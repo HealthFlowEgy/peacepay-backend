@@ -59,6 +59,7 @@ class AddMoneyController extends Controller
         }
         try{
             $instance = PaymentGatewayHelper::init($request->all())->gateway()->render();
+            session()->put('topupAmountHealthPay', $request->amount);
         }catch(Exception $e) {
             return back()->with(['error' => [$e->getMessage()]]);
         } 
@@ -68,6 +69,7 @@ class AddMoneyController extends Controller
         $requestData   = $request->all();
         $token         = $requestData['token'] ?? "";
         $checkTempData = TemporaryData::where("type",$gateway)->where("identifier",$token)->first();
+
         if(!$checkTempData) return redirect()->route('user.add.money.index')->with(['error' => [__('Transaction faild. Record didn\'t saved properly. Please try again')]]);
         $checkTempData = $checkTempData->toArray();
 
@@ -103,6 +105,7 @@ class AddMoneyController extends Controller
         if(!$hasData){
             return redirect()->route('user.add.money.index');
         }
+        // dd($page_title,$hasData,$gateway,$digitShow);
         return view('user.sections.add-money.manual.payment_confirmation',compact("page_title","hasData",'gateway','digitShow'));
     }
     //flutterwave payment success 

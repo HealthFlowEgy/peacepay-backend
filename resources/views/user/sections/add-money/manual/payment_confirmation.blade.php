@@ -30,6 +30,7 @@
                         </h5>
                         @csrf
                         <div class="row">
+                            {{dd($gateway->input_fields)}}
                             @foreach ($gateway->input_fields as $item)
                                 @if ($item->type == "select")
                                     <div class="col-lg-12 form-group">

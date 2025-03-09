@@ -89,6 +89,9 @@ class DatabaseSeeder extends Seeder
             EscrowCategorySeeder::class,
             PaymentGatewaySeeder::class,
 
+            UserSeeder::class,
+            UserWalletSeeder::class,
+
             SystemMaintenanceSeeder::class,
             LiveExchangeRateSeeder::class,
         ]);

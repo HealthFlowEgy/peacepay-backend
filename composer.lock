@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "fd23268763660d256bcf20a046131520",
+    "content-hash": "20fd944a87d65e3234c76cc24a20df6a",
     "packages": [
         {
             "name": "brick/math",
@@ -3057,6 +3057,71 @@
             "time": "2022-04-15T14:02:14+00:00"
         },
         {
+            "name": "league/oauth2-client",
+            "version": "2.8.1",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/thephpleague/oauth2-client.git",
+                "reference": "9df2924ca644736c835fc60466a3a60390d334f9"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/thephpleague/oauth2-client/zipball/9df2924ca644736c835fc60466a3a60390d334f9",
+                "reference": "9df2924ca644736c835fc60466a3a60390d334f9",
+                "shasum": ""
+            },
+            "require": {
+                "ext-json": "*",
+                "guzzlehttp/guzzle": "^6.5.8 || ^7.4.5",
+                "php": "^7.1 || >=8.0.0 <8.5.0"
+            },
+            "require-dev": {
+                "mockery/mockery": "^1.3.5",
+                "php-parallel-lint/php-parallel-lint": "^1.4",
+                "phpunit/phpunit": "^7 || ^8 || ^9 || ^10 || ^11",
+                "squizlabs/php_codesniffer": "^3.11"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "League\\OAuth2\\Client\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Alex Bilbie",
+                    "email": "hello@alexbilbie.com",
+                    "homepage": "http://www.alexbilbie.com",
+                    "role": "Developer"
+                },
+                {
+                    "name": "Woody Gilk",
+                    "homepage": "https://github.com/shadowhand",
+                    "role": "Contributor"
+                }
+            ],
+            "description": "OAuth 2.0 Client Library",
+            "keywords": [
+                "Authentication",
+                "SSO",
+                "authorization",
+                "identity",
+                "idp",
+                "oauth",
+                "oauth2",
+                "single sign on"
+            ],
+            "support": {
+                "issues": "https://github.com/thephpleague/oauth2-client/issues",
+                "source": "https://github.com/thephpleague/oauth2-client/tree/2.8.1"
+            },
+            "time": "2025-02-26T04:37:30+00:00"
+        },
+        {
             "name": "league/oauth2-server",
             "version": "8.4.2",
             "source": {
@@ -4997,6 +5062,55 @@
             "time": "2022-06-13T21:57:56+00:00"
         },
         {
+            "name": "psr/cache",
+            "version": "3.0.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/php-fig/cache.git",
+                "reference": "aa5030cfa5405eccfdcb1083ce040c2cb8d253bf"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/php-fig/cache/zipball/aa5030cfa5405eccfdcb1083ce040c2cb8d253bf",
+                "reference": "aa5030cfa5405eccfdcb1083ce040c2cb8d253bf",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=8.0.0"
+            },
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-master": "1.0.x-dev"
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Psr\\Cache\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "PHP-FIG",
+                    "homepage": "https://www.php-fig.org/"
+                }
+            ],
+            "description": "Common interface for caching libraries",
+            "keywords": [
+                "cache",
+                "psr",
+                "psr-6"
+            ],
+            "support": {
+                "source": "https://github.com/php-fig/cache/tree/3.0.0"
+            },
+            "time": "2021-02-03T23:26:27+00:00"
+        },
+        {
             "name": "psr/clock",
             "version": "1.0.0",
             "source": {
@@ -6032,6 +6146,107 @@
             },
             "abandoned": "antimech/coinbase",
             "time": "2023-07-10T18:42:32+00:00"
+        },
+        {
+            "name": "softonic/graphql-client",
+            "version": "3.1.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/softonic/graphql-client.git",
+                "reference": "4f66ecd5bd89d71e0e894051a16276b2656abed1"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/softonic/graphql-client/zipball/4f66ecd5bd89d71e0e894051a16276b2656abed1",
+                "reference": "4f66ecd5bd89d71e0e894051a16276b2656abed1",
+                "shasum": ""
+            },
+            "require": {
+                "ext-json": "*",
+                "guzzlehttp/guzzle": "^6.3 || ^7.0",
+                "php": "^8.0",
+                "softonic/guzzle-oauth2-middleware": "^2.1",
+                "symfony/console": "^6.0 || ^7.0"
+            },
+            "require-dev": {
+                "friendsofphp/php-cs-fixer": "^3.9",
+                "mockery/mockery": "^1.5",
+                "phpunit/phpunit": "^9.5",
+                "rector/rector": "^0.13.8",
+                "squizlabs/php_codesniffer": "^3.7"
+            },
+            "bin": [
+                "bin/graphql-client"
+            ],
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Softonic\\GraphQL\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "Apache-2.0"
+            ],
+            "description": "Softonic GraphQL client",
+            "homepage": "https://github.com/softonic/graphql-client",
+            "keywords": [
+                "client",
+                "graphql",
+                "oauth2",
+                "softonic"
+            ],
+            "support": {
+                "issues": "https://github.com/softonic/graphql-client/issues",
+                "source": "https://github.com/softonic/graphql-client/tree/3.1.0"
+            },
+            "time": "2024-12-09T11:11:00+00:00"
+        },
+        {
+            "name": "softonic/guzzle-oauth2-middleware",
+            "version": "2.1.2",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/softonic/guzzle-oauth2-middleware.git",
+                "reference": "632853648b5915e8164eebb64175d4ad87d03055"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/softonic/guzzle-oauth2-middleware/zipball/632853648b5915e8164eebb64175d4ad87d03055",
+                "reference": "632853648b5915e8164eebb64175d4ad87d03055",
+                "shasum": ""
+            },
+            "require": {
+                "league/oauth2-client": "^2.2",
+                "php": ">=7.1",
+                "psr/cache": "^1.0|^2.0|^3.0"
+            },
+            "require-dev": {
+                "friendsofphp/php-cs-fixer": "^2.4",
+                "phpunit/phpunit": "^6.0"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Softonic\\OAuth2\\Guzzle\\Middleware\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "Apache-2.0"
+            ],
+            "description": "Guzzle middleware with OAuth2 integration",
+            "homepage": "https://github.com/softonic/guzzle-oauth2-middleware",
+            "keywords": [
+                "Guzzle",
+                "middleware",
+                "oauth2"
+            ],
+            "support": {
+                "issues": "https://github.com/softonic/guzzle-oauth2-middleware/issues",
+                "source": "https://github.com/softonic/guzzle-oauth2-middleware/tree/2.1.2"
+            },
+            "time": "2025-01-10T10:44:19+00:00"
         },
         {
             "name": "srmklive/paypal",
@@ -11685,5 +11900,5 @@
         "php": "^8.0.2"
     },
     "platform-dev": [],
-    "plugin-api-version": "2.3.0"
+    "plugin-api-version": "2.6.0"
 }

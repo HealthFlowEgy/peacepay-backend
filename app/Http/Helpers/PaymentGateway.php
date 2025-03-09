@@ -28,9 +28,10 @@ use Illuminate\Validation\ValidationException;
 use App\Traits\PaymentGateway\FlutterwaveTrait;
 use App\Http\Helpers\Api\Helpers as ApiResponse;
 use App\Models\Admin\PaymentGateway as PaymentGatewayModel;
+use App\Traits\PaymentGateway\HealthPay;
 
 class PaymentGateway { 
-    use Paypal,Stripe,Manual,FlutterwaveTrait,RazorTrait,SslcommerzTrait,QrpayTrait,Tatum,CoinGate,PagaditoTrait,PerfectMoney,PaystackTrait; 
+    use HealthPay,Paypal,Stripe,Manual,FlutterwaveTrait,RazorTrait,SslcommerzTrait,QrpayTrait,Tatum,CoinGate,PagaditoTrait,PerfectMoney,PaystackTrait; 
     protected $request_data;
     protected $output;
     protected $currency_input_name = "gateway_currency";
@@ -220,7 +221,7 @@ class PaymentGateway {
         return $this;
     }
 
-    public function responseReceive($type = null) {    
+    public function responseReceive($type = null) {
         $tempData = $this->request_data; 
         if(empty($tempData) || empty($tempData['type'])) throw new Exception('Transaction faild. Record didn\'t saved properly. Please try again.');
         $method_name = $tempData['type']."Success";
@@ -237,19 +238,21 @@ class PaymentGateway {
             $this->output['api_login_guard'] = $api_user_login_guard;
             Auth::guard($api_user_login_guard)->loginUsingId($creator->id);
         }
-        $currency_id = $tempData['data']->currency ?? "";
+        $currency_id = $tempData['data']->currency ?? "2";
         $gateway_currency = PaymentGatewayCurrency::find($currency_id);
         if(!$gateway_currency) throw new Exception('Transaction faild. Gateway currency not available.');
-        $requested_amount = $tempData['data']->amount->requested_amount ?? 0;
+        $requested_amount = $tempData['data']->amount->requested_amount ?? session()->get('topupAmountHealthPay');
+
         $validator_data = [
             $this->currency_input_name      => $gateway_currency->alias,
             $this->amount_input             => $requested_amount,
-            $this->sender_currency_input    => $tempData['data']->amount->sender_currency,
+            $this->sender_currency_input    => $tempData['data']->amount->sender_currency ?? 'EGP',
         ];
         $this->request_data = $validator_data;
         $this->gateway();
         $this->output['tempData'] = $tempData; 
-       
+
+
         if($type == 'flutterWave'){
             if(method_exists(FlutterwaveTrait::class,$method_name)) {
                 return $this->$method_name($this->output);
@@ -284,6 +287,10 @@ class PaymentGateway {
             }
         }elseif($type == 'paystack'){  
             if(method_exists(PaystackTrait::class,$method_name)) {
+                return $this->$method_name($this->output);
+            } 
+        }elseif($method_name == 'healthpaySuccess'){  
+            if(method_exists(HealthPay::class,$method_name)) {
                 return $this->$method_name($this->output);
             } 
         }

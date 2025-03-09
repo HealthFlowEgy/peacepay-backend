@@ -36,7 +36,9 @@ class RouteServiceProvider extends ServiceProvider
             Route::middleware(['web', 'system.maintenance'])
                 ->group(base_path('routes/web.php'));
 
-            Route::middleware(['web', 'auth', 'verification.guard', 'user.google.two.factor', 'verified.sms'])
+            Route::middleware(['web', 'auth', 'verification.guard', 'user.google.two.factor'
+            // , 'verified.sms'
+            ])
                 ->group(base_path('routes/user.php'));
 
             Route::middleware(['web', 'auth:admin', 'app.mode', 'admin.role.guard', 'admin.google.two.factor'])

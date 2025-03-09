@@ -20,24 +20,24 @@ class EnsureSMSVerified
      */
     public function handle($request, Closure $next, $redirectToRoute = null)
     {
-        if (! $request->user() || ( ! $request->user()->sms_verified)) {
-            // For JSON requests, return a structured error response
-            if ($request->expectsJson()) {
-                return response()->json([
-                    'success' => false,
-                    'error' => [
-                        'code' => 'SMS_NOT_VERIFIED',
-                        'message' => 'Your mobile number is not verified.',
-                        'details' => [
-                            'action' => 'Verify your mobile number',
-                        ]
-                    ]
-                ], 403);
-            }
+        // if (! $request->user() || ( ! $request->user()->sms_verified)) {
+        //     // For JSON requests, return a structured error response
+        //     if ($request->expectsJson()) {
+        //         return response()->json([
+        //             'success' => false,
+        //             'error' => [
+        //                 'code' => 'SMS_NOT_VERIFIED',
+        //                 'message' => 'Your mobile number is not verified.',
+        //                 'details' => [
+        //                     'action' => 'Verify your mobile number',
+        //                 ]
+        //             ]
+        //         ], 403);
+        //     }
 
-            // For non-JSON requests, redirect as before
-            return Redirect::guest(URL::route($redirectToRoute ?: 'user.code.verify.mobile'));
-        }
+        //     // For non-JSON requests, redirect as before
+        //     return Redirect::guest(URL::route($redirectToRoute ?: 'user.code.verify.mobile'));
+        // }
 
         return $next($request);
     }

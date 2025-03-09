@@ -16,6 +16,7 @@ class PaymentGatewayConst {
     const MONEYOUT  = "Money Out";
     const ACTIVE    =  true;
 
+    const HEALTHPAY     = 'healthpay';
     const PAYPAL        = 'paypal';
     const STRIPE        = 'stripe';
     const MANUA_GATEWAY = 'manual';
@@ -73,6 +74,7 @@ class PaymentGatewayConst {
     }
     public static function register($alias = null) {
         $gateway_alias  = [
+            self::HEALTHPAY     => "healthPayInit",
             self::PAYPAL        => "paypalInit",
             self::STRIPE        => "stripeInit",
             self::MANUA_GATEWAY => "manualInit",
@@ -127,6 +129,7 @@ class PaymentGatewayConst {
     }
     public static function registerGatewayRecognization() {
         return [ 
+            'isHealthPay'       => self::HEALTHPAY,
             'isPaypal'          => self::PAYPAL,
             'isCoinGate'        => self::COIN_GATE,
             'isQrpay'           => self::QRPAY,
