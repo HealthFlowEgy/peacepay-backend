@@ -48,6 +48,7 @@ class EscrowActionsController extends Controller
             $gateway->where('slug', PaymentGatewayConst::add_money_slug());
             $gateway->where('status', 1);
         })->get();
+        session()->put('topupAmountHealthPay',$escrow->amount);
         $user_wallet = UserWallet::where(['user_id' => auth()->user()->id, 'currency_id' => $escrow->escrowCurrency->id])->first();
         return view('user.my-escrow.payment-approval-pending', compact('page_title','escrow','payment_gateways_currencies','user_wallet'));
     }
