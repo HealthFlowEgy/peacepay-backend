@@ -139,9 +139,9 @@
         function getRole() {
             var role = $("select[name=role] :selected").val();
             if (role == "seller") { 
-                $('.buyer_seller_show').text("{{ __('Buyer Username/Email') }}"); 
+                $('.buyer_seller_show').text("{{ __('Buyer Username/Email/Mobile') }}"); 
             }else{
-                $('.buyer_seller_show').text("{{ __('Seller Username/Email') }}"); 
+                $('.buyer_seller_show').text("{{ __('Seller Username/Email/Mobile') }}"); 
             }
         }
         function setOptionsForWhoWillPay() {

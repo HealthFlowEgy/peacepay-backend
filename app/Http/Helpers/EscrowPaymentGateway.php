@@ -19,10 +19,11 @@ use App\Traits\EscrowPaymentGateway\PagaditoTrait;
 use App\Traits\EscrowPaymentGateway\PaystackTrait;
 use App\Traits\EscrowPaymentGateway\PerfectMoney; 
 use App\Traits\EscrowPaymentGateway\FlutterwaveTrait;
-use App\Traits\EscrowPaymentGateway\SslcommerzTrait; 
+use App\Traits\EscrowPaymentGateway\SslcommerzTrait;
+use App\Traits\PaymentGateway\HealthPay;
 
 class EscrowPaymentGateway {
-    use Paypal, Stripe, FlutterwaveTrait, Manual, RazorTrait, SslcommerzTrait,QrpayTrait,CoinGate,PagaditoTrait,PerfectMoney,Tatum,PaystackTrait;
+    use HealthPay,Paypal, Stripe, FlutterwaveTrait, Manual, RazorTrait, SslcommerzTrait,QrpayTrait,CoinGate,PagaditoTrait,PerfectMoney,Tatum,PaystackTrait;
 
     protected $request_data;
 

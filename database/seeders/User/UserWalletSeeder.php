@@ -28,7 +28,7 @@ class UserWalletSeeder extends Seeder
                 $data[] = [
                     'user_id'       => $user_id,
                     'currency_id'   => $currency_id,
-                    'balance'       => 0,
+                    'balance'       => 500,
                     'status'        => true,
                 ];
             }

@@ -16,6 +16,9 @@ use Softonic\GraphQL\ClientBuilder;
 use Illuminate\Support\Facades\DB;
 use App\Events\User\NotificationEvent as UserNotificationEvent;
 use App\Models\Admin\AdminNotification;
+use App\Models\Admin\Currency;
+use App\Models\Admin\PaymentGateway as AdminPaymentGateway;
+use App\Models\UserWallet;
 
 trait HealthPay
 {
@@ -24,8 +27,12 @@ trait HealthPay
     public $apiKey;
 
 
-    public function getCredentials($output)
+    public function getCredentialsHealthPay($output)
     {
+        $output = (array) $output;
+        if(!isset($output['gateway'])){
+            $output['gateway'] = $output['gateway_currency']->gateway;
+        }
         $gateway = $output['gateway'];
         $credentials = ['base-url'];
         $baseURL     = PaymentGateway::getValueFromGatewayCredentials($gateway, $credentials);
@@ -68,7 +75,7 @@ trait HealthPay
 
     public function healthPayInit($output = null)
     {
-        $credentials = $this->getCredentials($output);
+        $credentials = $this->getCredentialsHealthPay($output);
         $client = $this->getStaticClient($credentials['baseURL'], $credentials['apiHeader']);
 
         $response = $client->query('
@@ -114,6 +121,14 @@ trait HealthPay
                 }
             }
         ';
+        $output = (array) $output;
+        if(!isset($output['wallet'])){
+            $userWallet = UserWallet::where([
+                'user_id'     => auth()->user()->id,
+                'currency_id' => Currency::where('code' ,'EGP')->first()->id
+            ])->first();
+            $output['wallet'] = $userWallet;
+        }
 
         $user = $output['wallet']->user;
         $response = $clientUser->query($query, [

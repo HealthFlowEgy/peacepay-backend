@@ -95,7 +95,8 @@ class EscrowController extends Controller
         $getEscrowChargeLimit = TransactionSetting::find(1);
         $sender_currency      = Currency::where('code', $validated['escrow_currency'])->first();
         $digitShow            = $sender_currency->type == "CRYPTO" ? 6 : 2 ;
-        $opposite_user                 = User::where('username',$validated['buyer_seller_identify'])->orWhere('email',$validated['buyer_seller_identify'])->first();
+        $opposite_user                 = User::where('username',$validated['buyer_seller_identify'])->orWhere('email',$validated['buyer_seller_identify'])
+        ->orWhere('mobile',$validated['buyer_seller_identify'])->first();
         //user check 
         if(empty($opposite_user) || $opposite_user->email == auth()->user()->email) return redirect()->back()->withInput()->with(['error' => [__('User not found')]]);
         //get payment method
@@ -580,7 +581,10 @@ class EscrowController extends Controller
         return number_format($user_wallets->balance,$digitShow);
     } 
     public function userCheck(Request $request){ 
-        $getUser = User::where('status', true)->where('username', $request->userCheck)->orWhere('email',$request->userCheck)->first();
+        $getUser = User::where('status', true)
+        ->where('username', $request->userCheck)
+        ->orWhere('email',$request->userCheck)
+        ->orWhere('mobile',$request->userCheck)->first();
         if($getUser != null){
             if($getUser->id == auth()->user()->id){
                 return false;

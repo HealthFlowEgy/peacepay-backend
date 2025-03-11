@@ -45,7 +45,7 @@ class HealthPayController extends Controller
 
         $mobileHealthPay = session()->get('mobileHealthPay');
         $output['gateway'] = PaymentGateway::where('alias','healthpay')->first();
-        $credentials = $this->getCredentials($output);
+        $credentials = $this->getCredentialsHealthPay($output);
 
         $clientUser = ClientBuilder::build($credentials['baseURL'], [
             'headers' => [
