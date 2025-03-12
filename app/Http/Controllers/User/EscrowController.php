@@ -65,15 +65,15 @@ class EscrowController extends Controller
     public function submit(Request $request) { 
         $basic_setting = BasicSettings::first();
         $user          = auth()->user();
-        if($basic_setting->kyc_verification){
-            if( $user->kyc_verified == 0){
-                return redirect()->route('user.authorize.kyc')->with(['error' => [__('Please submit kyc information')]]);
-            }elseif($user->kyc_verified == 2){
-                return redirect()->route('user.authorize.kyc')->with(['error' => [__('Please wait before admin approved your kyc information')]]);
-            }elseif($user->kyc_verified == 3){
-                return redirect()->route('user.authorize.kyc')->with(['error' => [__('Admin rejected your kyc information, Please re-submit again')]]);
-            }
-        }
+        // if($basic_setting->kyc_verification){
+        //     if( $user->kyc_verified == 0){
+        //         return redirect()->route('user.authorize.kyc')->with(['error' => [__('Please submit kyc information')]]);
+        //     }elseif($user->kyc_verified == 2){
+        //         return redirect()->route('user.authorize.kyc')->with(['error' => [__('Please wait before admin approved your kyc information')]]);
+        //     }elseif($user->kyc_verified == 3){
+        //         return redirect()->route('user.authorize.kyc')->with(['error' => [__('Admin rejected your kyc information, Please re-submit again')]]);
+        //     }
+        // }
         $page_title = "Escrow Details";
         $validator  = Validator::make($request->all(),[
             'title'                 => 'required|string',

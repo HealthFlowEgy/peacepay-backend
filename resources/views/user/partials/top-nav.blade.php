@@ -18,6 +18,19 @@
                     @endif
                 </a>
             </div>
+
+            <div class="toggle-container">
+                <a class="btn btn--base" href="{{route('user.add.money.index')}}">
+                    {{__('Add Money')}}
+                </a>
+            </div>
+
+            <div class="toggle-container">
+                <a class="btn btn--base" href="{{route('user.money.out.index')}}">
+                    {{__('Money Out')}}
+                </a>
+            </div>
+
             <div class="toggle-container">
                 <div class="switch-toggles user_type_show {{ auth()->user()->type == 'buyer' ? 'active' : ''; }}" data-deactive="deactive">
                     <input type="hidden" class="user_type_data" value="1">

@@ -37,7 +37,7 @@ class RouteServiceProvider extends ServiceProvider
                 ->group(base_path('routes/web.php'));
 
             Route::middleware(['web', 'auth', 'verification.guard', 'user.google.two.factor'
-            // , 'verified.sms'
+            , 'verified.sms'
             ])
                 ->group(base_path('routes/user.php'));
 
