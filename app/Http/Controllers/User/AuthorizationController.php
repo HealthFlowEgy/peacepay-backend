@@ -100,7 +100,7 @@ class AuthorizationController extends Controller
     } 
     public function kycSubmit(Request $request) { 
         $user = auth()->user();
-        if($user->kyc_verified == GlobalConst::VERIFIED) return back()->with(['success' => [__('You are already KYC Verified User')]]); 
+        if($user->kyc_verified == GlobalConst::VERIFIED && request()->change != 1) return back()->with(['success' => [__('You are already KYC Verified User')]]); 
         $user_kyc_fields = SetupKyc::userKyc()->first()->fields ?? [];
         $validation_rules = $this->generateValidationRules($user_kyc_fields); 
         $validated = Validator::make($request->all(),$validation_rules)->validate();
@@ -109,7 +109,7 @@ class AuthorizationController extends Controller
             'user_id'       => auth()->user()->id,
             'data'          => json_encode($get_values),
             'created_at'    => now(),
-        ]; 
+        ];
         DB::beginTransaction();
         try{
             DB::table('user_kyc_data')->updateOrInsert(["user_id" => $user->id],$create);

@@ -42,8 +42,8 @@ Route::prefix("user")->name("user.")->group(function () {
     // My Escrow routes
     Route::controller(EscrowController::class)->name('my-escrow.')->group(function () {
         Route::get('/my-escrow', 'index')->name('index');
-        Route::get('/create-escrow', 'create')->name('add');
-        Route::post('/submit-escrow', 'submit')->name('submit');
+        Route::get('/create-escrow', 'create')->name('add')->middleware('create.escrow');
+        Route::post('/submit-escrow', 'submit')->name('submit')->middleware('create.escrow');
         Route::post('/confirm-escrow', 'successConfirm')->name('confirm');
         Route::get('/success-escrow', 'successEscrow')->name('success');
         Route::get('/escrow-payment/{gateway}/{trx}', 'escrowPaymentSuccess')->name('payment.success');
@@ -84,6 +84,7 @@ Route::prefix("user")->name("user.")->group(function () {
     // Escrow action routes
     Route::controller(EscrowActionsController::class)->name('escrow-action.')->group(function () {
         Route::get('escrow/payment/approval-pending/{id}', 'paymentApprovalPending')->name('paymentApprovalPending');
+        Route::get('escrow/payment/approval-cancel/{id}', 'paymentCancel')->name('paymentCancel');
         Route::post('escrow/payment/approval-submit/{id}', 'paymentApprovalSubmit')->name('paymentApprovalSubmit');
         Route::get('/escrow-payment-approval/{gateway}', 'escrowPaymentApprovalSuccess')->name('payment.approval.success');
         Route::get("cancel/response", 'cancel')->name('payment.cancel');

@@ -5,6 +5,7 @@ namespace App\Http;
 use App\Http\Middleware\Admin\SystemMaintenance;
 use App\Http\Middleware\Admin\SystemMaintenanceApi;
 use App\Http\Middleware\ConfirmPINCode;
+use App\Http\Middleware\CreateEscrow;
 use App\Http\Middleware\EnsureSMSVerified;
 use Illuminate\Foundation\Http\Kernel as HttpKernel;
 
@@ -72,6 +73,7 @@ class Kernel extends HttpKernel
         'throttle' => \Illuminate\Routing\Middleware\ThrottleRequests::class,
         'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
         'verified.sms' => EnsureSMSVerified::class,
+        'create.escrow' => CreateEscrow::class,
         'app.mode'  => \App\Http\Middleware\Admin\AppModeGuard::class,
         'app.mode.api'  => \App\Http\Middleware\Admin\AppModeGuardApi::class,
         'admin.login.guard' => \App\Http\Middleware\Admin\LoginGuard::class,

@@ -55,6 +55,33 @@
                                     </li>
                                 @endforeach
                             </ul>
+
+
+
+
+                            <br>
+                            <hr>
+
+                            <p>{{ __("If u want to Cahnge KYC Data Your Account will be pending untill admin approve.") }}</p>
+                            <form action="{{ setRoute('user.authorize.kyc.submit') }}" class="account-form" method="POST" enctype="multipart/form-data">
+                                @csrf
+                                <div class="row ml-b-20">
+        
+                                    @include('user.components.generate-kyc-fields',['fields' => $kyc_fields])
+                                    <input type="hidden" name="change" value="1">
+                                    <div class="col-lg-12 form-group">
+                                        <div class="forgot-item">
+                                            <label>{{ __("Back to ") }}<a href="{{ setRoute('user.dashboard') }}" class="text--base">{{ __("Dashboard") }}</a></label>
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-12 form-group text-center">
+                                        <button type="submit" class="btn--base w-100">{{ __("Submit") }}</button>
+                                    </div>
+                                </div>
+                            </form>
+
+
+                        
                         @else
                         <p>{{ __("Please submit your KYC information with valid data.") }}</p>
                         <form action="{{ setRoute('user.authorize.kyc.submit') }}" class="account-form" method="POST" enctype="multipart/form-data">

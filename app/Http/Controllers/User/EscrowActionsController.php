@@ -52,6 +52,13 @@ class EscrowActionsController extends Controller
         $user_wallet = UserWallet::where(['user_id' => auth()->user()->id, 'currency_id' => $escrow->escrowCurrency->id])->first();
         return view('user.my-escrow.payment-approval-pending', compact('page_title','escrow','payment_gateways_currencies','user_wallet'));
     }
+    public function paymentCancel($id){
+        $escrow                      = Escrow::findOrFail(decrypt($id));
+        $escrow->update([
+            'status' => 7
+        ]);
+        return redirect()->route('user.my-escrow.index')->with(['success' => [__('You have canceled the payment')]]);
+    }
     //payment approvel submit when seller will send payment request to buyer 
     public function paymentApprovalSubmit(Request $request, $id) {
         $validator = Validator::make($request->all(),[ 
@@ -78,7 +85,7 @@ class EscrowActionsController extends Controller
                 $buyer_amount = $amount + ($escrow->escrowDetails->fee/2);
             }
             if ($user_wallet->balance == 0 || $user_wallet->balance < 0 || $user_wallet->balance < $buyer_amount) {
-                return redirect()->back()->with(['error' => ['Insuficiant Balance']]); 
+                return redirect()->back()->with(['error' => ['Insuficiant Balance Please Add Money First']]); 
             }
             $this->escrowWalletPayment($escrow);
             $escrow->payment_type = EscrowConstants::MY_WALLET;

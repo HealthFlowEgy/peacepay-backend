@@ -20,11 +20,13 @@
             <div class="table-wrapper">
                 <div class="dashboard-header-wrapper">
                     <h4 class="title">{{ __("My Escrow") }}</h4>
-                    <div class="dashboard-btn-wrapper">
-                        <div class="dashboard-btn">
-                            <a href="{{ setRoute('user.my-escrow.add') }}" class="btn--base"><i class="las la-plus me-1"></i> {{ __("Create New Escrow") }}</a>
+                    @if(auth()->user()->type == "seller")
+                        <div class="dashboard-btn-wrapper">
+                            <div class="dashboard-btn">
+                                <a href="{{ setRoute('user.my-escrow.add') }}" class="btn--base"><i class="las la-plus me-1"></i> {{ __("Create New Escrow") }}</a>
+                            </div>
                         </div>
-                    </div>
+                    @endif
                 </div>
                 <div class="table-responsive">
                     <table class="custom-table">
@@ -49,6 +51,7 @@
                                 <td>
                                     @if ($item->buyer_or_seller_id == auth()->user()->id && $item->status == escrow_const()::APPROVAL_PENDING)
                                     <a href="{{ setRoute('user.escrow-action.paymentApprovalPending', encrypt($item->id))}}" class="btn btn--base bg--warning"><i class="las la-expand"></i></a>
+                                    <a href="{{ setRoute('user.escrow-action.paymentCancel', encrypt($item->id))}}" class="btn btn--base bg--danger">{{__('Cancel')}}</a>
                                     @endif
                                     @if ($item->user_id == auth()->user()->id && $item->opposite_role == "buyer" && $item->status == escrow_const()::PAYMENT_WATTING)
                                     <a href="{{ setRoute('user.my-escrow.payment.crypto.address', $item->escrow_id)}}" class="btn btn--base bg--warning"><i class="las la-expand"></i></a>
@@ -73,6 +76,13 @@
                                         @endif
                                     </a>
                                     {{-- end escrow conversation button  --}}
+
+                                    @if(auth()->user()->type == 'seller')
+                                        <div class="btn-group share-buttons">
+                                            <button onclick="copyToClipboard('{{ setRoute('user.escrow-action.paymentApprovalPending', encrypt($item->id)) }}')" class="btn btn--base bg--primary" title="Copy Link"><i class="las la-copy"></i></button>
+                                            <a href="https://wa.me/201143536496/?text={{ urlencode(__('Please Pay Using This link').' '.setRoute('user.escrow-action.paymentApprovalPending', encrypt($item->id))) }}" target="_blank" class="btn btn--base bg--success" title="Share on WhatsApp"><i class="lab la-whatsapp"></i></a>
+                                        </div>
+                                    @endif
                                 </td>
                             </tr> 
                             @empty
@@ -88,3 +98,19 @@
         </div>
     </div>
 @endsection
+
+@push('script')
+    <script>
+        function copyToClipboard(text) {
+            var tempInput = document.createElement("input");
+            tempInput.value = text;
+            document.body.appendChild(tempInput);
+            tempInput.select();
+            document.execCommand("copy");
+            document.body.removeChild(tempInput);
+            
+            // Optional: Show a notification or tooltip that the link was copied
+            alert("Link copied to clipboard!");
+        }
+    </script>
+@endpush

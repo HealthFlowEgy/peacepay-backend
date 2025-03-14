@@ -35,6 +35,9 @@ class Escrow extends Model
     public function user() {
         return $this->belongsTo(User::class);
     }
+    public function userWillPay() {
+        return $this->belongsTo(User::class,'buyer_or_seller_id');
+    }
     public function escrowCategory()
     {
         return $this->belongsTo(EscrowCategory::class);

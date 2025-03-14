@@ -37,7 +37,7 @@
                             <div class="col-xl-6 col-lg-6 form-group">
                                 <label>{{ __("My Role") }}<span>*</span></label>
                                 <select class="form--control nice-select role" name="role" required>
-                                    <option value="buyer" {{ ($user_pass_data['role'] ?? $user_type) == "buyer" ? "selected": "" }}>{{ __("Buyer") }}</option>
+                                    <!-- <option value="buyer" {{ ($user_pass_data['role'] ?? $user_type) == "buyer" ? "selected": "" }}>{{ __("Buyer") }}</option> -->
                                     <option value="seller" {{ ($user_pass_data['role'] ?? $user_type) == "seller" ? "selected": "" }}>{{ __("Seller") }}</option>
                                 </select>
                             </div>
@@ -120,6 +120,8 @@
         $('select[name=escrow_currency]').on('change',function(){
             userWalletByCurrency();
         });
+
+        /*
         $('.buyer_seller_identify').on('focusout',function(){
             var userCheck = $(".buyer_seller_identify").val(); 
             // alert(userCheck)
@@ -136,6 +138,7 @@
                 }
             }); 
         });
+        */
         function getRole() {
             var role = $("select[name=role] :selected").val();
             if (role == "seller") { 

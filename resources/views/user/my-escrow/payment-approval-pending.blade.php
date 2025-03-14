@@ -186,6 +186,25 @@
                                     <span class="text--info last totalPayable">--</span>
                                 </div>
                             </div> 
+                            <div class="preview-list-item">
+                                <div class="preview-list-left">
+                                    <div class="preview-list-user-wrapper">
+                                        <div class="preview-list-user-icon">
+                                            <i class="las la-money-check-alt"></i>
+                                        </div>
+                                        <div class="preview-list-user-content">
+                                            <span class="last buyerPay">{{ __("Seller") }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="preview-list-right">
+                                    <span class="text--info">
+                                        {{$escrow->user->fullname}}
+                                        <br>
+                                        {{$escrow->user->mobile}}
+                                    </span>
+                                </div>
+                            </div> 
                         </div>
                     </div>
                 </div>

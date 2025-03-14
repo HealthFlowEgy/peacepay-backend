@@ -30,6 +30,9 @@ use App\Http\Helpers\EscrowPaymentGateway;
 use App\Notifications\Escrow\EscrowRequest;
 use App\Models\Admin\PaymentGatewayCurrency;
 use App\Events\User\NotificationEvent as UserNotificationEvent;
+use App\Providers\Admin\BasicSettingsProvider;
+use Illuminate\Auth\Events\Registered;
+use Illuminate\Support\Facades\Hash;
 
 class EscrowController extends Controller
 {
@@ -98,7 +101,28 @@ class EscrowController extends Controller
         $opposite_user                 = User::where('username',$validated['buyer_seller_identify'])->orWhere('email',$validated['buyer_seller_identify'])
         ->orWhere('mobile',$validated['buyer_seller_identify'])->first();
         //user check 
-        if(empty($opposite_user) || $opposite_user->email == auth()->user()->email) return redirect()->back()->withInput()->with(['error' => [__('User not found')]]);
+        if(empty($opposite_user)
+        //  || $opposite_user->email == auth()->user()->email
+        ){
+            // return redirect()->back()->withInput()->with(['error' => [__('User not found')]]);
+            $basic_settings = BasicSettingsProvider::get();
+            $data['email_verified']    = ($basic_settings->email_verification == true) ? false : true; 
+            $data['sms_verified']      = ($basic_settings->sms_verification == true) ? false : true;
+            $data['kyc_verified']      = ($basic_settings->kyc_verification == true) ? false : true;
+            $data['password']          = Hash::make('123456');
+            $data['username']          = make_username('default','user'); 
+            $data['firstname']         = 'default'; 
+            $data['lastname']          = 'user'; 
+            $data['registered']        = 0; 
+            $data['mobile_code']       = env('MOBILE_CODE');
+            $data['full_mobile']       = env('MOBILE_CODE').$validated['buyer_seller_identify'];
+            $data['email']             = env('MOBILE_CODE').$validated['buyer_seller_identify'];
+            $data['mobile']            = $validated['buyer_seller_identify'];
+            $data['type']              = 'buyer';
+
+            $opposite_user = User::create($data);
+            event(new Registered($opposite_user));
+        }
         //get payment method
         $payment_type = EscrowConstants::DID_NOT_PAID;
         $payment_gateways_currencies = null;

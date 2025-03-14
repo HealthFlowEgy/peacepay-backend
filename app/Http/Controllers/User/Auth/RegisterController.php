@@ -66,6 +66,17 @@ class RegisterController extends Controller
     public function register(Request $request)
     { 
         $validated = $this->validator($request->all())->validate();
+        
+        $existsUser = User::where([
+            'mobile' => $validated['mobile'],
+            'registered' => 1,
+        ])->first();
+        if($existsUser){
+            return redirect()->back()->with([
+                'error' => ['Mobile number already registered.'],
+            ]);
+        }
+
         $basic_settings             = $this->basic_settings;
         
         $validated = Arr::except($validated,['agree']);
@@ -77,6 +88,7 @@ class RegisterController extends Controller
         $validated['mobile_code']       = env('MOBILE_CODE');
         $validated['full_mobile']       = env('MOBILE_CODE').$validated['mobile'];
         $validated['email']             = env('MOBILE_CODE').$validated['mobile'];
+        $validated['user_exists']       = User::where('mobile',$validated['mobile'])->first() ? true:false;
 
 
         event(new Registered($user = $this->create($validated)));
@@ -111,7 +123,7 @@ class RegisterController extends Controller
             'firstname'     => 'required|string|max:60',
             'lastname'      => 'required|string|max:60',
             'type'          => 'required|string|max:60',
-            'mobile'        => 'required|string|max:11|min:11|unique:users,mobile|regex:/^0/',
+            'mobile'        => 'required|string|max:11|min:11|regex:/^0/',
             'password'      => $passowrd_rule, 
             'agree'         => $agree,
         ], $messages);
@@ -126,6 +138,15 @@ class RegisterController extends Controller
      */
     protected function create(array $data)
     {
+        if($data['user_exists']){
+            $user = User::where('mobile', $data['mobile'])->first();
+            $user->firstname = $data['firstname'];
+            $user->lastname = $data['lastname'];
+            $user->type = $data['type'];
+            $user->registered = 1;
+            $user->save();
+            return $user;
+        }
         return User::create($data);
     }
 

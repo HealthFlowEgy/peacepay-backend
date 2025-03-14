@@ -23,7 +23,12 @@ Route::controller(PagaditoCallbackController::class)->prefix("payment")->group(f
     Route::get('pagadito/success','pagaditoSuccess')->name('success'); 
 });
 Route::controller(SiteController::class)->group(function(){
-    Route::get('/','home')->name('index');
+    Route::get('/',function(){
+        if(auth()->check()){
+            return redirect()->route('user.dashboard');
+        }
+        return redirect()->route('user.login');
+    })->name('index');
     Route::get('about-us','aboutUs')->name('aboutUs'); 
     Route::get('services','services')->name('services'); 
     Route::get('features','features')->name('features'); 
