@@ -58,6 +58,10 @@ class Escrow extends Model
     {
         return $this->hasMany(EscrowChat::class);
     }
+    public function policies()
+    {
+        return $this->belongsToMany(Policy::class,'escrow_policies')->withPivot('escrow_id','policy_id','fee');
+    }
     public function getOppositeRoleAttribute(){
         if ($this->user_id == auth()->user()->id) {
             return $this->role;

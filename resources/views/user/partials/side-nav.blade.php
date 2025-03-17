@@ -25,6 +25,12 @@
                             </a>
                         </li>
                         <li class="sidebar-menu-item">
+                            <a href="{{ setRoute('user.policies.index') }}">
+                                <i class="las la-user-shield menu-icon"></i>
+                                <span class="menu-title">{{ __("Polices") }}</span>
+                            </a>
+                        </li>
+                        <li class="sidebar-menu-item">
                             <a href="{{ setRoute('user.transactions.index') }}">
                                 <i class="menu-icon las la-wallet"></i>
                                 <span class="menu-title">{{ __("Transactions") }}</span>

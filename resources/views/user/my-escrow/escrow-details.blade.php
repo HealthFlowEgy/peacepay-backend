@@ -68,7 +68,24 @@
                     <li>{{ __("Buyer Paid") }} : <span class="text-right">{{ get_amount($escrow->escrowDetails->buyer_pay,$escrow->escrow_currency) }}</span></li>  
                     @endif
                 </ul>
+            </div>
+
+            <div class="support-profile-box">
+                <h4 class="title">{{ __("Policies") }}</h4>
+                <ul class="support-profile-list">
+
+                    @foreach($escrow->policies as $policy)
+                        <li>
+                            {{ $policy->name }} : 
+                            <span class="text-right">
+                                {{ $policy->pivot->fee }}
+                            </span>
+                        </li>
+                    @endforeach
+                </ul>
             </div> 
+
+
         </div>
     </div>
 @endif

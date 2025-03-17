@@ -30,6 +30,7 @@ use App\Http\Helpers\EscrowPaymentGateway;
 use App\Notifications\Escrow\EscrowRequest;
 use App\Models\Admin\PaymentGatewayCurrency;
 use App\Events\User\NotificationEvent as UserNotificationEvent;
+use App\Models\Policy;
 use App\Providers\Admin\BasicSettingsProvider;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Support\Facades\Hash;
@@ -61,7 +62,11 @@ class EscrowController extends Controller
             $gateway->where('status', 1);
         })->get();
         $user_pass_data = $request->all();
-        return view('user.my-escrow.create', compact('page_title', 'escrowCategories','currencies','payment_gateways_currencies','user_pass_data'));
+        $policies = Policy::where('user_id', auth()->user()->id)->get();
+
+
+
+        return view('user.my-escrow.create', compact('policies','page_title', 'escrowCategories','currencies','payment_gateways_currencies','user_pass_data'));
     }
     //===================== escrow submission ======================================================
     // escrow submit 
@@ -242,10 +247,12 @@ class EscrowController extends Controller
             'creator_table'         => auth()->guard(get_auth_guard())->user()->getTable(),
             'creator_id'       => auth()->guard(get_auth_guard())->user()->id,   //for sscommerz relogin after payment
             'creator_guard'    => get_auth_guard(),                              //for sscommerz relogin after payment
+            'policy_ids'       => $request->policy_ids,
+            'fees'             => $request->fees
         ];
         $this->addEscrowTempData($identifier, $tempData);
         Session::put('identifier',$identifier);
-        return view('user.my-escrow.escrow-preview', compact('page_title','oldData','digitShow','identifier'));
+        return view('user.my-escrow.escrow-preview', compact('page_title','tempData','oldData','digitShow','identifier'));
     }
     //escrow temp data insert
     public function addEscrowTempData($identifier,$data) {  
@@ -487,6 +494,8 @@ class EscrowController extends Controller
     //insert escrow data
     public function createEscrow($tempData, $additionalData = null,$setStatus = null) {
         $escrowData = $tempData->data->escrow;
+        $policy_ids = $tempData->data->policy_ids??[];
+        $fees = (array) $tempData->data->fees??[];
         if ($setStatus == null) {
             $status = 0;
             if ($escrowData->role == "seller") {
@@ -524,8 +533,19 @@ class EscrowController extends Controller
                 'status'                      => $status,
                 'details'                     => $additionalData,
                 'created_at'                  => now(),
-                'callback_ref'                  => $tempData->identifier,
+                'callback_ref'                => $tempData->identifier,
             ]);
+
+
+            $policy_data = [];
+            foreach($policy_ids as $policy_id) {
+                $policy_data[$policy_id] = [
+                    'fee' => $fees[$policy_id]
+                ];
+            }
+            
+            $escrowCreate->policies()->sync($policy_data);
+
             EscrowDetails::create([
                 'escrow_id'             => $escrowCreate->id ?? 0,
                 'fee'                   => $escrowData->escrow_total_charge,

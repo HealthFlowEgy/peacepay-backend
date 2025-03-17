@@ -11,6 +11,24 @@
     $user_type = auth()->user()->type;
 @endphp
 @section('content')
+<style>
+
+    .select2-container--default .select2-selection--multiple,
+    .select2,.select2 .selection,
+    .select2-container--default.select2-container--focus .select2-selection--multiple{
+        background-color: transparent !important;
+        color: black;
+        height: 50px;
+    }
+    .select2 ul {
+        height: 50px;
+    }
+    .select2-container .select2-selection--multiple .select2-selection__rendered{
+        display: block;
+    }
+
+</style>
+
 <div class="body-wrapper">
     <div class="row mt-20 mb-20-none">
         <div class="col-xl-12 col-lg-12 mb-20">
@@ -33,6 +51,17 @@
                                     <option value="{{ $item->id }}" {{ old('escrow_category') == $item->id ? "selected": "" }}>{{ $item->name }}</option>
                                     @endforeach 
                                 </select>
+                            </div>
+                            <div class="col-xl-6 col-lg-6 form-group">
+                                <label>{{ __("Policies") }}<span>*</span></label>
+                                <select class="form--control select2" name="policy_ids[]" id="policy-select" multiple required>
+                                    @foreach ($policies as $policy)
+                                        <option value="{{$policy->id}}">{{ $policy->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-xl-12 col-lg-12 form-group" id="policy-fees-container">
+
                             </div>
                             <div class="col-xl-6 col-lg-6 form-group">
                                 <label>{{ __("My Role") }}<span>*</span></label>
@@ -105,12 +134,15 @@
 </div> 
 @endsection
 @push('script')
+
     <script>
         $(document).ready(function(){
             getRole();
             setOptionsForWhoWillPay();
             userWalletByCurrency();
             paymentMethodAvailable();
+
+            $('.select2').select2();
         });
         $('.role').on('change',function(){
             getRole();
@@ -201,5 +233,60 @@
             // Set the input field value to the numeric input
             e.target.value = numericInput;
         });
+
+
+
+
+        $(document).ready(function() {
+            // Function to create fee inputs for selected policies
+            function updatePolicyFees() {
+                // Clear previous fee inputs
+                $('#policy-fees-container').empty();
+                
+                // Get selected policies
+                var selectedPolicies = $('#policy-select').select2('data');
+                
+                if(selectedPolicies.length > 0) {
+                    // Create a row for the fees header
+                    $('#policy-fees-container').append('<div class="row mb-3"><div class="col-12"><h5>{{ __("Policy Fees") }}</h5></div></div>');
+                    
+                    // Create inputs for each selected policy
+                    $.each(selectedPolicies, function(index, policy) {
+                        var policyId = policy.id;
+                        var policyName = policy.text;
+                        
+                        // Create a row with policy name and fee input
+                        var feeRow = `
+                        <div class="row mb-2 align-items-center">
+                            
+                            <div class="col-xl-6 col-lg-6 form-group">
+                                <label>${policyName} {{ __("Fee") }}</label>
+                                <div class="input-group">
+                                    <input type="number" name="fees[${policyId}]" class="form--control policy-fee" placeholder="{{ __('Enter fee amount') }}..." step="0.01" min="0" required>
+                                    <span class="input-group-text">{{ get_default_currency_code() }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        `;
+                        
+                        $('#policy-fees-container').append(feeRow);
+                    });
+                }
+            }
+            
+            // Initialize select2 if not already
+            if($.fn.select2) {
+                $('.select2').select2();
+            }
+            
+            // Listen for changes on the policy select
+            $('#policy-select').on('change', function() {
+                updatePolicyFees();
+            });
+            
+            // Initial check on page load (for pre-selected values)
+            updatePolicyFees();
+        });
+
     </script>
 @endpush

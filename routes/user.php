@@ -13,6 +13,7 @@ use App\Http\Controllers\User\AuthorizationController;
 use App\Http\Controllers\User\GeeralConrtoller;
 use App\Http\Controllers\User\HealthPayController;
 use App\Http\Controllers\User\MoneyExchangeController;
+use App\Http\Controllers\User\PolicyController;
 use App\Http\Controllers\User\SecurityController;
 use App\Providers\Admin\BasicSettingsProvider;
 use Illuminate\Http\Request;
@@ -39,6 +40,11 @@ Route::prefix("user")->name("user.")->group(function () {
         Route::put('update', 'update')->name('update');
         Route::get('/user-type/update', 'profileTypeUpdate')->name('type.update');
     });
+
+    // Policy routes
+    Route::resource('policies', PolicyController::class);
+
+
     // My Escrow routes
     Route::controller(EscrowController::class)->name('my-escrow.')->group(function () {
         Route::get('/my-escrow', 'index')->name('index');
