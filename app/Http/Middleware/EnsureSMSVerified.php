@@ -49,7 +49,7 @@ class EnsureSMSVerified
                 'user_id' => $user->id,
                 'device_fingerprint' => $fingerprint,
                 'ip_address' => $request->ip(),
-                'user_agent' => $request->userAgent(),
+                'user_agent' => $request->header('agent') ?? $request->userAgent(),
                 'last_used_at' => Carbon::now(),
             ]);
         }
@@ -85,7 +85,7 @@ class EnsureSMSVerified
                 'user_id' => $user->id,
                 'device_fingerprint' => $fingerprint,
                 'ip_address' => $request->ip(),
-                'user_agent' => $request->userAgent(),
+                'user_agent' => $request->header('agent') ?? $request->userAgent(),
                 'last_used_at' => Carbon::now(),
             ]);
         }
@@ -100,7 +100,7 @@ class EnsureSMSVerified
     {
         // Combine multiple factors to create a unique device identifier
         $data = [
-            'user_agent' => $request->userAgent(),
+            'user_agent' => $request->header('agent') ?? $request->userAgent(),
             'ip' => $request->ip(),
             // You can add more factors if available, like:
             // 'accept_language' => $request->header('Accept-Language'),
