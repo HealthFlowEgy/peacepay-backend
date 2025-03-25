@@ -29,7 +29,26 @@
                 <i class="las la-times"></i>
             </div>
         </div>
+
+        
         <div class="support-profile-body">
+
+            <div class="support-profile-box">
+                <h4 class="title">{{ __("Policies") }}</h4>
+                <ul class="support-profile-list">
+
+                    @foreach($escrow->policies as $policy)
+                        <li>
+                            {{ $policy->name }} : 
+                            <span class="text-right">
+                                {{ $policy->pivot->fee }} {{ $escrow->escrow_currency }}
+                            </span>
+                        </li>
+                    @endforeach
+                </ul>
+            </div> 
+
+
             <div class="support-profile-box">
                 <h4 class="title">{{ __("Escrow Details") }}</h4>
                 <ul class="support-profile-list">
@@ -69,21 +88,6 @@
                     @endif
                 </ul>
             </div>
-
-            <div class="support-profile-box">
-                <h4 class="title">{{ __("Policies") }}</h4>
-                <ul class="support-profile-list">
-
-                    @foreach($escrow->policies as $policy)
-                        <li>
-                            {{ $policy->name }} : 
-                            <span class="text-right">
-                                {{ $policy->pivot->fee }}
-                            </span>
-                        </li>
-                    @endforeach
-                </ul>
-            </div> 
 
 
         </div>

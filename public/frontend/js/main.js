@@ -193,7 +193,7 @@ var swiper = new Swiper(".testimonial-slider", {
 var swiper = new Swiper(".dashboard-item-slider", {
   slidesPerView: 4,
   spaceBetween: 30,
-  loop: true,
+  loop: false,
   autoplay: {
     speed: 1000,
     delay: 3000,

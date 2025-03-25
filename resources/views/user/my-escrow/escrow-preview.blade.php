@@ -20,6 +20,40 @@
         @csrf
         <input type="hidden" value="{{ $identifier }}" name="identifier">
         <div class="row mt-20 mb-20-none">
+            
+            
+            <div class="custom-card mt-10">
+                <div class="dashboard-header-wrapper">
+                    <h4 class="title">{{ __("Policies") }}</h4>
+                </div>
+                <div class="card-body">
+                    <div class="preview-list-wrapper">
+
+
+                        <div class="preview-list-item">
+                            @foreach(App\Models\Policy::whereIn('id',$tempData['policy_ids'])->get() as $key => $policy)
+                                <div class="preview-list-left">
+                                    <div class="preview-list-user-wrapper">
+                                        <div class="preview-list-user-icon">
+                                            <i class="las la-battery-half"></i>
+                                        </div>
+                                        <div class="preview-list-user-content">
+                                            <span>{{ $policy->name }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="preview-list-right">
+                                    <span class="text--warning">{{ $tempData['fees'][$policy->id] }}</span>
+                                </div>
+                            @endforeach
+                        </div>
+                        
+                    </div>
+                </div>
+            </div>
+
+
+            
             <div class="col-xl-6 col-lg-6 mb-20">
                 <div class="custom-card mt-10">
                     <div class="dashboard-header-wrapper">
@@ -113,6 +147,8 @@
                     </div>
                 </div>
             </div>
+
+
             <div class="col-xl-6 col-lg-6 mb-20">
                 <div class="custom-card mt-10">
                     <div class="dashboard-header-wrapper">
@@ -203,37 +239,7 @@
 
 
 
-                <div class="custom-card mt-10">
-                    <div class="dashboard-header-wrapper">
-                        <h4 class="title">{{ __("Policies") }}</h4>
-                    </div>
-                    <div class="card-body">
-                        <div class="preview-list-wrapper">
-
-
-                            <div class="preview-list-item">
-                                @foreach(App\Models\Policy::whereIn('id',$tempData['policy_ids'])->get() as $key => $policy)
-                                    <div class="preview-list-left">
-                                        <div class="preview-list-user-wrapper">
-                                            <div class="preview-list-user-icon">
-                                                <i class="las la-battery-half"></i>
-                                            </div>
-                                            <div class="preview-list-user-content">
-                                                <span>{{ $policy->name }}</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="preview-list-right">
-                                        <span class="text--warning">{{ $tempData['fees'][$policy->id] }}</span>
-                                    </div>
-                                @endforeach
-                            </div>
-                            
-                        </div>
-                    </div>
-                </div>
-
-
+                
             </div>
         </div>
         <button type="submit" class="btn--base mt-20 w-100">{{ $oldData->role == "buyer" ?  __("Confirm & Pay"):  __("Confirm & Send") }}</button>

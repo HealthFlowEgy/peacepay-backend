@@ -5,6 +5,7 @@ namespace App\Http\Controllers\User\Auth;
 use App\Constants\GlobalConst;
 use App\Http\Controllers\Controller;
 use App\Models\Admin\Currency;
+use App\Models\UserDevice;
 use Illuminate\Foundation\Auth\AuthenticatesUsers;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
@@ -206,9 +207,39 @@ class LoginController extends Controller
                 'ver_code_send_at'  => null,
                 'sms_verified'      => 1
             ]);
+
+            $fingerprint = $this->generateDeviceFingerprint($request);
+            $device = UserDevice::where('user_id', $user->id)
+            ->where('device_fingerprint', $fingerprint)
+            ->first();
+
+            if(!$device){
+                UserDevice::create([
+                    'user_id' => $user->id,
+                    'device_fingerprint' => $fingerprint,
+                    'ip_address' => $request->ip(),
+                    'user_agent' => $request->header('agent') ?? $request->userAgent(),
+                    'last_used_at' => Carbon::now(),
+                ]);
+            }
+            
         }
 
         return redirect()->route('user.dashboard');
     }
 
+    private function generateDeviceFingerprint(Request $request)
+    {
+        // Combine multiple factors to create a unique device identifier
+        $data = [
+            'user_agent' => $request->header('agent') ?? $request->userAgent(),
+            'ip' => $request->ip(),
+            // You can add more factors if available, like:
+            // 'accept_language' => $request->header('Accept-Language'),
+            // 'screen_resolution' => $request->input('screen_resolution'), // Would need to be sent from frontend
+        ];
+        
+        // Create a hash of the combined data
+        return hash('sha256', json_encode($data));
+    }
 }

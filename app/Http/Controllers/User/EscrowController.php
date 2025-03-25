@@ -45,7 +45,16 @@ class EscrowController extends Controller
      */
     public function index() {
         $page_title = "My Escrow";
-        $escrowData = Escrow::with('escrowCategory','escrowDetails')->where('user_id', auth()->user()->id)->orWhere('buyer_or_seller_id',auth()->user()->id)->latest()->paginate(20);
+
+
+        $escrowData = Escrow::with('escrowCategory','escrowDetails')
+        ->when(auth()->user()->type == 'seller',function($q){
+            $q->where('user_id', auth()->user()->id);
+        })
+        ->when(auth()->user()->type == 'buyer',function($q){
+            $q->where('buyer_or_seller_id',auth()->user()->id);
+        })
+        ->latest()->paginate(20);
         return view('user.my-escrow.index', compact('page_title','escrowData'));
     } 
         /**
