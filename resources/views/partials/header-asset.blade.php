@@ -50,14 +50,12 @@
 <!-- main style css link -->
 <link rel="stylesheet" href="{{ asset('public/frontend/css/style.css') }}" />
 
-<!-- @if(auth()->check() && auth()->user()->type == 'seller')
-        <link rel="stylesheet" href="{{ asset('public/frontend/css/style-seller.css') }}">
-        @endif -->
 
-@php 
-    $color = @$basic_settings->base_color ?? '#000000';
+
+@php
+    $color = @$basic_settings?->base_color ?? '#000000';
     
-    if (auth()->user()->type === 'seller') {
+    if (auth()->check() && auth()->user()->type === 'seller') {
         $color = '#4CAF50'; // Green color for sellers
     }
 @endphp
