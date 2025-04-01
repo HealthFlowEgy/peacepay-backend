@@ -68,14 +68,14 @@ __("Create New Policy")]) @endsection @section('content')
                             </div>
                             
                             <!-- Escrow Amount Responsibility -->
-                            <div class="col-md-6 form-group">
+                            <!-- <div class="col-md-6 form-group">
                                 <label>Escrow Amount Paid By:</label>
                                 <select name="fields[escrow_amount_payer]" class="form--control">
                                     <option value="buyer" {{ old('fields.escrow_amount_payer', $policyFields['escrow_amount_payer'] ?? '') == 'buyer' ? 'selected' : '' }}>Buyer</option>
                                     <option value="seller" {{ old('fields.escrow_amount_payer', $policyFields['escrow_amount_payer'] ?? '') == 'seller' ? 'selected' : '' }}>Seller</option>
                                 </select>
                             </div>
-                            
+                             -->
                             <!-- Delivery Timeframe Option -->
                             <div class="col-md-6 form-group">
                                 <label>Delivery Timeframe:</label>

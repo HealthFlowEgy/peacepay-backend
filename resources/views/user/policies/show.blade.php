@@ -64,7 +64,7 @@
                                     <table class="table table-bordered">
                                         <tbody>
                                             @php
-                                                $fields = json_decode($policy->fields, true);
+                                                $fields = $policy->fields;
                                             @endphp
                                             
                                             @if(!empty($fields))
@@ -90,10 +90,10 @@
                                                 @endif
                                                 
                                                 @if(isset($fields['escrow_amount_payer']))
-                                                <tr>
+                                                <!-- <tr>
                                                     <td><strong>Escrow Amount Paid By:</strong></td>
                                                     <td>{{ ucfirst($fields['escrow_amount_payer']) }}</td>
-                                                </tr>
+                                                </tr> -->
                                                 @endif
                                                 
                                                 @if(isset($fields['has_delivery_timeframe']))

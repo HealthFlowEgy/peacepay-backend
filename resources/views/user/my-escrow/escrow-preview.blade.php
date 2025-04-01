@@ -42,7 +42,9 @@
                                     </div>
                                 </div>
                                 <div class="preview-list-right">
-                                    <span class="text--warning">{{ $fee }} {{$field != 'delivery_timeframe_days' ? 'EGP' : 'days'}}</span>
+                                    <span class="text--warning">
+                                        {{ $fee }} {{$field != 'delivery_timeframe_days' ? $oldData->escrow_currency : 'days'}}
+                                    </span>
                                 </div>
                             </div>
                         @endforeach

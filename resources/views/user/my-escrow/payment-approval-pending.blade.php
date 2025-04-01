@@ -119,6 +119,46 @@
                     </div>
                 </div>
             </div>
+
+            <div class="col-xl-6 col-lg-6 mb-20">
+                <div class="custom-card mt-10">
+                    <div class="dashboard-header-wrapper">
+                        <h4 class="title">{{ __("Policies") }}</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="preview-list-wrapper">
+
+                            @foreach($escrow->policies as $policy)
+                                <div class="preview-list-item">
+                                    <div class="preview-list-left">
+                                        <div class="preview-list-user-wrapper">
+                                            <div class="preview-list-user-icon">
+                                                <i class="las la-heading"></i>
+                                            </div>
+                                            <div class="preview-list-user-content">
+                                                <span>
+                                                    @php($field = $policy->pivot->field)
+                            {{ str_replace('_', ' ', $field) }}  ( {{ $field != 'delivery_timeframe_days' ? $policy->pivot->collected_from : '' }} )
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="preview-list-right">
+                                        <span>
+                                            {{ $policy->pivot->fee }} {{ $field != 'delivery_timeframe_days' ? $escrow->escrow_currency:'days' }}
+                                        </span>
+                                    </div>
+                                </div>
+                            @endforeach
+                            
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+            
             <div class="col-xl-6 col-lg-6 mb-20">
                 <div class="custom-card mt-10">
                     <div class="dashboard-header-wrapper">
@@ -209,6 +249,7 @@
                     </div>
                 </div>
             </div>
+            
             <div class="col-xl-12 col-lg-12 form-group paymentMethodSelectForBuyer">
                 <label>{{ __("Pay with") }}<span>*</span></label>
                 <select class="form--control payment_gateway nice-select" name="payment_gateway">

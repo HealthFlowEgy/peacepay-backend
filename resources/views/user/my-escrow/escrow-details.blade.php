@@ -39,9 +39,10 @@
 
                     @foreach($escrow->policies as $policy)
                         <li>
-                            {{ str_replace('_', ' ', $policy->pivot->field) }}  ( {{ $policy->pivot->collected_from }} ): 
+                            @php($field = $policy->pivot->field)
+                            {{ str_replace('_', ' ', $field) }}  ( {{ $field != 'delivery_timeframe_days' ? $policy->pivot->collected_from : '' }} ): 
                             <span class="text-right">
-                                {{ $policy->pivot->fee }} {{ $escrow->escrow_currency }}
+                                {{ $policy->pivot->fee }} {{ $field != 'delivery_timeframe_days' ? $escrow->escrow_currency:'days' }}
                             </span>
                         </li>
                     @endforeach

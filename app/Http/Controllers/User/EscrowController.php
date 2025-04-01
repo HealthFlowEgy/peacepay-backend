@@ -143,11 +143,21 @@ class EscrowController extends Controller
         //get payment method
         $payment_type = EscrowConstants::DID_NOT_PAID;
         $payment_gateways_currencies = null;
+        
+        
+        $request_amount = $validated['amount'];
+        foreach ($validated['field'] as $field => $amount){
+            if($field != 'delivery_timeframe_days'){
+                $request_amount += $amount;
+            }
+        }
+        
+
         if ($validated['role'] == "buyer") {
             if ($validated['payment_gateway'] == "myWallet") {
                 $user_wallets = UserWallet::where(['user_id' => auth()->user()->id, 'currency_id' => $sender_currency->id])->first();
                 if(empty($user_wallets)) return redirect()->back()->withInput()->with(['error' => ['Wallet not found.']]); 
-                if($user_wallets->balance == 0 || $user_wallets->balance < 0 || $user_wallets->balance < $validated['amount']) return redirect()->back()->withInput()->with(['error' => [__('Insuficiant Balance')]]);
+                if($user_wallets->balance == 0 || $user_wallets->balance < 0 || $user_wallets->balance < $request_amount) return redirect()->back()->withInput()->with(['error' => [__('Insuficiant Balance')]]);
                 $payment_method        = "My Wallet";
                 $gateway_currency      = $validated['escrow_currency'];
                 $gateway_exchange_rate = 1;
@@ -164,7 +174,6 @@ class EscrowController extends Controller
                 $payment_type = EscrowConstants::GATEWAY;
             }
         }
-        $request_amount = $validated['amount'];
         //convert escrow currency amount into default currency
         $usd_exchange_amount = (1/$sender_currency->rate)*$request_amount;
         //charge calculate in USD currency 
@@ -210,7 +219,7 @@ class EscrowController extends Controller
             'title'           => $validated['title'],
             'role'            => $validated['role'],
             'product_type'    => $escrowCategory->name,
-            'amount'          => $validated['amount'],
+            'amount'          => $request_amount,
             'escrow_currency' => $validated['escrow_currency'],
             'charge_payer'    => $validated['who_will_pay_options'],
 
