@@ -56,10 +56,38 @@
     $color = @$basic_settings?->base_color ?? '#000000';
     
     if (auth()->check() && auth()->user()->type === 'seller') {
-        $color = '#4CAF50'; // Green color for sellers
+        $color = '#0b288e';
     }
 @endphp
 
+@if (auth()->check() && auth()->user()->type === 'seller')
+<style>
+    .navbar-wrapper,
+    .sidebar
+    /* ,
+    .page-wrapper */
+    {
+        background-color: white;
+        color: black;
+    }
+
+    /* .dashbord-item,
+    .chart-wrapper,
+    .table-wrapper,
+    .custom-table tbody tr:nth-of-type(2n)
+    {
+        color: white;
+        background-color: #51914d;
+    } */
+    .dashboard-path .main-path,
+    .sidebar-menu .sidebar-menu-item a
+    {
+        color: black;
+    }
+
+</style>
+
+@endif
 <style>
     :root {
         --primary-color: {{$color}};

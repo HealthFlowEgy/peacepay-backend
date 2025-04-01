@@ -11,7 +11,14 @@ class Policy extends Model
     protected $fillable = [
         'name',
         'description',
-        'collected_from', // ['buyer','seller']
+        'fields',
         'user_id'
     ];
+
+    public function scopeMine($query) {
+        if(auth()->check()){
+            return $query->where('user_id', auth()->user()->id);
+        }
+        return $query;
+    }
 }

@@ -13,13 +13,8 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::create('escrow_policies', function (Blueprint $table) {
-            $table->id();
-            $table->unsignedBigInteger('escrow_id');
-            $table->unsignedBigInteger('policy_id');
-            $table->float('fee')->default(0);
-            $table->string('field');
-            $table->timestamps();
+        Schema::table('payment_gateways', function (Blueprint $table) {
+            // $table->foreignId('user_id')->nullable();
         });
     }
 
@@ -30,6 +25,8 @@ return new class extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('escrow_policies');
+        Schema::table('payment_gateways', function (Blueprint $table) {
+            // $table->dropColumn('user_id');
+        });
     }
 };

@@ -11,6 +11,7 @@ class EscrowPolicy extends Model
     protected $fillable = [
         'escrow_id',
         'policy_id',
-        'fee'
+        'fee',
+        'field'
     ];
 }

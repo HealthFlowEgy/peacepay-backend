@@ -92,6 +92,7 @@ class EscrowController extends Controller
         //     }
         // }
         $page_title = "Escrow Details";
+
         $validator  = Validator::make($request->all(),[
             'title'                 => 'required|string',
             'escrow_category'       => 'required|integer',
@@ -103,6 +104,8 @@ class EscrowController extends Controller
             'payment_gateway'       => 'nullable',
             'remarks'               => 'nullable|string',
             'file.*'                => "nullable|file|max:100000|mimes:jpg,jpeg,png,pdf,zip",
+            'field'                 => 'required',
+            'policy_id'             => 'required',
         ]);
         if($validator->fails()) {
             return back()->withErrors($validator)->withInput();
@@ -256,8 +259,8 @@ class EscrowController extends Controller
             'creator_table'         => auth()->guard(get_auth_guard())->user()->getTable(),
             'creator_id'       => auth()->guard(get_auth_guard())->user()->id,   //for sscommerz relogin after payment
             'creator_guard'    => get_auth_guard(),                              //for sscommerz relogin after payment
-            'policy_ids'       => $request->policy_ids,
-            'fees'             => $request->fees
+            'policy_id'       => $request->policy_id,
+            'field'             => $request->field
         ];
         $this->addEscrowTempData($identifier, $tempData);
         Session::put('identifier',$identifier);
@@ -503,8 +506,8 @@ class EscrowController extends Controller
     //insert escrow data
     public function createEscrow($tempData, $additionalData = null,$setStatus = null) {
         $escrowData = $tempData->data->escrow;
-        $policy_ids = $tempData->data->policy_ids??[];
-        $fees = (array) $tempData->data->fees??[];
+        $policy_id = $tempData->data->policy_id??null;
+        $fields = (array) $tempData->data->field??[];
         if ($setStatus == null) {
             $status = 0;
             if ($escrowData->role == "seller") {
@@ -546,14 +549,15 @@ class EscrowController extends Controller
             ]);
 
 
-            $policy_data = [];
-            foreach($policy_ids as $policy_id) {
-                $policy_data[$policy_id] = [
-                    'fee' => $fees[$policy_id]
-                ];
+            $escrowCreate->policies()->detach(); // Remove all existing policies first
+
+            foreach ($fields as $field => $fee) {
+                $escrowCreate->policies()->attach($policy_id, [
+                    'fee' => $fee,
+                    'field' => $field
+                ]);
             }
             
-            $escrowCreate->policies()->sync($policy_data);
 
             EscrowDetails::create([
                 'escrow_id'             => $escrowCreate->id ?? 0,

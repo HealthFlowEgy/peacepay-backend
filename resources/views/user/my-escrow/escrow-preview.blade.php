@@ -21,32 +21,31 @@
         <input type="hidden" value="{{ $identifier }}" name="identifier">
         <div class="row mt-20 mb-20-none">
             
-            
+            @php($policy = App\Models\Policy::where('id',$tempData['policy_id'])->first())
             <div class="custom-card mt-10">
                 <div class="dashboard-header-wrapper">
-                    <h4 class="title">{{ __("Policies") }}</h4>
+                    <h4 class="title">{{ $policy->name }}</h4>
                 </div>
                 <div class="card-body">
                     <div class="preview-list-wrapper">
 
-
-                        <div class="preview-list-item">
-                            @foreach(App\Models\Policy::whereIn('id',$tempData['policy_ids'])->get() as $key => $policy)
+                        @foreach($tempData['field'] as $field => $fee)
+                            <div class="preview-list-item">
                                 <div class="preview-list-left">
                                     <div class="preview-list-user-wrapper">
                                         <div class="preview-list-user-icon">
                                             <i class="las la-battery-half"></i>
                                         </div>
                                         <div class="preview-list-user-content">
-                                            <span>{{ $policy->name }}</span>
+                                            <span>{{ str_replace('_',' ',$field) }}</span>
                                         </div>
                                     </div>
                                 </div>
                                 <div class="preview-list-right">
-                                    <span class="text--warning">{{ $tempData['fees'][$policy->id] }}</span>
+                                    <span class="text--warning">{{ $fee }} {{$field != 'delivery_timeframe_days' ? 'EGP' : 'days'}}</span>
                                 </div>
-                            @endforeach
-                        </div>
+                            </div>
+                        @endforeach
                         
                     </div>
                 </div>

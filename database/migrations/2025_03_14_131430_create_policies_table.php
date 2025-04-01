@@ -17,7 +17,8 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->text('description');
-            $table->string('collected_from')->default('buyer'); // ['buyer','seller']
+            $table->text('fields');
+            // $table->string('collected_from')->default('buyer'); // ['buyer','seller']
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
 
             

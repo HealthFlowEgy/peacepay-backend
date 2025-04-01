@@ -12,6 +12,9 @@
         .text-capitalize{
             text-transform: capitalize;
         }
+        .table{
+            color: white;
+        }
     </style>
 @endpush
 @section('content')
@@ -56,8 +59,57 @@
                         </div>
                         <div class="col-xs-12 col-sm-12 col-md-12">
                             <div class="form-group">
-                                <strong>Collected From:</strong>
-                                {{ ucfirst($policy->collected_from) }}
+                                <strong>Policy Details:</strong>
+                                <div class="table-responsive mt-3">
+                                    <table class="table table-bordered">
+                                        <tbody>
+                                            @php
+                                                $fields = json_decode($policy->fields, true);
+                                            @endphp
+                                            
+                                            @if(!empty($fields))
+                                                @if(isset($fields['delivery_fee_payer']))
+                                                <tr>
+                                                    <td><strong>Delivery Fee Paid By:</strong></td>
+                                                    <td>{{ ucfirst($fields['delivery_fee_payer']) }}</td>
+                                                </tr>
+                                                @endif
+                                                
+                                                @if(isset($fields['return_fee_payer']))
+                                                <tr>
+                                                    <td><strong>Return Fee Paid By:</strong></td>
+                                                    <td>{{ ucfirst($fields['return_fee_payer']) }}</td>
+                                                </tr>
+                                                @endif
+                                                
+                                                @if(isset($fields['advanced_payment_payer']))
+                                                <tr>
+                                                    <td><strong>Advanced Payment Paid By:</strong></td>
+                                                    <td>{{ ucfirst($fields['advanced_payment_payer']) }}</td>
+                                                </tr>
+                                                @endif
+                                                
+                                                @if(isset($fields['escrow_amount_payer']))
+                                                <tr>
+                                                    <td><strong>Escrow Amount Paid By:</strong></td>
+                                                    <td>{{ ucfirst($fields['escrow_amount_payer']) }}</td>
+                                                </tr>
+                                                @endif
+                                                
+                                                @if(isset($fields['has_delivery_timeframe']))
+                                                <tr>
+                                                    <td><strong>Delivery Timeframe:</strong></td>
+                                                    <td>{{ $fields['has_delivery_timeframe'] == 1 ? 'Yes, included' : 'Not required' }}</td>
+                                                </tr>
+                                                @endif
+                                            @else
+                                                <tr>
+                                                    <td colspan="2">No additional policy details specified</td>
+                                                </tr>
+                                            @endif
+                                        </tbody>
+                                    </table>
+                                </div>
                             </div>
                         </div>
                         <div class="col-xs-12 col-sm-12 col-md-12">

@@ -15,7 +15,7 @@ class PolicyController extends Controller
      */
     public function index()
     {
-        $policies = Policy::latest()->paginate(10);
+        $policies = Policy::mine()->latest()->paginate(10);
         return view('user.policies.index', compact('policies'));
     }
 
@@ -40,10 +40,12 @@ class PolicyController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'required|string',
-            'collected_from' => 'required|in:buyer,seller',
+            'fields' => 'required',
         ]);
 
-        Policy::create($request->all()+[
+
+        Policy::create($request->except('fields')+[
+            'fields' => json_encode($request->fields),
             'user_id' => auth()->user()->id,
         ]);
 
@@ -85,10 +87,12 @@ class PolicyController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'required|string',
-            'collected_from' => 'required|in:buyer,seller',
+            'fields' => 'required',
         ]);
 
-        $policy->update($request->all());
+        $policy->update($request->except('fields')+[
+            'fields' => json_encode($request->fields),
+        ]);
 
         return redirect()->route('user.policies.index')
             ->with('success', 'Policy updated successfully.');

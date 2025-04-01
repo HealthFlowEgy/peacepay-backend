@@ -34,7 +34,6 @@
                             <th>No</th>
                             <th>Name</th>
                             <th>Description</th>
-                            <th>Collected From</th>
                             <th width="280px">Action</th>
                         </tr>
                         @foreach ($policies as $policy)
@@ -42,11 +41,10 @@
                             <td>{{ ++$loop->index }}</td>
                             <td>{{ $policy->name }}</td>
                             <td>{{ Str::limit($policy->description, 50) }}</td>
-                            <td>{{ ucfirst($policy->collected_from) }}</td>
                             <td>
                                 <form action="{{ route('user.policies.destroy',$policy->id) }}" method="POST">
                                     <a class="btn btn--info" href="{{ route('user.policies.show',$policy->id) }}">Show</a>
-                                    <a class="btn btn--primary" href="{{ route('user.policies.edit',$policy->id) }}">Edit</a>
+                                    <!-- <a class="btn btn--primary" href="{{ route('user.policies.edit',$policy->id) }}">Edit</a> -->
                                     @csrf
                                     @method('DELETE')
                                     <button type="submit" class="btn btn--danger" onclick="return confirm('Are you sure you want to delete this policy?')">Delete</button>

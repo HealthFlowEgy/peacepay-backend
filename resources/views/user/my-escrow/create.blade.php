@@ -52,17 +52,44 @@
                                     @endforeach 
                                 </select>
                             </div>
+
+
+
+
+
+                            
                             <div class="col-xl-6 col-lg-6 form-group">
                                 <label>{{ __("Policies") }}<span>*</span></label>
-                                <select class="form--control select2" name="policy_ids[]" id="policy-select" multiple required>
+                                <select class="form--control " name="policy_id" id="policy-select" required>
+                                    <option value="">{{ __("Select Policy") }}</option>
                                     @foreach ($policies as $policy)
-                                        <option value="{{$policy->id}}">{{ $policy->name }}</option>
+                                        @php
+                                            // Ensure fields is properly decoded then re-encoded for HTML attribute
+                                            $fieldsArray = is_string($policy->fields) ? json_decode($policy->fields, true) : $policy->fields;
+                                            $fieldsJson = json_encode($fieldsArray ?? [], JSON_HEX_APOS | JSON_HEX_QUOT);
+                                        @endphp
+                                        <option value="{{ $policy->id }}" data-fields="{{ $fieldsJson }}">
+                                            {{ $policy->name }}
+                                        </option>
                                     @endforeach
                                 </select>
                             </div>
-                            <div class="col-xl-12 col-lg-12 form-group" id="policy-fees-container">
-
+                            
+                            <!-- Policy Fields Container -->
+                            <div id="policy-fields-container" class="mt-4" style="display: none;">
+                                <h4>{{ __("Policy Settings") }}</h4>
+                                <div class="row" id="dynamic-policy-fields"></div>
                             </div>
+
+
+
+
+                            
+
+
+
+
+                            
                             <div class="col-xl-6 col-lg-6 form-group">
                                 <label>{{ __("My Role") }}<span>*</span></label>
                                 <select class="form--control nice-select role" name="role" required>
@@ -237,56 +264,153 @@
 
 
 
-        $(document).ready(function() {
-            // Function to create fee inputs for selected policies
-            function updatePolicyFees() {
-                // Clear previous fee inputs
-                $('#policy-fees-container').empty();
+        
+
+
+
+
+
+
+
+
+
+        
+        
+
+        
+        
+        
+        document.getElementById('policy-select').addEventListener('change', function() {
+            const container = document.getElementById('policy-fields-container');
+            const fieldsContainer = document.getElementById('dynamic-policy-fields');
+            fieldsContainer.innerHTML = '';
+            
+            if (!this.value) {
+                container.style.display = 'none';
+                return;
+            }
+        
+            const selectedOption = this.options[this.selectedIndex];
+            const fieldsData = selectedOption.getAttribute('data-fields');
+            
+            try {
+                const decodedFields = decodeHtmlEntities(fieldsData);
+                const fields = JSON.parse(decodedFields);
+                container.style.display = 'block';
                 
-                // Get selected policies
-                var selectedPolicies = $('#policy-select').select2('data');
-                
-                if(selectedPolicies.length > 0) {
-                    // Create a row for the fees header
-                    $('#policy-fees-container').append('<div class="row mb-3"><div class="col-12"><h5>{{ __("Policy Fees") }}</h5></div></div>');
-                    
-                    // Create inputs for each selected policy
-                    $.each(selectedPolicies, function(index, policy) {
-                        var policyId = policy.id;
-                        var policyName = policy.text;
-                        
-                        // Create a row with policy name and fee input
-                        var feeRow = `
-                        <div class="row mb-2 align-items-center">
-                            
-                            <div class="col-xl-6 col-lg-6 form-group">
-                                <label>${policyName} {{ __("Fee") }}</label>
-                                <div class="input-group">
-                                    <input type="number" name="fees[${policyId}]" class="form--control policy-fee" placeholder="{{ __('Enter fee amount') }}..." step="0.01" min="0" required>
-                                    <span class="input-group-text">{{ get_default_currency_code() }}</span>
-                                </div>
-                            </div>
-                        </div>
-                        `;
-                        
-                        $('#policy-fees-container').append(feeRow);
+                if (fields && typeof fields === 'object') {
+                    // Create a mapping of field configurations
+                    const fieldConfigurations = [
+                        {
+                            condition: fields.delivery_fee_payer,
+                            label: 'Delivery Fee Amount',
+                            name: 'delivery_fee_amount',
+                            type: 'currency',
+                            required: true
+                        },
+                        {
+                            condition: fields.return_fee_payer,
+                            label: 'Return Fee Amount',
+                            name: 'return_fee_amount',
+                            type: 'currency',
+                            required: true
+                        },
+                        {
+                            condition: fields.advanced_payment_payer,
+                            label: 'Advanced Payment Amount',
+                            name: 'advanced_payment_amount',
+                            type: 'currency',
+                            required: true
+                        },
+                        {
+                            condition: fields.has_delivery_timeframe,
+                            label: 'Delivery Timeframe (Days)',
+                            name: 'delivery_timeframe_days',
+                            type: 'number',
+                            min: 1,
+                            step: 1,
+                            required: true
+                        }
+                    ];
+        
+                    // Generate fields based on configuration
+                    fieldConfigurations.forEach(config => {
+                        if (config.condition) {
+                            createInputField({
+                                container: fieldsContainer,
+                                label: config.label,
+                                name: `field[${config.name}]`,
+                                type: config.type || 'number',
+                                min: config.min || 0,
+                                step: config.step || (config.type === 'currency' ? 0.01 : 1),
+                                required: config.required,
+                                placeholder: config.placeholder || (config.type === 'currency' ? '0.00' : '')
+                            });
+                        }
                     });
                 }
+            } catch (e) {
+                console.error('Error parsing policy fields:', e);
+                showErrorToast('Failed to load policy details');
             }
-            
-            // Initialize select2 if not already
-            if($.fn.select2) {
-                $('.select2').select2();
-            }
-            
-            // Listen for changes on the policy select
-            $('#policy-select').on('change', function() {
-                updatePolicyFees();
-            });
-            
-            // Initial check on page load (for pre-selected values)
-            updatePolicyFees();
         });
+        
+        /**
+         * Decodes HTML entities in a string
+         */
+        function decodeHtmlEntities(str) {
+            const textarea = document.createElement('textarea');
+            textarea.innerHTML = str;
+            return textarea.value;
+        }
+        
+        /**
+         * Creates a form input field with consistent styling and validation
+         */
+        function createInputField({
+            container = document.getElementById('dynamic-policy-fields'),
+            label,
+            name,
+            type = 'number',
+            min = 0,
+            step = 1,
+            required = true,
+            placeholder = ''
+        }) {
+            const fieldGroup = document.createElement('div');
+            fieldGroup.className = 'col-xl-6 col-lg-6 form-group';
+            
+            const inputId = `input-${name.replace(/[\[\]]/g, '-')}`;
+            
+            fieldGroup.innerHTML = `
+                <label for="${inputId}" class="form-label d-block mb-2">
+                    ${label}
+                    ${required ? '<span class="text-danger">*</span>' : ''}
+                </label>
+                <input 
+                    type="${type}" 
+                    id="${inputId}"
+                    name="${name}" 
+                    class="form--control"
+                    min="${min}"
+                    step="${step}"
+                    value="0"
+                    ${placeholder ? `placeholder="${placeholder}"` : ''}
+                    ${required ? 'required' : ''}
+                >
+            `;
+            
+            container.appendChild(fieldGroup);
+        }
+        
+        /**
+         * Shows an error toast notification
+         */
+        function showErrorToast(message) {
+            // Implement your preferred toast/notification system here
+            console.error('Error:', message);
+            alert(message); // Replace with actual toast implementation
+        }
 
     </script>
 @endpush
