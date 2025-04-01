@@ -60,7 +60,7 @@ class Escrow extends Model
     }
     public function policies()
     {
-        return $this->belongsToMany(Policy::class,'escrow_policies')->withPivot('escrow_id','policy_id','fee','field');
+        return $this->belongsToMany(Policy::class,'escrow_policies')->withPivot('escrow_id','policy_id','fee','field','collected_from');
     }
     public function getOppositeRoleAttribute(){
         if ($this->user_id == auth()->user()->id) {

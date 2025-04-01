@@ -19,6 +19,7 @@ return new class extends Migration
             $table->unsignedBigInteger('policy_id');
             $table->float('fee')->default(0);
             $table->string('field');
+            $table->string('collected_from');
             $table->timestamps();
         });
     }

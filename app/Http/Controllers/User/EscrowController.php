@@ -551,10 +551,18 @@ class EscrowController extends Controller
 
             $escrowCreate->policies()->detach(); // Remove all existing policies first
 
+            $policy = Policy::find($policy_id);
+            
             foreach ($fields as $field => $fee) {
+
+                $policyFields = $policy->fields;
+                $fieldPolicy = mappingPolicyFields($field);
+
+
                 $escrowCreate->policies()->attach($policy_id, [
                     'fee' => $fee,
-                    'field' => $field
+                    'field' => $field,
+                    'collected_from' => $policyFields[$fieldPolicy]
                 ]);
             }
             

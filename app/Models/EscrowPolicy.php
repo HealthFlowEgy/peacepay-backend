@@ -12,6 +12,7 @@ class EscrowPolicy extends Model
         'escrow_id',
         'policy_id',
         'fee',
-        'field'
+        'field',
+        'collected_from'
     ];
 }

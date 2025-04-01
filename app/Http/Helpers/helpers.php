@@ -2072,3 +2072,14 @@ function update_project_localization_data()
 
     return true;
 }
+
+
+function mappingPolicyFields($amountField){
+    $fields = [
+        'delivery_fee_amount' => 'delivery_fee_payer',
+        'return_fee_amount' => 'return_fee_payer',
+        'advanced_payment_amount' => 'advanced_payment_payer',
+        'delivery_timeframe_days' => 'has_delivery_timeframe'
+    ];
+    return $fields[$amountField];
+}

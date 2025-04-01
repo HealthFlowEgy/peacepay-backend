@@ -39,7 +39,7 @@
 
                     @foreach($escrow->policies as $policy)
                         <li>
-                            {{ $policy->name }} : 
+                            {{ str_replace('_', ' ', $policy->pivot->field) }}  ( {{ $policy->pivot->collected_from }} ): 
                             <span class="text-right">
                                 {{ $policy->pivot->fee }} {{ $escrow->escrow_currency }}
                             </span>

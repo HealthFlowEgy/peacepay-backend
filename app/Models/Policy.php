@@ -21,4 +21,8 @@ class Policy extends Model
         }
         return $query;
     }
+
+    public function getFieldsAttribute(){
+        return json_decode($this->attributes['fields'], true);
+    }
 }
