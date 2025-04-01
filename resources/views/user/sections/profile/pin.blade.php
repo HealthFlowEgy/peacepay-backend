@@ -17,11 +17,10 @@
                             <h4 class="title">{{ __("PIN Code") }}</h4>
                         </div>
                         <div class="card-body profile-body-wrapper">
-                            <form class="card-form" method="POST" action="{{ setRoute('user.profile.pin') }}" enctype="multipart/form-data">
+                            <form class="card-form pin-update-form" method="POST" action="{{ setRoute('user.profile.pin') }}" enctype="multipart/form-data">
                                 @csrf
                                 @method("PUT")
                                 <div class="profile-form-area text-center">
-
                                     <div class="row">
                                         @if(auth()->user()->pin_code)
                                             <div class="col-lg-12 form-group">
@@ -29,8 +28,10 @@
                                                     'label'         => __("Current PIN Code")."<span>*</span>",
                                                     'name'          => "current_pin_code",
                                                     'value'         => old('current_pin_code'),
-                                                    'required'      => true
+                                                    'required'      => true,
+                                                    'class'         => "pin-code-input"
                                                 ])
+                                                <small class="pin-code-error text-danger" style="display: none;">{{ __("Please enter a 6-digit PIN code") }}</small>
                                             </div>
                                         @endif
                                         <div class="col-lg-12 form-group">
@@ -38,8 +39,10 @@
                                                 'label'         => __("PIN Code")."<span>*</span>",
                                                 'name'          => "pin_code",
                                                 'value'         => old('pin_code'),
-                                                'required'      => true
+                                                'required'      => true,
+                                                'class'         => "pin-code-input"
                                             ])
+                                            <small class="pin-code-error text-danger" style="display: none;">{{ __("Please enter a 6-digit PIN code") }}</small>
                                         </div>
                                         @if(auth()->user()->pin_code)
                                             <div class="col-lg-12 form-group">
@@ -47,12 +50,13 @@
                                                     'label'         => __("Confirm PIN Code")."<span>*</span>",
                                                     'name'          => "pin_code_confirmation",
                                                     'value'         => old('pin_code_confirmation'),
-                                                    'required'      => true
+                                                    'required'      => true,
+                                                    'class'         => "pin-code-input"
                                                 ])
+                                                <small class="pin-code-error text-danger" style="display: none;">{{ __("Please enter a 6-digit PIN code") }}</small>
                                             </div>
                                         @endif
                                     </div>
-
                                     <div class="col-xl-12 col-lg-12">
                                         <button type="submit" class="btn--base w-100">{{ __("Update") }}</button>
                                     </div>
@@ -104,5 +108,54 @@
             countrySelect(".country-select",$(".country-select").siblings(".select2"));
             stateSelect(".state-select",$(".state-select").siblings(".select2"));
         }); 
+
+
+
+
+
+
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const pinUpdateForm = document.querySelector('.pin-update-form');
+            const pinInputs = document.querySelectorAll('.pin-code-input');
+            const pinErrors = document.querySelectorAll('.pin-code-error');
+            
+            // Apply validation to each PIN input
+            pinInputs.forEach((input, index) => {
+                // Allow only numbers when typing
+                input.addEventListener('input', function() {
+                    this.value = this.value.replace(/[^0-9]/g, '');
+                    
+                    // Limit to 6 digits
+                    if (this.value.length > 6) {
+                        this.value = this.value.slice(0, 6);
+                    }
+                    
+                    // Show/hide error message based on current input
+                    if (this.value.length !== 0 && this.value.length !== 6) {
+                        pinErrors[index].style.display = 'block';
+                    } else {
+                        pinErrors[index].style.display = 'none';
+                    }
+                });
+            });
+            
+            // Form submission validation
+            pinUpdateForm.addEventListener('submit', function(event) {
+                let isValid = true;
+                
+                // Check all PIN inputs are valid
+                pinInputs.forEach((input, index) => {
+                    if (input.value.length !== 6 || !/^\d{6}$/.test(input.value)) {
+                        event.preventDefault();
+                        pinErrors[index].style.display = 'block';
+                        if (isValid) {
+                            input.focus();
+                            isValid = false;
+                        }
+                    }
+                });
+            });
+        });
     </script>
 @endpush

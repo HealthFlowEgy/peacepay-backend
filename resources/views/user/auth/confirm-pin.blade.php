@@ -18,7 +18,7 @@
                     </a>
                 </div>
                 <h3 class="title">{{ __("PIN Code") }}</h3>
-                <form action="{{ setRoute('user.pin.code.confirm') }}" class="account-form" method="POST">
+                <form action="{{ setRoute('user.pin.code.confirm') }}" class="account-form pin-verification-form" method="POST">
                     @csrf
                     <div class="row ml-b-20">
                         <div class="col-lg-12 form-group">
@@ -27,7 +27,9 @@
                                 'placeholder'   => __("Enter PIN Code"),
                                 'required'      => true,
                                 'value'         => old("pin_code"),
+                                'class'         => "pin-code-input"
                             ])
+                            <small class="pin-code-error text-danger" style="display: none;">{{ __("Please enter a 6-digit PIN code") }}</small>
                         </div>
                         <div class="col-lg-12 form-group text-center">
                             <button type="submit" class="btn--base w-100">{{ __("Verify") }}</button>
@@ -61,5 +63,41 @@
         }, 1000);
     }
     resetTime();
+
+
+
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const pinForm = document.querySelector('.pin-verification-form');
+        const pinInput = document.querySelector('.pin-code-input');
+        const pinError = document.querySelector('.pin-code-error');
+        
+        // Allow only numbers when typing
+        pinInput.addEventListener('input', function() {
+            this.value = this.value.replace(/[^0-9]/g, '');
+            
+            // Limit to 6 digits
+            if (this.value.length > 6) {
+                this.value = this.value.slice(0, 6);
+            }
+            
+            // Show/hide error message based on current input
+            if (this.value.length !== 0 && this.value.length !== 6) {
+                pinError.style.display = 'block';
+            } else {
+                pinError.style.display = 'none';
+            }
+        });
+        
+        // Form submission validation
+        pinForm.addEventListener('submit', function(event) {
+            // Validate PIN has exactly 6 digits
+            if (pinInput.value.length !== 6 || !/^\d{6}$/.test(pinInput.value)) {
+                event.preventDefault();
+                pinError.style.display = 'block';
+                pinInput.focus();
+            }
+        });
+    });
 </script>
 @endpush

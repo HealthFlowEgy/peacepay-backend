@@ -24,6 +24,8 @@ class GeeralConrtoller extends Controller
             session()->put('pin_code_confirmed_add_money',true);
          }elseif(session()->get('pin_code_current') == 'money_out'){
             session()->put('pin_code_confirmed_money_out',true);
+         }elseif(session()->get('pin_code_current') == 'approval_pending'){
+            session()->put('pin_code_confirmed_approval_pending',true);
          }
 
          $redirectUrl = session()->get('url_pin_code');

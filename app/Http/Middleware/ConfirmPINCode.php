@@ -28,6 +28,12 @@ class ConfirmPINCode
             return redirect()->route('user.pin.code.confirm');
         }
 
+        if(strpos($request->path(),'user/escrow/payment/approval-pending') === 0 && session()->get('pin_code_confirmed_approval_pending') != true){
+            session()->put('url_pin_code', $request->fullUrl());
+            session()->put('pin_code_current', 'approval_pending');
+            return redirect()->route('user.pin.code.confirm');
+        }
+
         return $next($request);
     }
 }
