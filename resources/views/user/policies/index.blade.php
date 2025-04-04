@@ -31,10 +31,10 @@
                 <div class="table-responsive">
                     <table class="custom-table">
                         <tr>
-                            <th>No</th>
-                            <th>Name</th>
-                            <th>Description</th>
-                            <th width="280px">Action</th>
+                            <th>id</th>
+                            <th>{{ __('Name') }}</th>
+                            <th>{{ __('Description') }}</th>
+                            <th width="280px">{{ __('Action') }}</th>
                         </tr>
                         @foreach ($policies as $policy)
                         <tr>
@@ -43,11 +43,11 @@
                             <td>{{ Str::limit($policy->description, 50) }}</td>
                             <td>
                                 <form action="{{ route('user.policies.destroy',$policy->id) }}" method="POST">
-                                    <a class="btn btn--info" href="{{ route('user.policies.show',$policy->id) }}">Show</a>
+                                    <a class="btn btn--info" href="{{ route('user.policies.show',$policy->id) }}">{{ __('Show')}}</a>
                                     <!-- <a class="btn btn--primary" href="{{ route('user.policies.edit',$policy->id) }}">Edit</a> -->
                                     @csrf
                                     @method('DELETE')
-                                    <button type="submit" class="btn btn--danger" onclick="return confirm('Are you sure you want to delete this policy?')">Delete</button>
+                                    <button type="submit" class="btn btn--danger" onclick="return confirm('Are you sure you want to delete this policy?')">{{ __('Delete')}}</button>
                                 </form>
                             </td>
                         </tr>

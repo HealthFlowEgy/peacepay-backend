@@ -78,7 +78,9 @@
                             <!-- Policy Fields Container -->
                             <div id="policy-fields-container" class="mt-4" style="display: none;">
                                 <h4>{{ __("Policy Settings") }}</h4>
-                                <div class="row" id="dynamic-policy-fields"></div>
+                                <div class="row" id="dynamic-policy-fields">
+
+                                </div>
                             </div>
 
 
@@ -303,28 +305,28 @@
                     const fieldConfigurations = [
                         {
                             condition: fields.delivery_fee_payer,
-                            label: 'Delivery Fee Amount',
+                            label: '{{ __("Delivery Fee Amount") }}',
                             name: 'delivery_fee_amount',
                             type: 'currency',
                             required: true
                         },
                         {
                             condition: fields.return_fee_payer,
-                            label: 'Return Fee Amount',
+                            label: '{{ __("Return Fee Amount") }}',
                             name: 'return_fee_amount',
                             type: 'currency',
                             required: true
                         },
                         {
                             condition: fields.advanced_payment_payer,
-                            label: 'Advanced Payment Amount',
+                            label: '{{ __("Advanced Payment Amount") }}',
                             name: 'advanced_payment_amount',
                             type: 'currency',
                             required: true
                         },
                         {
                             condition: fields.has_delivery_timeframe,
-                            label: 'Delivery Timeframe (Days)',
+                            label: '{{ __("Delivery Timeframe (Days)") }}',
                             name: 'delivery_timeframe_days',
                             type: 'number',
                             min: 1,

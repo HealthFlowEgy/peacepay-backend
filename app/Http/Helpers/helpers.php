@@ -2083,3 +2083,11 @@ function mappingPolicyFields($amountField){
     ];
     return $fields[$amountField];
 }
+
+function fieldsAddedToAmount(){
+    $fields = [
+        'delivery_fee_amount',
+        'advanced_payment_amount',
+    ];
+    return $fields;
+}

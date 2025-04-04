@@ -147,7 +147,7 @@ class EscrowController extends Controller
         
         $request_amount = $validated['amount'];
         foreach ($validated['field'] as $field => $amount){
-            if($field != 'delivery_timeframe_days'){
+            if(in_array($field,fieldsAddedToAmount())){
                 $request_amount += $amount;
             }
         }

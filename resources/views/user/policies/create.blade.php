@@ -22,7 +22,7 @@
                         
                         <div class="row">
                             <div class="col-xl-6 col-lg-6 form-group">
-                                <label>Name:</label>
+                                <label>{{ __('Name') }}:</label>
                                 <input type="text" name="name" class="form--control" placeholder="Name" value="{{ old('name') }}">
                             </div>
                         </div>
@@ -30,7 +30,7 @@
                         <div class="row mb-3">
                             <div class="col-xs-12 col-sm-12 col-md-12">
                                 <div class="form-group">
-                                    <label>Description:</label>
+                                    <label>{{ __('Description') }}:</label>
                                     <textarea class="form--control" style="height:150px" name="description" placeholder="Description">{{ old('description') }}</textarea>
                                 </div>
                             </div>
@@ -39,33 +39,33 @@
                         <!-- Payment Responsibility Section -->
                         <div class="row mb-3">
                             <div class="col-12">
-                                <h4>Payment Responsibilities</h4>
+                                <h4>{{ __('Payment Responsibilities') }}</h4>
                             </div>
                             
                             <!-- Delivery Fee Responsibility -->
                             <div class="col-md-6 form-group">
-                                <label>Delivery Fee Paid By:</label>
+                                <label>{{__('Delivery Fee Paid By')}}:</label>
                                 <select name="fields[delivery_fee_payer]" class="form--control">
-                                    <option value="buyer" {{ old('fields.delivery_fee_payer') == 'buyer' ? 'selected' : '' }}>Buyer</option>
-                                    <option value="seller" {{ old('fields.delivery_fee_payer') == 'seller' ? 'selected' : '' }}>Seller</option>
+                                    <option value="buyer" {{ old('fields.delivery_fee_payer') == 'buyer' ? 'selected' : '' }}>{{ __('Buyer') }}</option>
+                                    <option value="seller" {{ old('fields.delivery_fee_payer') == 'seller' ? 'selected' : '' }}>{{ __('Seller') }}</option>
                                 </select>
                             </div>
                             
                             <!-- Return Fee Responsibility -->
                             <div class="col-md-6 form-group">
-                                <label>Return Fee Paid By:</label>
+                                <label>{{ __('Return Fee Paid By') }}:</label>
                                 <select name="fields[return_fee_payer]" class="form--control">
-                                    <option value="buyer" {{ old('fields.return_fee_payer') == 'buyer' ? 'selected' : '' }}>Buyer</option>
-                                    <option value="seller" {{ old('fields.return_fee_payer') == 'seller' ? 'selected' : '' }}>Seller</option>
+                                    <option value="buyer" {{ old('fields.return_fee_payer') == 'buyer' ? 'selected' : '' }}>{{ __('Buyer') }}</option>
+                                    <option value="seller" {{ old('fields.return_fee_payer') == 'seller' ? 'selected' : '' }}>{{ __('Seller') }}</option>
                                 </select>
                             </div>
                             
                             <!-- Advanced Payment Responsibility -->
                             <div class="col-md-6 form-group">
-                                <label>Advanced Payment Paid By:</label>
+                                <label>{{ __('Advanced Payment Paid By') }}:</label>
                                 <select name="fields[advanced_payment_payer]" class="form--control">
-                                    <option value="buyer" {{ old('fields.advanced_payment_payer') == 'buyer' ? 'selected' : '' }}>Buyer</option>
-                                    <option value="seller" {{ old('fields.advanced_payment_payer') == 'seller' ? 'selected' : '' }}>Seller</option>
+                                    <option value="buyer" {{ old('fields.advanced_payment_payer') == 'buyer' ? 'selected' : '' }}>{{ __('Buyer') }}</option>
+                                    <option value="seller" {{ old('fields.advanced_payment_payer') == 'seller' ? 'selected' : '' }}>{{ __('Seller') }}</option>
                                 </select>
                             </div>
                             
@@ -80,18 +80,18 @@
                             
                             <!-- Delivery Timeframe Option -->
                             <div class="col-md-6 form-group">
-                                <label>Delivery Timeframe:</label>
+                                <label>{{ __('') }}Delivery Timeframe:</label>
                                 <div class="radio-wrapper">
                                     <div class="radio-item">
                                         <input class="" type="radio" name="fields[has_delivery_timeframe]" id="timeframe_yes" value="1" {{ old('fields.has_delivery_timeframe') == '1' ? 'checked' : '' }}>
                                         <label class="" for="timeframe_yes">
-                                            Yes, include delivery timeframe
+                                            {{ __('Yes, include delivery timeframe') }}
                                         </label>
                                     </div>
                                     <div class="radio-item">
                                         <input class="" type="radio" name="fields[has_delivery_timeframe]" id="timeframe_no" value="0" {{ old('fields.has_delivery_timeframe') == '0' ? 'checked' : '' }}>
                                         <label class="" for="timeframe_no">
-                                            No delivery timeframe required
+                                            {{ __('No delivery timeframe required') }}
                                         </label>
                                     </div>
                                 </div>
@@ -100,7 +100,7 @@
                         
                         <div class="row">
                             <div class="col-xs-12 col-sm-12 col-md-12 text-center">
-                                <button type="submit" class="btn btn-primary">Submit</button>
+                                <button type="submit" class="btn btn-primary">{{ __('Submit') }}</button>
                             </div>
                         </div>
                     </form>

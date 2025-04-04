@@ -851,5 +851,20 @@
    "Download For Android": "تحميل للاندرويد",
    "Download For IOS": "تحميل لنظام IOS",
    "These credentials do not match our records": "بيانات الاعتماد هذه لا تتطابق مع سجلاتنا",
-   "System Maintenance": "صيانة النظام"
+   "System Maintenance": "صيانة النظام",
+
+   "Delivery Fee Amount": "مبلغ رسوم التوصيل",
+   "Advanced Payment Amount": "مبلغ الدفعة المقدمة",
+   "Return Fee Amount": "مبلغ رسوم الإرجاع",
+   "Delivery Timeframe (Days)": "المدة الزمنية للتوصيل (أيام)",
+   "Policies": "السياسات",
+   "Policy Settings": "إعدادات السياسة",
+   "Select Policy": "اختر السياسة",
+   "Show": "عرض",
+   "Delete": "حذف",
+   "Create New Policy": "إنشاء سياسة جديدة",
+   "Payment Responsibilities": "مسؤوليات الدفع",
+   "Delivery Fee Paid By": "رسوم التوصيل يدفعها",
+   "No delivery timeframe required": "لا يلزم تحديد مدة زمنية للتوصيل",
+   "Yes, include delivery timeframe": "نعم، تضمين المدة الزمنية للتوصيل"
 }
