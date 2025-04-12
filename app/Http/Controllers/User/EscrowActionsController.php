@@ -68,6 +68,7 @@ class EscrowActionsController extends Controller
             return back()->withErrors($validator)->withInput();
         }
         $validated = $validator->validate();
+        session()->put('escrowId', $id);
         $escrow    = Escrow::findOrFail($id);
         if ($escrow->status != EscrowConstants::APPROVAL_PENDING) {
             return redirect()->back()->with(['error' => ['Something went wrong']]);
@@ -95,7 +96,7 @@ class EscrowActionsController extends Controller
             if(!$payment_gateways_currencies || !$payment_gateways_currencies->gateway) {
                 return redirect()->back()->withInput()->with(['error' => [__('Payment gateway not found')]]); 
             }
-            //buyer amount calculation
+            
             $amount       = $escrow->amount;
             $eschangeRate = (1/$escrow->escrowCurrency->rate)*$payment_gateways_currencies->rate;
             if ($escrow->role == EscrowConstants::SELLER_TYPE && $escrow->who_will_pay == EscrowConstants::ME) {

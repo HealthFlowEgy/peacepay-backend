@@ -66,6 +66,13 @@
                             'value'         => old('currency_symbol',$payment_gateway->currencies->first()->currency_symbol),
                         ])
                     </div>
+                    <div class="form-group">
+                        <label for="usertype">User Type*</label>
+                        <select name="user_type" class="form-control select2-auto-tokenize" required>
+                            <option value="buyer" {{ old('user_type',$payment_gateway->user_type) == 'buyer' ? 'selected' : '' }}>buyer</option>
+                            <option value="seller" {{ old('user_type',$payment_gateway->user_type) == 'seller' ? 'selected' : '' }}>seller</option>
+                        </select>
+                    </div>
                 </div>
             </div>
         </div>

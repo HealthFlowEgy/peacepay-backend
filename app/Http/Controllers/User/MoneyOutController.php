@@ -35,10 +35,13 @@ class MoneyOutController extends Controller
     public function index() {
         $page_title = "Money Out"; 
         $sender_currency = Currency::where('status', true)->get(); 
+        
         $payment_gateways_currencies = PaymentGatewayCurrency::whereHas('gateway', function ($gateway) {
             $gateway->where('slug', PaymentGatewayConst::money_out_slug());
             $gateway->where('status', 1);
+            $gateway->where('user_type', auth()->user()->type);
         })->get();
+
         $transactions = Transaction::with('gateway_currency')->moneyOut()->where('user_id',auth()->user()->id)->latest()->take(10)->get(); 
         return view('user.sections.money-out.index', compact("page_title","transactions","payment_gateways_currencies","sender_currency"));
     } 

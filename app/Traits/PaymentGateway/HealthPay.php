@@ -150,7 +150,7 @@ trait HealthPay
 
 
 
-    public function topupWalletUser($clientUser)
+    public function topupWalletUser($clientUser, $amount=0)
     {
         $query = '
                 mutation topupWalletUser($userToken: String!, $amount: Float!) {
@@ -166,7 +166,7 @@ trait HealthPay
 
         $response = $clientUser->query($query, [
             'userToken'     => session()->get('userTokenHealthPay'),
-            'amount'        => (float) session()->get('topupAmountHealthPay')
+            'amount'        => $amount ?? (float) session()->get('topupAmountHealthPay')
         ]);
 
         if ($response->hasErrors()) {

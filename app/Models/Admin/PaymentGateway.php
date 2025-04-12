@@ -24,6 +24,7 @@ class PaymentGateway extends Model
         'title'                => 'string',
         'alias'                => 'string',
         'image'                => 'string',
+        'user_type'            => 'string',
         'input_fields'         => 'object',
         'supported_currencies' => 'object',
         'credentials'          => 'object',

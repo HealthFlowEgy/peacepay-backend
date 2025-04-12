@@ -19,27 +19,27 @@
                         <form class="card-form" action="{{ setRoute("user.money.out.insert") }}" method="POST">
                             @csrf
                             <div class="row">
-                                <div class="col-xl-12 col-lg-12 form-group text-center">
+                                <!-- <div class="col-xl-12 col-lg-12 form-group text-center">
                                     <div class="exchange-area">
                                         <code class="d-block text-center"><span>{{ __("Exchange Rate") }}</span> <span class="rate-show">--</span></code>
                                     </div>
-                                </div>
+                                </div> -->
                                 <div class="col-xl-6 col-lg-6 form-group">
                                     <label>{{ __("Payment Gateway") }}<span>*</span></label>
                                     <select class="form--control nice-select gateway-select" name="gateway_currency">
                                         @foreach ($payment_gateways_currencies ?? [] as $item)
-                                        <option
-                                            value="{{ $item->alias  }}"
-                                            data-currency="{{ $item->currency_code }}"
-                                            data-min_amount="{{ $item->min_limit }}"
-                                            data-max_amount="{{ $item->max_limit }}"
-                                            data-percent_charge="{{ $item->percent_charge }}"
-                                            data-fixed_charge="{{ $item->fixed_charge }}"
-                                            data-rate="{{ $item->rate }}"
-                                            >
-                                            {{ $item->name }}
-                                        </option>
-                                    @endforeach
+                                            <option
+                                                value="{{ $item->alias  }}"
+                                                data-currency="{{ $item->currency_code }}"
+                                                data-min_amount="{{ $item->min_limit }}"
+                                                data-max_amount="{{ $item->max_limit }}"
+                                                data-percent_charge="{{ $item->percent_charge }}"
+                                                data-fixed_charge="{{ $item->fixed_charge }}"
+                                                data-rate="{{ $item->rate }}"
+                                                >
+                                                {{ $item->name }}
+                                            </option>
+                                        @endforeach
                                     </select>
                                 </div>
                                 <div class="col-xl-6 col-lg-6 form-group">

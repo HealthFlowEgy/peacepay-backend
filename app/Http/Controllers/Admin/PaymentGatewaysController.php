@@ -537,6 +537,7 @@ class PaymentGatewaysController extends Controller
                 $query->where('slug',PaymentGatewayConst::add_money_slug())->where('type',PaymentGatewayConst::MANUAL)->where('alias',$alias);
             })],
             'desc'                  => 'nullable|string|max:10000',
+            'user_type'             => 'nullable|string|max:10000',
             'label'                 => 'nullable|array',
             'label.*'               => 'nullable|string|max:50',
             'input_type'            => 'nullable|array',
@@ -656,6 +657,7 @@ class PaymentGatewaysController extends Controller
                 $query->whereNot('id',$gateway->id)->where('slug',PaymentGatewayConst::add_money_slug())->where('type',PaymentGatewayConst::MANUAL)->where('alias',$alias);
             })],
             'desc'                  => 'nullable|string|max:10000',
+            'user_type'             => 'nullable|string|max:10000',
             'label'                 => 'nullable|array',
             'label.*'               => 'nullable|string|max:50',
             'input_type'            => 'nullable|array',
@@ -847,6 +849,7 @@ class PaymentGatewaysController extends Controller
                 $query->where('slug',PaymentGatewayConst::money_out_slug())->where('type',PaymentGatewayConst::MANUAL)->where('alias',$alias);
             })],
             'desc'                  => 'nullable|string|max:10000',
+            'user_type'             => 'nullable|string|max:10000',
             'label'                 => 'nullable|array',
             'label.*'               => 'nullable|string|max:50',
             'input_type'            => 'nullable|array',
@@ -1091,6 +1094,7 @@ class PaymentGatewaysController extends Controller
                 $query->whereNot('id',$gateway->id)->where('slug',PaymentGatewayConst::money_out_slug())->where('type',PaymentGatewayConst::MANUAL)->where('alias',$alias);
             })],
             'desc'                  => 'nullable|string|max:10000',
+            'user_type'             => 'nullable|string|max:10000',
             'label'                 => 'nullable|array',
             'label.*'               => 'nullable|string|max:50',
             'input_type'            => 'nullable|array',
