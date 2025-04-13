@@ -69,14 +69,14 @@
                                                 'required'      => true
                                             ])
                                         </div>
-                                        <div class="col-xl-6 col-lg-6 form-group">
+                                        <!-- <div class="col-xl-6 col-lg-6 form-group">
                                             <label>{{ __("Country") }}</label>
                                             <select name="country" class="form--control select2-auto-tokenize country-select" data-placeholder="Select Country" data-old="{{ old('country',auth()->user()->address->country ?? "") }}"></select>
-                                        </div>
+                                        </div> -->
                                         <div class="col-xl-6 col-lg-6 form-group">
                                             <label>{{ __("Phone") }}</label>
-                                            <input class="phone-code" type="hidden" name="phone_code" value="{{ auth()->user()->mobile_code }}" />
-                                            <input type="text" class="form--control" placeholder="Enter Phone ..." name="phone" value="{{ old('phone',auth()->user()->mobile) }}"> 
+                                            <input readonly class="phone-code" type="hidden" name="phone_code" value="{{ auth()->user()->mobile_code }}" />
+                                            <input readonly type="text" class="form--control" placeholder="Enter Phone ..." name="phone" value="{{ old('phone',auth()->user()->mobile) }}"> 
                                         </div>
                                         <div class="col-xl-6 col-lg-6 form-group">
                                             @include('admin.components.form.input',[

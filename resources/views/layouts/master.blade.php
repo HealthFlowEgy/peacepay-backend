@@ -22,5 +22,7 @@
         @include('partials.footer-asset') 
     </main> 
     @stack('script')
+
+    
 </body>
 </html>

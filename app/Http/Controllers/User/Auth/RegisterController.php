@@ -87,9 +87,11 @@ class RegisterController extends Controller
         $validated['username']          = make_username($validated['firstname'],$validated['lastname']); 
         $validated['mobile_code']       = env('MOBILE_CODE');
         $validated['full_mobile']       = env('MOBILE_CODE').$validated['mobile'];
-        $validated['email']             = env('MOBILE_CODE').$validated['mobile'];
+        $validated['email']             = env('MOBILE_CODE').$validated['mobile'].'_'.time().'@example.com';
         $validated['user_exists']       = User::where('mobile',$validated['mobile'])->first() ? true:false;
-
+        $validated['address']       = [
+            'country'   => 'Egypt'
+        ];
 
         event(new Registered($user = $this->create($validated)));
         $this->guard()->login($user);

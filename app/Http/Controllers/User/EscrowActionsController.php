@@ -44,12 +44,19 @@ class EscrowActionsController extends Controller
     public function paymentApprovalPending($id) { 
         $page_title                  = "Payment Approval";
         $escrow                      = Escrow::findOrFail(decrypt($id));
+
+        if(auth()->user()->id != $escrow->buyer_or_seller_id && auth()->user()->id != $escrow->user_id) {
+            return redirect()->route('user.my-escrow.index')->with(['error' => [__('You are not authorized to access this page')]]);
+        }
+
+
         $payment_gateways_currencies = PaymentGatewayCurrency::whereHas('gateway', function ($gateway) {
             $gateway->where('slug', PaymentGatewayConst::add_money_slug());
             $gateway->where('status', 1);
         })->get();
         session()->put('topupAmountHealthPay',$escrow->amount);
         $user_wallet = UserWallet::where(['user_id' => auth()->user()->id, 'currency_id' => $escrow->escrowCurrency->id])->first();
+
         return view('user.my-escrow.payment-approval-pending', compact('page_title','escrow','payment_gateways_currencies','user_wallet'));
     }
     public function paymentCancel($id){

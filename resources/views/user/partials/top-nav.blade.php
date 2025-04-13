@@ -69,6 +69,16 @@
                     </ul>
                 </div>
             </div>
+            <div class="header-language">
+                @php
+                    $session_lan = session('local')??get_default_language_code();
+                @endphp
+                <select name="lang_switch" class="form--control language-select nice-select" id="language-select">
+                    @foreach($__languages as $item)
+                        <option value="{{$item->code}}" @if($session_lan == $item->code) selected  @endif>{{ __($item->name) }}</option>
+                    @endforeach
+                </select>
+            </div>
             <div class="header-user-wrapper">
                 <div class="header-user-thumb">
                     <a href="{{ setRoute('user.profile.index') }}"><img src="{{ auth()->user()->userImage }}" alt="user"></a>
@@ -91,5 +101,13 @@
                 
             });
         });
-    </script>
+
+        $(document).ready(function () {
+            $(".language-select").change(function(){ 
+                var submitForm = `<form action="{{ setRoute('languages.switch') }}" id="local_submit" method="POST"> @csrf <input type="hidden" name="target" value="${$(this).val()}" ></form>`;
+                $("body").append(submitForm);
+                $("#local_submit").submit();
+            });
+        });
+</script>
 @endpush

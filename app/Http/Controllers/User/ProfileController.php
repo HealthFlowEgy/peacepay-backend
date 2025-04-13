@@ -38,9 +38,9 @@ class ProfileController extends Controller
         $validated = Validator::make($request->all(), [
             'firstname'     => "required|string|max:60",
             'lastname'      => "required|string|max:60",
-            'country'       => "required|string|max:50",
-            'phone_code'    => "required|string|max:20",
-            'phone'         => "required|string|max:20",
+            // 'country'       => "required|string|max:50",
+            // 'phone_code'    => "required|string|max:20",
+            // 'phone'         => "required|string|max:20",
             'state'         => "nullable|string|max:50",
             'city'          => "nullable|string|max:50",
             'zip_code'      => "nullable|string",
@@ -48,14 +48,14 @@ class ProfileController extends Controller
             'image'         => "nullable|image|mimes:jpg,png,svg,webp|max:10240",
         ])->validate();
 
-        $validated['mobile']        = remove_speacial_char($validated['phone']);
-        $validated['mobile_code']   = remove_speacial_char($validated['phone_code']);
+        // $validated['mobile']        = remove_speacial_char($validated['phone']);
+        // $validated['mobile_code']   = remove_speacial_char($validated['phone_code']);
 
-        $complete_phone             = $validated['mobile_code'] . $validated['mobile'];
-        $validated['full_mobile']   = $complete_phone;
+        // $complete_phone             = $validated['mobile_code'] . $validated['mobile'];
+        // $validated['full_mobile']   = $complete_phone;
         $validated                  = Arr::except($validated, ['agree', 'phone_code', 'phone']);
         $validated['address']       = [
-            'country'   => $validated['country'],
+            'country'   => $validated['country'] ?? "Egypt",
             'state'     => $validated['state'] ?? "",
             'city'      => $validated['city'] ?? "",
             'zip'       => $validated['zip_code'] ?? "",

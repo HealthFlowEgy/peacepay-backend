@@ -24,12 +24,14 @@
                                 <span class="menu-title">{{ __("My Escrow") }}</span>
                             </a>
                         </li>
+                        @if(auth()->user()->type == 'seller')
                         <li class="sidebar-menu-item">
                             <a href="{{ setRoute('user.policies.index') }}">
                                 <i class="las la-user-shield menu-icon"></i>
                                 <span class="menu-title">{{ __("Polices") }}</span>
                             </a>
                         </li>
+                        @endif
                         <li class="sidebar-menu-item">
                             <a href="{{ setRoute('user.transactions.index') }}">
                                 <i class="menu-icon las la-wallet"></i>

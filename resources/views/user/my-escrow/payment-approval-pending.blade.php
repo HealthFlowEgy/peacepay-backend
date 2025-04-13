@@ -275,7 +275,19 @@
                 </select>
             </div>
         </div>
-        <button type="submit" class="btn--base mt-20 w-100">{{ __("Confirm & Pay") }}</button>
+
+        <div class="row">
+            
+            <div class="col-6">
+                <button type="submit" class="btn--base mt-20 w-100">{{ __("Confirm & Pay") }}</button>
+            </div>
+
+            <div class="col-6">
+                <a href="{{ setRoute('user.escrow-action.paymentCancel', encrypt($escrow->id))}}" class="btn btn--base bg--danger mt-20 w-100">{{__('Cancel')}}</a>
+            </div>
+    
+        </div>
+        
     </form>
 </div>
 @endsection
