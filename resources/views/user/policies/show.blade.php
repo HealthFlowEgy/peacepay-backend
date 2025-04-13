@@ -82,10 +82,10 @@
                                                 </tr>
                                                 @endif
                                                 
-                                                @if(isset($fields['advanced_payment_payer']))
+                                                @if(isset($fields['has_advanced_payment']))
                                                 <tr>
-                                                    <td><strong>Advanced Payment Paid By:</strong></td>
-                                                    <td>{{ ucfirst($fields['advanced_payment_payer']) }}</td>
+                                                    <td><strong>Advanced Payment:</strong></td>
+                                                    <td>{{ $fields['has_advanced_payment'] == 1 ? 'Yes, included' : 'Not required' }}</td>
                                                 </tr>
                                                 @endif
                                                 

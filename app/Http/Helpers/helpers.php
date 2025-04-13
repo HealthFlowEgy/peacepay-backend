@@ -2124,7 +2124,7 @@ function mappingPolicyFields($amountField)
     $fields = [
         'delivery_fee_amount' => 'delivery_fee_payer',
         'return_fee_amount' => 'return_fee_payer',
-        'advanced_payment_amount' => 'advanced_payment_payer',
+        'advanced_payment_amount' => 'has_advanced_payment',
         'delivery_timeframe_days' => 'has_delivery_timeframe'
     ];
     return $fields[$amountField];
@@ -2133,12 +2133,18 @@ function mappingPolicyFields($amountField)
 function fieldsAddedToAmount()
 {
     $fields = [
-        'delivery_fee_amount',
         'advanced_payment_amount',
     ];
     return $fields;
 }
 
+function fieldsAddedToAmountIfFromBuyer()
+{
+    $fields = [
+        'delivery_fee_amount',
+    ];
+    return $fields;
+}
 
 function getValueFromGatewayCredentials($gateway, $keywords) {
     $result = "";

@@ -63,10 +63,20 @@
                             <!-- Advanced Payment Responsibility -->
                             <div class="col-md-6 form-group">
                                 <label>{{ __('Advanced Payment Paid By') }}:</label>
-                                <select name="fields[advanced_payment_payer]" class="form--control">
-                                    <option value="buyer" {{ old('fields.advanced_payment_payer') == 'buyer' ? 'selected' : '' }}>{{ __('Buyer') }}</option>
-                                    <option value="seller" {{ old('fields.advanced_payment_payer') == 'seller' ? 'selected' : '' }}>{{ __('Seller') }}</option>
-                                </select>
+                                <div class="radio-wrapper">
+                                    <div class="radio-item">
+                                        <input class="" type="radio" name="fields[has_advanced_payment]" id="has_advanced_payment_yes" value="1" {{ old('fields.has_advanced_payment') == '1' ? 'checked' : '' }}>
+                                        <label class="" for="has_advanced_payment_yes">
+                                            {{ __('Yes') }}
+                                        </label>
+                                    </div>
+                                    <div class="radio-item">
+                                        <input class="" type="radio" name="fields[has_advanced_payment]" id="has_advanced_payment_no" value="0" {{ old('fields.has_advanced_payment') == '0' ? 'checked' : '' }}>
+                                        <label class="" for="has_advanced_payment_no">
+                                            {{ __('No') }}
+                                        </label>
+                                    </div>
+                                </div>
                             </div>
                             
                             <!-- Escrow Amount Responsibility -->

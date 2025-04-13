@@ -96,7 +96,7 @@ class EscrowController extends Controller
         $validator  = Validator::make($request->all(),[
             'title'                 => 'required|string',
             'escrow_category'       => 'required|integer',
-            'role'                  => 'required|string',
+            // 'role'                  => 'required|string',
             'who_will_pay_options'  => 'required|string',
             'buyer_seller_identify' => 'required',
             'amount'                => 'required|numeric',
@@ -111,6 +111,7 @@ class EscrowController extends Controller
             return back()->withErrors($validator)->withInput();
         }
         $validated            = $validator->validate();
+        $validated['role']    = 'seller';
         $escrowCategory       = EscrowCategory::find($validated['escrow_category']);
         $getEscrowChargeLimit = TransactionSetting::find(1);
         $sender_currency      = Currency::where('code', $validated['escrow_currency'])->first();
@@ -146,10 +147,18 @@ class EscrowController extends Controller
         
         
         $request_amount = $validated['amount'];
+
+        $policy = Policy::find($validated['policy_id']);
         foreach ($validated['field'] as $field => $amount){
             if(in_array($field,fieldsAddedToAmount())){
                 $request_amount += $amount;
+            }elseif (
+                in_array($field, fieldsAddedToAmountIfFromBuyer())
+                && $policy->fields[mappingPolicyFields($field)] == 'buyer'
+            ) {
+                $request_amount += $amount;
             }
+
         }
         
 

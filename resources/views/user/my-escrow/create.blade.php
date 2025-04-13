@@ -92,19 +92,14 @@
 
 
                             
-                            <div class="col-xl-6 col-lg-6 form-group">
-                                <label>{{ __("My Role") }}<span>*</span></label>
-                                <select class="form--control nice-select role" name="role" required>
-                                    <!-- <option value="buyer" {{ ($user_pass_data['role'] ?? $user_type) == "buyer" ? "selected": "" }}>{{ __("Buyer") }}</option> -->
-                                    <option value="seller" {{ ($user_pass_data['role'] ?? $user_type) == "seller" ? "selected": "" }}>{{ __("Seller") }}</option>
-                                </select>
-                            </div>
-                            <div class="col-xl-6 col-lg-6 form-group">
+                            
+                            <!-- <div class="col-xl-6 col-lg-6 form-group">
                                 <label>{{ __("who Will Pay The Fees") }}<span>*</span></label>
                                 <div class="who_will_pay_select">
 
                                 </div>
-                            </div>
+                            </div> -->
+                            <input type="hidden" name="who_will_pay_options" value="me">
                             <div class="col-xl-6 col-lg-6 form-group">
                                 <label ><span class="buyer_seller_show" style="color:#c4c6c7 "></span><span>*</span></label>
                                 <input type="text" name="buyer_seller_identify" class="form--control buyer_seller_identify" value="{{ old('buyer_seller_identify') }}" placeholder="{{ __('Enter Username or Email') }}..." required>
@@ -167,7 +162,7 @@
     <script>
         $(document).ready(function(){
             getRole();
-            setOptionsForWhoWillPay();
+            // setOptionsForWhoWillPay();
             userWalletByCurrency();
             paymentMethodAvailable();
 
@@ -175,7 +170,7 @@
         });
         $('.role').on('change',function(){
             getRole();
-            setOptionsForWhoWillPay();
+            // setOptionsForWhoWillPay();
             paymentMethodAvailable();
         });
         $('select[name=escrow_currency]').on('change',function(){
@@ -318,7 +313,7 @@
                             required: true
                         },
                         {
-                            condition: fields.advanced_payment_payer,
+                            condition: fields.has_advanced_payment,
                             label: '{{ __("Advanced Payment Amount") }}',
                             name: 'advanced_payment_amount',
                             type: 'currency',
