@@ -150,6 +150,43 @@
                                     </div>
                                 </div>
                             @endforeach
+
+                            <div class="preview-list-item">
+                                <div class="preview-list-left">
+                                    <div class="preview-list-user-wrapper">
+                                        <div class="preview-list-user-icon">
+                                            <i class="las la-battery-half"></i>
+                                        </div>
+                                        <div class="preview-list-user-content">
+                                            <span>{{ __('Delivery Timeframe')}}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="preview-list-right">
+                                    <span class="text--warning">
+                                        {{ $escrow->delivery_timeframe }} {{ __('Days') }}
+                                    </span>
+                                </div>
+                            </div>
+    
+    
+                            <div class="preview-list-item">
+                                <div class="preview-list-left">
+                                    <div class="preview-list-user-wrapper">
+                                        <div class="preview-list-user-icon">
+                                            <i class="las la-battery-half"></i>
+                                        </div>
+                                        <div class="preview-list-user-content">
+                                            <span>{{ __('Return Price')}}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="preview-list-right">
+                                    <span class="text--warning">
+                                        {{ $escrow->return_price }}  {{ $escrow->escrow_currency }}
+                                    </span>
+                                </div>
+                            </div>
                             
 
                         </div>

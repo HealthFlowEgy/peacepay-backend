@@ -102,6 +102,13 @@
                                                     <td>{{ $fields['has_delivery_timeframe'] == 1 ? 'Yes, included' : 'Not required' }}</td>
                                                 </tr>
                                                 @endif
+
+                                                @if(isset($fields['is_paid_by_dsp']))
+                                                <tr>
+                                                    <td><strong>is paid by dsp:</strong></td>
+                                                    <td>{{ $fields['is_paid_by_dsp'] == 1 ? 'Yes' : 'Not' }}</td>
+                                                </tr>
+                                                @endif
                                             @else
                                                 <tr>
                                                     <td colspan="2">No additional policy details specified</td>

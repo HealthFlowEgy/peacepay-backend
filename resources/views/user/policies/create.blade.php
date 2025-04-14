@@ -52,13 +52,13 @@
                             </div>
                             
                             <!-- Return Fee Responsibility -->
-                            <div class="col-md-6 form-group">
+                            <!-- <div class="col-md-6 form-group">
                                 <label>{{ __('Return Fee Paid By') }}:</label>
                                 <select name="fields[return_fee_payer]" class="form--control">
                                     <option value="buyer" {{ old('fields.return_fee_payer') == 'buyer' ? 'selected' : '' }}>{{ __('Buyer') }}</option>
                                     <option value="seller" {{ old('fields.return_fee_payer') == 'seller' ? 'selected' : '' }}>{{ __('Seller') }}</option>
                                 </select>
-                            </div>
+                            </div> -->
                             
                             <!-- Advanced Payment Responsibility -->
                             <div class="col-md-6 form-group">
@@ -89,7 +89,7 @@
                             </div> -->
                             
                             <!-- Delivery Timeframe Option -->
-                            <div class="col-md-6 form-group">
+                            <!-- <div class="col-md-6 form-group">
                                 <label>{{ __('') }}Delivery Timeframe:</label>
                                 <div class="radio-wrapper">
                                     <div class="radio-item">
@@ -105,7 +105,27 @@
                                         </label>
                                     </div>
                                 </div>
+                            </div> -->
+
+                            <!-- Advanced Payment Responsibility -->
+                            <div class="col-md-6 form-group">
+                                <label>{{ __('Is paid by DSP') }}:</label>
+                                <div class="radio-wrapper">
+                                    <div class="radio-item">
+                                        <input class="" type="radio" name="fields[is_paid_by_dsp]" id="is_paid_by_dsp_yes" value="1" {{ old('fields.is_paid_by_dsp') == '1' ? 'checked' : '' }}>
+                                        <label class="" for="is_paid_by_dsp_yes">
+                                            {{ __('Yes') }}
+                                        </label>
+                                    </div>
+                                    <div class="radio-item">
+                                        <input class="" type="radio" name="fields[is_paid_by_dsp]" id="is_paid_by_dsp_no" value="0" {{ old('fields.is_paid_by_dsp') == '0' ? 'checked' : '' }}>
+                                        <label class="" for="is_paid_by_dsp_no">
+                                            {{ __('No') }}
+                                        </label>
+                                    </div>
+                                </div>
                             </div>
+
                         </div>
                         
                         <div class="row">

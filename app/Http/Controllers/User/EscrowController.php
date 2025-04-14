@@ -100,6 +100,9 @@ class EscrowController extends Controller
             'who_will_pay_options'  => 'required|string',
             'buyer_seller_identify' => 'required',
             'amount'                => 'required|numeric',
+            'return_price'          => 'nullable|numeric',
+            'delivery_timeframe'    => 'nullable|numeric',
+            'amount'                => 'required|numeric',
             'escrow_currency'       => 'required|string',
             'payment_gateway'       => 'nullable',
             'remarks'               => 'nullable|string',
@@ -221,6 +224,8 @@ class EscrowController extends Controller
         $oldData = (object) [ 
             'buyer_or_seller_id'          => $opposite_user->id,
             'escrow_category_id'          => $validated['escrow_category'],
+            'delivery_timeframe'          => $validated['delivery_timeframe'],
+            'return_price'                => $validated['return_price'],
             'payment_type'                => $payment_type,
             'payment_gateway_currency_id' => $payment_type == EscrowConstants::GATEWAY ? $payment_gateways_currencies->id : null,
 
@@ -564,9 +569,11 @@ class EscrowController extends Controller
                 'details'                     => $additionalData,
                 'created_at'                  => now(),
                 'callback_ref'                => $tempData->identifier,
+                'return_price'                => $escrowData->return_price,
+                'delivery_timeframe'          => $escrowData->delivery_timeframe,
             ]);
 
-
+            
             $escrowCreate->policies()->detach(); // Remove all existing policies first
 
             $policy = Policy::find($policy_id);

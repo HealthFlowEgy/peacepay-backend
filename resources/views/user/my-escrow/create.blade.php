@@ -44,14 +44,62 @@
                                 <label>{{ __("Title") }}<span>*</span></label>
                                 <input type="text" name="title" class="form--control" value="{{ $user_pass_data['title'] ?? old('title') }}" placeholder="{{ __("enter Title") }}..." required>
                             </div>
-                            <div class="col-xl-6 col-lg-6 form-group transaction-type">
+                            <div class="col-xl-12 form-group">
+                                <label>{{ __("Remarks") }} <span class="text--base">({{ __("Optional") }})</span></label>
+                                <textarea class="form--control" name="remarks" placeholder="{{ __("Write Here") }}…">{{ old('remarks') }}</textarea>
+                            </div>
+
+                            <div class="col-xl-6 col-lg-6 form-group">
+                                <label>{{ __("Amount") }}<span>*</span></label>
+                                <div class="input-group">
+                                    <input type="text" name="amount" id="amount" class="form--control" value="{{ $user_pass_data['amount'] ?? old('amount') }}" placeholder="{{ __('enter Amount') }}..." required>
+                                    <select class="form--control nice-select" name="escrow_currency" required>
+                                        @foreach ($currencies as $item)
+                                        <option 
+                                        value="{{ $item->code}}"
+                                        data-id="{{ $item->id }}"
+                                        data-symbol="{{ $item->symbol }}"
+                                        data-type="{{ $item->type }}"
+                                        {{ ($user_pass_data['escrow_currency'] ?? old('escrow_currency')) == $item->code ? "selected": "" }} {{ get_default_currency_code() == $item->code ? "selected": "" }}
+                                        >{{ $item->code}}</option>
+                                        @endforeach 
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="col-xl-6 col-lg-6 form-group">
+                                <label ><span class="buyer_seller_show" style="color:#c4c6c7 "></span><span>*</span></label>
+                                <input type="text" name="buyer_seller_identify" class="form--control buyer_seller_identify" value="{{ old('buyer_seller_identify') }}" placeholder="{{ __('Enter mobile') }}..." required>
+                                <div class="userCheckMessage text-end"></div>
+                            </div>
+
+                            <!-- <div class="col-xl-6 col-lg-6 form-group">
+                                <label>{{ __("Delivery Price") }}<span>*</span></label>
+                                <input type="number" name="delivery_price" class="form--control" value="{{ $user_pass_data['delivery_price'] ?? old('delivery_price') }}" placeholder="{{ __("enter delivery price") }}..." required>
+                            </div> -->
+
+                            <div class="col-xl-6 col-lg-6 form-group">
+                                <label>{{ __("Return Price") }}</label>
+                                <input type="number" name="return_price" class="form--control" value="{{ $user_pass_data['return_price'] ?? old('return_price') }}" placeholder="{{ __("enter return price") }}...">
+                            </div>
+
+                            <div class="col-xl-6 col-lg-6 form-group">
+                                <label>{{ __("Delivery Timeframe Days") }}</label>
+                                <input type="number" name="delivery_timeframe" class="form--control" value="{{ $user_pass_data['delivery_timeframe'] ?? old('delivery_timeframe') }}" placeholder="{{ __("enter delivery timeframe") }}...">
+                            </div>
+
+
+
+                            <input type="hidden" name="escrow_category" value="{{$escrowCategories->first()->id}}">
+                            
+                            <!-- <div class="col-xl-6 col-lg-6 form-group transaction-type">
                                 <label>{{ __("category") }}<span>*</span></label>
                                 <select class="form--control trx-type-select nice-select" name="escrow_category" required> 
                                     @foreach ($escrowCategories as $item)
                                     <option value="{{ $item->id }}" {{ old('escrow_category') == $item->id ? "selected": "" }}>{{ $item->name }}</option>
                                     @endforeach 
                                 </select>
-                            </div>
+                            </div> -->
 
 
 
@@ -100,38 +148,15 @@
                                 </div>
                             </div> -->
                             <input type="hidden" name="who_will_pay_options" value="me">
-                            <div class="col-xl-6 col-lg-6 form-group">
-                                <label ><span class="buyer_seller_show" style="color:#c4c6c7 "></span><span>*</span></label>
-                                <input type="text" name="buyer_seller_identify" class="form--control buyer_seller_identify" value="{{ old('buyer_seller_identify') }}" placeholder="{{ __('Enter Username or Email') }}..." required>
-                                <div class="userCheckMessage text-end"></div>
-                            </div>
-                            <div class="col-xl-6 col-lg-6 form-group">
-                                <label>{{ __("Amount") }}<span>*</span></label>
-                                <div class="input-group">
-                                    <input type="text" name="amount" id="amount" class="form--control" value="{{ $user_pass_data['amount'] ?? old('amount') }}" placeholder="{{ __('enter Amount') }}..." required>
-                                    <select class="form--control nice-select" name="escrow_currency" required>
-                                        @foreach ($currencies as $item)
-                                        <option 
-                                        value="{{ $item->code}}"
-                                        data-id="{{ $item->id }}"
-                                        data-symbol="{{ $item->symbol }}"
-                                        data-type="{{ $item->type }}"
-                                        {{ ($user_pass_data['escrow_currency'] ?? old('escrow_currency')) == $item->code ? "selected": "" }} {{ get_default_currency_code() == $item->code ? "selected": "" }}
-                                        >{{ $item->code}}</option>
-                                        @endforeach 
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="col-xl-12 form-group">
-                                <label>{{ __("Remarks") }} <span class="text--base">({{ __("Optional") }})</span></label>
-                                <textarea class="form--control" name="remarks" placeholder="{{ __("Write Here") }}…">{{ old('remarks') }}</textarea>
-                            </div>
-                            <div class="col-xl-12 col-lg-12 form-group">
+                            
+                            
+                            
+                            <!-- <div class="col-xl-12 col-lg-12 form-group">
                                 <label>{{ __("Attachments") }} <span class="text--base">(Optional) </span> (Supported files jpg, jpeg, png, pdf, zip)</label>
                                 <div class="">
                                     <input type="file" class="" name="file[]" id="fileUpload" data-height="130" accept=".jpg,.jpeg,.png,.pdf,.zip" data-max_size="20" data-file_limit="15">
                                 </div>
-                            </div> 
+                            </div>  -->
                             <div class="col-xl-12 col-lg-12 form-group paymentMethodSelectForBuyer">
                                 <label>{{ __("Pay with") }}<span>*</span></label>
                                 <select class="form--control payment_gateway" name="payment_gateway">
@@ -197,11 +222,11 @@
         */
         function getRole() {
             var role = $("select[name=role] :selected").val();
-            if (role == "seller") { 
-                $('.buyer_seller_show').text("{{ __('Buyer Username/Email/Mobile') }}"); 
-            }else{
-                $('.buyer_seller_show').text("{{ __('Seller Username/Email/Mobile') }}"); 
-            }
+            //if (role == "seller") { 
+                $('.buyer_seller_show').text("{{ __('Buyer Wallet Number') }}"); 
+            //}else{
+            //    $('.buyer_seller_show').text("{{ __('Seller Username/Email/Mobile') }}"); 
+            //}
         }
         function setOptionsForWhoWillPay() {
             var role = $("select[name=role] :selected").val();
@@ -323,6 +348,15 @@
                             condition: fields.has_delivery_timeframe,
                             label: '{{ __("Delivery Timeframe (Days)") }}',
                             name: 'delivery_timeframe_days',
+                            type: 'number',
+                            min: 1,
+                            step: 1,
+                            required: true
+                        },
+                        {
+                            condition: fields.is_paid_by_dsp,
+                            label: '{{ __("DSP Amount") }}',
+                            name: 'dsp_amount',
                             type: 'number',
                             min: 1,
                             step: 1,

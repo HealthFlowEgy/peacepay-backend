@@ -245,13 +245,13 @@ class PaymentGatewaySeeder extends Seeder
 
 
         //============================Health automatic start=================================================
-        $data =  array('slug' => 'add-money','code' => '50000','type' => 'AUTOMATIC','name' => 'HealthPay','title' => 'Health Gateway','alias' => 'healthpay','image' => 'seeder/file.jpeg','credentials' => '[{"label":"baseURL","placeholder":"enter baseURL","name":"base-url","value":"https://sword.beta.healthpay.tech/graphql"},{"label":"api-header","placeholder":"enter api-header","name":"api-header","value":"H_PeAceP@y"},{"label":"api-key","placeholder":"enter api-key","name":"api-key","value":"k_PeAceP@y"}]','supported_currencies' => '["EGP"]','crypto' => '0','desc' => NULL,'input_fields' => NULL,'status' => '1','last_edit_by' => '1','created_at' => now(),'updated_at' => now(),'env' => 'SANDBOX');
-        $gateway_id = PaymentGateway::insertGetId($data);
+        // $data =  array('slug' => 'add-money','code' => '50000','type' => 'AUTOMATIC','name' => 'HealthPay','title' => 'Health Gateway','alias' => 'healthpay','image' => 'seeder/file.jpeg','credentials' => '[{"label":"baseURL","placeholder":"enter baseURL","name":"base-url","value":"https://sword.beta.healthpay.tech/graphql"},{"label":"api-header","placeholder":"enter api-header","name":"api-header","value":"H_PeAceP@y"},{"label":"api-key","placeholder":"enter api-key","name":"api-key","value":"k_PeAceP@y"}]','supported_currencies' => '["EGP"]','crypto' => '0','desc' => NULL,'input_fields' => NULL,'status' => '1','last_edit_by' => '1','created_at' => now(),'updated_at' => now(),'env' => 'SANDBOX');
+        // $gateway_id = PaymentGateway::insertGetId($data);
 
-        $gateway_currency = array(
-            array('payment_gateway_id' => $gateway_id,'name' => 'Health EGP','alias' => 'add-money-healthpay-egp-automatic','currency_code' => 'EGP','currency_symbol' => 'EGP','image' => NULL,'min_limit' => '10.00000000','max_limit' => '100000.00000000','percent_charge' => '1.00000000','fixed_charge' => '1.00000000','rate' => '1','created_at' => now(),'updated_at' => now()),
-        );
-        PaymentGatewayCurrency::insert($gateway_currency);
+        // $gateway_currency = array(
+        //     array('payment_gateway_id' => $gateway_id,'name' => 'Health EGP','alias' => 'add-money-healthpay-egp-automatic','currency_code' => 'EGP','currency_symbol' => 'EGP','image' => NULL,'min_limit' => '10.00000000','max_limit' => '100000.00000000','percent_charge' => '1.00000000','fixed_charge' => '1.00000000','rate' => '1','created_at' => now(),'updated_at' => now()),
+        // );
+        // PaymentGatewayCurrency::insert($gateway_currency);
         //============================Health automatic end=================================================
 
 

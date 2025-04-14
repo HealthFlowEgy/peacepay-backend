@@ -46,6 +46,22 @@
                             </span>
                         </li>
                     @endforeach
+
+                    <li>
+                        {{__("Delivery Timeframe") }} : 
+                        <span class="text-right">
+                            {{ $escrow->delivery_timeframe }}
+                        </span>
+                    </li>
+
+                    <li>
+                        {{__("Return Price") }} : 
+                        <span class="text-right">
+                            {{ $escrow->return_price }}
+                        </span>
+                    </li>
+
+                    
                 </ul>
             </div> 
 

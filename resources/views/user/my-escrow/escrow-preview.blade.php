@@ -20,7 +20,7 @@
         @csrf
         <input type="hidden" value="{{ $identifier }}" name="identifier">
         <div class="row mt-20 mb-20-none">
-            
+
             @php($policy = App\Models\Policy::where('id',$tempData['policy_id'])->first())
             <div class="custom-card mt-10">
                 <div class="dashboard-header-wrapper">
@@ -48,6 +48,45 @@
                                 </div>
                             </div>
                         @endforeach
+
+
+                        <div class="preview-list-item">
+                            <div class="preview-list-left">
+                                <div class="preview-list-user-wrapper">
+                                    <div class="preview-list-user-icon">
+                                        <i class="las la-battery-half"></i>
+                                    </div>
+                                    <div class="preview-list-user-content">
+                                        <span>{{ __('Delivery Timeframe')}}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="preview-list-right">
+                                <span class="text--warning">
+                                    {{ $oldData->delivery_timeframe }} {{ __('Days') }}
+                                </span>
+                            </div>
+                        </div>
+
+
+                        <div class="preview-list-item">
+                            <div class="preview-list-left">
+                                <div class="preview-list-user-wrapper">
+                                    <div class="preview-list-user-icon">
+                                        <i class="las la-battery-half"></i>
+                                    </div>
+                                    <div class="preview-list-user-content">
+                                        <span>{{ __('Return Price')}}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="preview-list-right">
+                                <span class="text--warning">
+                                    {{ $oldData->return_price }}  {{ $oldData->escrow_currency }}
+                                </span>
+                            </div>
+                        </div>
+
                         
                     </div>
                 </div>

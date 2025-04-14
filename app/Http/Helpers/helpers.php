@@ -2125,7 +2125,8 @@ function mappingPolicyFields($amountField)
         'delivery_fee_amount' => 'delivery_fee_payer',
         'return_fee_amount' => 'return_fee_payer',
         'advanced_payment_amount' => 'has_advanced_payment',
-        'delivery_timeframe_days' => 'has_delivery_timeframe'
+        'delivery_timeframe_days' => 'has_delivery_timeframe',
+        'dsp_amount' => 'is_paid_by_dsp',
     ];
     return $fields[$amountField];
 }
