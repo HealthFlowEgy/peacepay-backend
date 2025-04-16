@@ -9,7 +9,7 @@
             @yield('breadcrumb')
         </div>
         <div class="right">
-            <div class="toggle-container">
+            <div class="toggle-container width-auto">
                 <a class="btn btn--base" href="{{route('user.profile.pin')}}">
                     @if(auth()->user()->pin_code)
                         {{__('Update PIN Code')}}
@@ -19,17 +19,25 @@
                 </a>
             </div>
 
-            <div class="toggle-container">
+            <div class="toggle-container width-auto">
                 <a class="btn btn--base" href="{{route('user.add.money.index')}}">
                     {{__('Add Money')}}
                 </a>
             </div>
 
-            <div class="toggle-container">
+            <div class="toggle-container width-auto">
                 <a class="btn btn--base" href="{{route('user.money.out.index')}}">
                     {{__('Money Out')}}
                 </a>
             </div>
+
+            @if(auth()->user()->type == 'seller')
+                <div class="toggle-container width-auto">
+                    <a class="btn btn--base" href="{{route('user.my-escrow.add')}}">
+                        {{__('Create Escrow')}}
+                    </a>
+                </div>
+            @endif
 
             <div class="toggle-container">
                 <div class="switch-toggles user_type_show {{ auth()->user()->type == 'buyer' ? 'active' : ''; }}" data-deactive="deactive">

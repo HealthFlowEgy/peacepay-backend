@@ -6200,3 +6200,7 @@ option {
   height: 100%;
   object-fit: cover;
 }
+
+.width-auto{
+  width: auto !important;
+}

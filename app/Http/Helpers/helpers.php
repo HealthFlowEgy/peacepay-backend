@@ -2122,11 +2122,11 @@ function update_project_localization_data()
 function mappingPolicyFields($amountField)
 {
     $fields = [
-        'delivery_fee_amount' => 'delivery_fee_payer',
-        'return_fee_amount' => 'return_fee_payer',
-        'advanced_payment_amount' => 'has_advanced_payment',
+        'delivery_fee_amount'     => 'delivery_fee_payer',
+        'return_fee_amount'       => 'return_fee_payer',
+        'advanced_payment_amount' => 'has_advanced_payment', // ده المبلغ الي هايروح للبايع علي طول من غير ما يتعمله هولد في بيس باي
         'delivery_timeframe_days' => 'has_delivery_timeframe',
-        'dsp_amount' => 'is_paid_by_dsp',
+        'dsp_amount'              => 'is_paid_by_dsp',
     ];
     return $fields[$amountField];
 }
@@ -2134,7 +2134,7 @@ function mappingPolicyFields($amountField)
 function fieldsAddedToAmount()
 {
     $fields = [
-        'advanced_payment_amount',
+        // 'advanced_payment_amount',
     ];
     return $fields;
 }
