@@ -30,13 +30,15 @@
                     @csrf
                     <div class="row">
                         
-                        <div class="col-xl-12 col-lg-12 form-group custom-toggle">
+                        <!-- <div class="col-xl-12 col-lg-12 form-group custom-toggle">
                             @include('admin.components.form.switcher',[
                                 'name'          => 'type',
                                 'value'         => old('type','buyer'),
-                                'options'       => ['Buyer' => 'buyer','Seller' => 'seller'],
+                                'options'       => ['Buyer' => 'buyer','Seller' => 'seller','Delivery' => 'delivery'],
                             ])
-                        </div>
+                        </div> -->
+
+                        <input type="hidden" name="type" value="buyer">
                         <div class="col-lg-6 col-md-12 form-group">
                             @include('admin.components.form.input',[
                                 'name'          => "firstname",

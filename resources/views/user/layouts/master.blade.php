@@ -44,10 +44,12 @@
 
     <script>
         // user account type change ajax 
-        $('.user_type').on('click',function(){ 
+        $('.user_type').on('click',function(){
+            var user_type = $(this).data('value');
             $.ajax({
             type:'get',
                 url:"{{ route('user.profile.type.update') }}", 
+                data:{user_type:user_type},
                 success:function(data){   
                     $.notify(
                             {

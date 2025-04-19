@@ -103,10 +103,10 @@ class ProfileController extends Controller
         return back()->with(['success' => [__('Password successfully updated!')]]);
     }
     //user profile type update ajax call 
-    public function profileTypeUpdate()
-    {
+    public function profileTypeUpdate(Request $request)
+    {        
         $user = User::find(auth()->user()->id);
-        ($user->type == 'buyer') ? $user->type = 'seller' : $user->type = 'buyer';
+        $user->type = $request->user_type;
 
         if ($user->update()) {
             return response()->json(['success' => __('Your profile type updated successfully')]);

@@ -37,10 +37,49 @@ use App\Notifications\Escrow\EscrowReleased;
 use App\Notifications\Escrow\EscrowDisputePayment;
 use App\Notifications\Escrow\EscrowReleasedRequest;
 use App\Events\User\NotificationEvent as UserNotificationEvent;
+use App\Models\Policy;
 
 class EscrowActionsController extends Controller
 {
     use ControlDynamicInputFields; 
+    
+    public function updateDelivery(Request $request, $id) {
+
+        $request->validate([
+            'mobile' => 'required|string|exists:users,mobile',
+        ]);
+        $escrow = Escrow::where('id', $id)->first();
+
+        $delivery = User::where('mobile', $request->mobile)->first();
+
+        $delivery_wallet = UserWallet::where('user_id',$delivery->id)
+            ->where('currency_id',$escrow->escrowCurrency->id)->first();
+
+        $policyDSP  = $escrow->policies()->where('field','dsp_amount')->first();
+        $policyDSPAmount = $policyDSP ? $policyDSP->pivot->fee : 0;
+
+        if($policyDSPAmount > $delivery_wallet->balance) {
+            return redirect()->back()->with(['error' => [__('Insufficient balance in delivery wallet')]]);
+        }
+        
+        $delivery_wallet->balance -= $policyDSPAmount;
+
+
+        DB::beginTransaction();
+        try{ 
+            $delivery_wallet->save();
+            
+            $escrow->update([
+                'delivery_id' => $delivery->id,
+            ]);
+            DB::commit();
+        }catch(Exception $e) {
+            DB::rollBack();
+            throw new Exception($e->getMessage());
+        }
+        return redirect()->route('user.my-escrow.index')->with(['success' => [__('Delivery has been updated successfully')]]);
+    }
+
     public function paymentApprovalPending($id) { 
         $page_title                  = "Payment Approval";
         $escrow                      = Escrow::findOrFail(decrypt($id));
@@ -574,10 +613,27 @@ class EscrowActionsController extends Controller
     //release payment to seller
     public function releasePayment(Request $request){
         $validator = Validator::make($request->all(),[
-            'target' => 'required',
+            'target'   => 'required',
+            'pin_code' => 'required|numeric',
         ]);
+
         $validated = $validator->validate();
         $escrow    = Escrow::findOrFail($validated['target']);
+        $policyDelivery  = $escrow->policies()->where('field','delivery_fee_amount')->first();
+        $policyDeliveryAmount = $policyDelivery ? $policyDelivery->pivot->fee : 0;
+
+        $policyDSP  = $escrow->policies()->where('field','dsp_amount')->first();
+        $policyDSPAmount = $policyDSP ? $policyDSP->pivot->fee : 0;
+
+        
+        if(!( auth()->user()->type == "delivery" && $escrow->delivery_id == auth()->user()->id )){
+            return redirect()->back()->with(['error' => [__('You are not authorized to access this page')]]);
+        }
+
+        if($escrow->pin_code != $validated['pin_code']){
+            return redirect()->back()->with(['error' => [__('Pin code is not matched')]]);
+        }
+
         $user      = User::findOrFail($escrow->user_id == auth()->user()->id ? $escrow->buyer_or_seller_id : $escrow->user_id);
         //status check 
         if($escrow->status != EscrowConstants::ONGOING) {
@@ -587,12 +643,18 @@ class EscrowActionsController extends Controller
         $wallet_user_id = $escrow->user_id == auth()->user()->id && $escrow->role == "buyer" ? $escrow->buyer_or_seller_id : $escrow->user_id; 
         $user_wallet           = UserWallet::where('user_id',$wallet_user_id)->where('currency_id',$escrow->escrowCurrency->id)->first();
         if(empty($user_wallet)) return redirect()->back()->with(['error' => [__('Seller Wallet not found')]]); 
-        $user_wallet->balance += $escrow->escrowDetails->seller_get;
+        $user_wallet->balance = ($user_wallet->balance + $escrow->escrowDetails->seller_get - $policyDeliveryAmount);
+
+        $delivery_wallet = UserWallet::where('user_id',$escrow->delivery_id)
+            ->where('currency_id',$escrow->escrowCurrency->id)->first();
+
+        $delivery_wallet->balance = ($delivery_wallet->balance + $policyDeliveryAmount + $policyDSPAmount);
 
         $escrow->status = EscrowConstants::RELEASED;
         DB::beginTransaction();
         try{ 
             $user_wallet->save();
+            $delivery_wallet->save();
             $escrow->save();
             
             DB::commit();

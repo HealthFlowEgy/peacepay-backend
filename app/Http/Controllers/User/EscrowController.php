@@ -54,6 +54,9 @@ class EscrowController extends Controller
         ->when(auth()->user()->type == 'buyer',function($q){
             $q->where('buyer_or_seller_id',auth()->user()->id);
         })
+        ->when(auth()->user()->type == 'delivery',function($q){
+            $q->where('delivery_id',auth()->user()->id);
+        })
         ->latest()->paginate(20);
         return view('user.my-escrow.index', compact('page_title','escrowData'));
     } 
@@ -571,6 +574,7 @@ class EscrowController extends Controller
                 'callback_ref'                => $tempData->identifier,
                 'return_price'                => $escrowData->return_price,
                 'delivery_timeframe'          => $escrowData->delivery_timeframe,
+                'pin_code'                    => rand(100000,999999),
             ]);
 
             

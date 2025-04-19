@@ -2134,7 +2134,7 @@ function mappingPolicyFields($amountField)
 function fieldsAddedToAmount()
 {
     $fields = [
-        // 'advanced_payment_amount',
+        
     ];
     return $fields;
 }

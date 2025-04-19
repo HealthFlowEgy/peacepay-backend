@@ -18,7 +18,8 @@ class Escrow extends Model
         'escrow_category_id' => 'integer', 
         'payment_gateway_currency_id' => 'integer', 
         'payment_type' => 'integer', 
-        'buyer_or_seller_id' => 'integer', 
+        'buyer_or_seller_id' => 'integer',
+        'delivery_id' => 'integer',
         'amount' => 'double',
         'escrow_id' => 'string', 
         'role' => 'string', 
@@ -37,6 +38,9 @@ class Escrow extends Model
     }
     public function userWillPay() {
         return $this->belongsTo(User::class,'buyer_or_seller_id');
+    }
+    public function delivery() {
+        return $this->belongsTo(User::class,'delivery_id');
     }
     public function escrowCategory()
     {

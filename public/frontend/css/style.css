@@ -957,7 +957,7 @@ blockquote .quote-icon {
   content: "";
   width: 50%;
   height: 40px;
-  background: var(--primary-color);
+  /* background: var(--primary-color); */
   right: -1px;
   top: 0;
   border-radius: 0 10px 10px 0;
@@ -966,7 +966,7 @@ blockquote .quote-icon {
 }
 .toggle-container .switch-toggles .switch {
   position: relative;
-  width: 50%;
+  width: 33.3%;
   line-height: 40px;
   float: left;
   text-align: center;
@@ -984,7 +984,7 @@ blockquote .quote-icon {
   color: #ffffff;
 }
 .toggle-container .switch-toggles.active::after {
-  background: var(--primary-color);
+  /* background: var(--primary-color); */
   right: 50%;
   border-radius: 10px 0 0 10px;
 }
@@ -6203,4 +6203,14 @@ option {
 
 .width-auto{
   width: auto !important;
+}
+.toggle-container .switch-toggles span{
+  color: #ffffff !important;
+}
+.toggle-container .switch-toggles .active {
+  background: var(--primary-color);
+}
+
+.toggle-container .user_type_show{
+  background: black;
 }

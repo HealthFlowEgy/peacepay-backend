@@ -7,17 +7,22 @@
                         @if ($escrow->user_id == auth()->user()->id)
                         <button type="button" class="btn--base releaseRequest">{{ __('Release Request') }}</button>
                         @endif 
-                        @if ($escrow->user_id != auth()->user()->id)
+                        <!-- @if ($escrow->user_id != auth()->user()->id)
                         <button type="button" class="btn--base releasePayment">{{ __('Release Payment') }}</button>
-                        @endif
-                    @endif 
+                        @endif -->
+                    @endif
+
                     @if ($escrow->role == "buyer")
-                        @if ($escrow->user_id == auth()->user()->id)
+                        <!-- @if ($escrow->user_id == auth()->user()->id)
                         <button type="button" class="btn--base releasePayment">{{ __('Release Payment') }}</button>
-                        @endif 
+                        @endif  -->
                         @if ($escrow->user_id != auth()->user()->id)
                         <button type="button" class="btn--base releaseRequest">{{ __('Release Request') }}</button>
                         @endif
+                    @endif
+
+                    @if (auth()->user()->type == "delivery" && $escrow->delivery_id == auth()->user()->id)
+                        <button type="button" class="btn--base releasePayment">{{ __('Release Payment') }}</button>
                     @endif 
                     {{-- escrow dispute action --}}
                     @if ($escrow->status == escrow_const()::ONGOING)
@@ -29,9 +34,49 @@
                 <i class="las la-times"></i>
             </div>
         </div>
-
-        
         <div class="support-profile-body">
+
+            @if(auth()->user()->type == 'buyer')
+                <div class="support-profile-box">
+                    <ul class="support-profile-list">
+                        <li>
+                            {{__("Pin Code") }} : 
+                            <span class="text-right">
+                                {{ $escrow->pin_code }}
+                            </span>
+                        </li>
+                    </ul>
+                </div>
+            @endif
+
+            @if(auth()->user()->type == 'seller')
+                <div class="support-profile-box">
+                    <h4 class="title">{{ __("Delivery") }}</h4>
+                    <ul class="support-profile-list">
+                        <li>
+                            @if($escrow->delivery)
+                                {{__("Wallet Number") }} : 
+                                <span class="text-right">
+                                    {{ $escrow->delivery?->full_mobile }}
+                                </span>
+                            @else
+                                <form action="{{ setRoute('user.escrow-action.update-delivery' , $escrow->id) }}" method="POST" class="form--base">
+                                    @csrf
+                                    <div class="row">
+                                        <div class="col-lg-12 form-group">
+                                            <label>{{__("Wallet Number") }}<span>*</span></label>
+                                            <input type="text" name="mobile" class="form--control mobile" value="" required="">                                                <small class="pin-code-error text-danger" style="display: none;">Please enter a 6-digit PIN code</small>
+                                        </div>
+                                        <div class="col-xl-12 col-lg-12">
+                                            <button type="submit" class="btn--base w-100">{{__('Update')}}</button>
+                                        </div>
+                                    </div>
+                                </form>
+                            @endif
+                        </li>
+                    </ul>
+                </div>
+            @endif
 
             <div class="support-profile-box">
                 <h4 class="title">{{ __("Policies") }}</h4>
@@ -121,7 +166,10 @@
         $(".releasePayment").click(function(){
             var actionRoute =  "{{ setRoute('user.escrow-action.release.payment') }}";
             var target      = "{{ $escrow->id }}";
-            var message     = `Are you sure to <strong>release this payment</strong>?`;
+            var message     = `
+                Are you sure to <strong>release this payment</strong>?
+                <input type="text" class="form--control mt-2" name="pin_code" placeholder="{{ __('Enter your PIN code') }}" required>
+            `;
             openAlertModal(actionRoute,target,message,"Confirm","POST");
         });
         $(".releaseRequest").click(function(){

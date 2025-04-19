@@ -40,12 +40,14 @@
             @endif
 
             <div class="toggle-container">
-                <div class="switch-toggles user_type_show {{ auth()->user()->type == 'buyer' ? 'active' : ''; }}" data-deactive="deactive">
+                <div class="switch-toggles user_type_show" data-deactive="deactive">
                     <input type="hidden" class="user_type_data" value="1">
-                    <span class="switch user_type" data-value="1">{{ __("Buyer") }}</span>
-                    <span class="switch user_type" data-value="0">{{ __("Seller") }}</span>
+                    <span class="switch user_type {{ auth()->user()->type == 'buyer' ? 'active' : ''; }}" data-value="buyer">{{ __("Buyer") }}</span>
+                    <span class="switch user_type {{ auth()->user()->type == 'seller' ? 'active' : ''; }}" data-value="seller">{{ __("Seller") }}</span>
+                    <span class="switch user_type {{ auth()->user()->type == 'delivery' ? 'active' : ''; }}" data-value="delivery">{{ __("Delivery") }}</span>
                 </div>
             </div>
+            
             <div class="header-notification-wrapper">
                 <button class="notification-icon notificationAction">
                     <i class="las la-bell"></i>
