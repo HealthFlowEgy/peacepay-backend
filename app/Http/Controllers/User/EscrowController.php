@@ -229,7 +229,7 @@ class EscrowController extends Controller
         $oldData = (object) [
             'buyer_or_seller_id'          => $opposite_user->id,
             'escrow_category_id'          => $validated['escrow_category'],
-            'delivery_timeframe'          => $validated['delivery_timeframe'],
+            'delivery_timeframe'          => $validated['delivery_timeframe'] ?? 0,
             'return_price'                => $validated['return_price'] ?? 0,
             'payment_type'                => $payment_type,
             'payment_gateway_currency_id' => $payment_type == EscrowConstants::GATEWAY ? $payment_gateways_currencies->id : null,
@@ -592,7 +592,7 @@ class EscrowController extends Controller
                 'created_at'                  => now(),
                 'callback_ref'                => $tempData->identifier,
                 'return_price'                => $escrowData->return_price ?? 0,
-                'delivery_timeframe'          => $escrowData->delivery_timeframe,
+                'delivery_timeframe'          => $escrowData->delivery_timeframe ?? 0,
                 'pin_code'                    => rand(100000, 999999),
             ]);
 
