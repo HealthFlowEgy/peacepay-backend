@@ -62,7 +62,7 @@
                             
                             <!-- Advanced Payment Responsibility -->
                             <div class="col-md-6 form-group">
-                                <label>{{ __('Advanced Payment Paid By') }}:</label>
+                                <label>{{ __('Has Advanced Payment?') }}:</label>
                                 <div class="radio-wrapper">
                                     <div class="radio-item">
                                         <input class="" type="radio" name="fields[has_advanced_payment]" id="has_advanced_payment_yes" value="1" {{ old('fields.has_advanced_payment') == '1' ? 'checked' : '' }}>
@@ -108,7 +108,7 @@
                             </div> -->
 
                             <!-- Advanced Payment Responsibility -->
-                            <div class="col-md-6 form-group">
+                            <!-- <div class="col-md-6 form-group">
                                 <label>{{ __('Is paid by DSP') }}:</label>
                                 <div class="radio-wrapper">
                                     <div class="radio-item">
@@ -124,7 +124,7 @@
                                         </label>
                                     </div>
                                 </div>
-                            </div>
+                            </div> -->
 
                         </div>
                         

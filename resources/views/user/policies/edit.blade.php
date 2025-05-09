@@ -60,7 +60,7 @@ __("Create New Policy")]) @endsection @section('content')
                             
                             <!-- Advanced Payment Responsibility -->
                             <div class="col-md-6 form-group">
-                                <label>Advanced Payment Paid By:</label>
+                                <label>{{ __('Has Advanced Payment?') }}:</label>
                                 <select name="fields[advanced_payment_payer]" class="form--control">
                                     <option value="buyer" {{ old('fields.advanced_payment_payer', $policyFields['advanced_payment_payer'] ?? '') == 'buyer' ? 'selected' : '' }}>Buyer</option>
                                     <option value="seller" {{ old('fields.advanced_payment_payer', $policyFields['advanced_payment_payer'] ?? '') == 'seller' ? 'selected' : '' }}>Seller</option>
@@ -77,7 +77,7 @@ __("Create New Policy")]) @endsection @section('content')
                             </div>
                              -->
                             <!-- Delivery Timeframe Option -->
-                            <div class="col-md-6 form-group">
+                            <!-- <div class="col-md-6 form-group">
                                 <label>Delivery Timeframe:</label>
                                 <div class="radio-wrapper">
                                     <div class="radio-item">
@@ -93,7 +93,7 @@ __("Create New Policy")]) @endsection @section('content')
                                         </label>
                                     </div>
                                 </div>
-                            </div>
+                            </div> -->
                         </div>
                         
                         <div class="row">

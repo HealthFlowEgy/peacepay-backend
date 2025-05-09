@@ -78,7 +78,7 @@
                                 <input type="number" name="delivery_price" class="form--control" value="{{ $user_pass_data['delivery_price'] ?? old('delivery_price') }}" placeholder="{{ __("enter delivery price") }}..." required>
                             </div> -->
 
-                            <div class="col-xl-6 col-lg-6 form-group">
+                            <!-- <div class="col-xl-6 col-lg-6 form-group">
                                 <label>{{ __("Return Price") }}</label>
                                 <input type="number" name="return_price" class="form--control" value="{{ $user_pass_data['return_price'] ?? old('return_price') }}" placeholder="{{ __("enter return price") }}...">
                             </div>
@@ -86,7 +86,7 @@
                             <div class="col-xl-6 col-lg-6 form-group">
                                 <label>{{ __("Delivery Timeframe Days") }}</label>
                                 <input type="number" name="delivery_timeframe" class="form--control" value="{{ $user_pass_data['delivery_timeframe'] ?? old('delivery_timeframe') }}" placeholder="{{ __("enter delivery timeframe") }}...">
-                            </div>
+                            </div> -->
 
 
 

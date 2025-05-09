@@ -151,7 +151,7 @@
                                 </div>
                             @endforeach
 
-                            <div class="preview-list-item">
+                            <!-- <div class="preview-list-item">
                                 <div class="preview-list-left">
                                     <div class="preview-list-user-wrapper">
                                         <div class="preview-list-user-icon">
@@ -167,10 +167,10 @@
                                         {{ $escrow->delivery_timeframe }} {{ __('Days') }}
                                     </span>
                                 </div>
-                            </div>
+                            </div> -->
     
     
-                            <div class="preview-list-item">
+                            <!-- <div class="preview-list-item">
                                 <div class="preview-list-left">
                                     <div class="preview-list-user-wrapper">
                                         <div class="preview-list-user-icon">
@@ -186,7 +186,7 @@
                                         {{ $escrow->return_price }}  {{ $escrow->escrow_currency }}
                                     </span>
                                 </div>
-                            </div>
+                            </div> -->
                             
 
                         </div>

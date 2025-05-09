@@ -96,12 +96,12 @@
                                                 </tr> -->
                                                 @endif
                                                 
-                                                @if(isset($fields['has_delivery_timeframe']))
+                                                <!-- @if(isset($fields['has_delivery_timeframe']))
                                                 <tr>
                                                     <td><strong>Delivery Timeframe:</strong></td>
                                                     <td>{{ $fields['has_delivery_timeframe'] == 1 ? 'Yes, included' : 'Not required' }}</td>
                                                 </tr>
-                                                @endif
+                                                @endif -->
 
                                                 @if(isset($fields['is_paid_by_dsp']))
                                                 <tr>

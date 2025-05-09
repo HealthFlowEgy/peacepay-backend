@@ -92,19 +92,19 @@
                         </li>
                     @endforeach
 
-                    <li>
+                    <!-- <li>
                         {{__("Delivery Timeframe") }} : 
                         <span class="text-right">
                             {{ $escrow->delivery_timeframe }}
                         </span>
-                    </li>
+                    </li> -->
 
-                    <li>
+                    <!-- <li>
                         {{__("Return Price") }} : 
                         <span class="text-right">
                             {{ $escrow->return_price }}
                         </span>
-                    </li>
+                    </li> -->
 
                     
                 </ul>
