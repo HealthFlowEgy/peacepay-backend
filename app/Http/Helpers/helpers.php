@@ -2131,6 +2131,43 @@ function mappingPolicyFields($amountField)
     return $fields[$amountField];
 }
 
+function checkDelivery($policy,$sender_currency,$delivery_fee_amount)
+{
+    if($policy->fields['delivery_fee_payer'] == 'seller'){
+        $user_wallet           = UserWallet::where(['user_id' => auth()->user()->id, 'currency_id' => $sender_currency->id])->first();
+        $user_balance          = $user_wallet->balance;
+
+        if($delivery_fee_amount > $user_balance){
+            return 0;
+        }
+    }
+
+    return 1;
+}
+
+function returnEscrowMoney($escrow)
+{
+    DB::beginTransaction();
+    try {
+        foreach ($escrow->policies as $policy) {
+            if ($policy->pivot->field == 'delivery_fee_amount' && $policy->pivot->collected_from == 'seller') {
+                $delivery_wallet = UserWallet::where(['user_id' => $escrow->user_id, 'currency_id' => $escrow->escrowCurrency->id])->first();
+                $delivery_wallet->balance += $policy->pivot->fee;
+                $delivery_wallet->save();
+            }
+        }
+    
+        $escrow->update([
+            'status' => 7
+        ]);
+        DB::commit();
+    } catch (Exception $e) {
+        DB::rollBack();
+        throw new Exception($e->getMessage());
+    }
+    
+}
+
 function fieldsAddedToAmount()
 {
     $fields = [
@@ -2430,3 +2467,4 @@ function deductFromUser(string $userToken, float $amount, ?string $description =
         throw $e;
     }
 }
+

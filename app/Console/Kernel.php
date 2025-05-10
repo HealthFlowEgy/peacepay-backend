@@ -16,7 +16,11 @@ class Kernel extends ConsoleKernel
     protected function schedule(Schedule $schedule)
     {
         // $schedule->command('inspire')->hourly();
-    } 
+        
+        // Add your escrow cancellation command here
+        $schedule->command('escrow:cancel-inactive')->daily();
+    }
+
     /**
      * Register the commands for the application.
      *

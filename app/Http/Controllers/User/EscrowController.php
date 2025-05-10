@@ -119,6 +119,8 @@ class EscrowController extends Controller
         if ($validator->fails()) {
             return back()->withErrors($validator)->withInput();
         }
+
+
         $validated            = $validator->validate();
         $validated['role']    = 'seller';
         $escrowCategory       = EscrowCategory::find($validated['escrow_category']);
@@ -127,6 +129,16 @@ class EscrowController extends Controller
         $digitShow            = $sender_currency->type == "CRYPTO" ? 6 : 2;
         $opposite_user                 = User::where('username', $validated['buyer_seller_identify'])->orWhere('email', $validated['buyer_seller_identify'])
             ->orWhere('mobile', $validated['buyer_seller_identify'])->first();
+
+        $policy = Policy::find($validated['policy_id']);
+        $checkDelivery = checkDelivery($policy, $sender_currency, $request['field']['delivery_fee_amount']);
+
+        if ($checkDelivery == 0) {
+            return redirect()->back()->withInput()->with(['error' => [__('Insufficient balance In delivery fee')]]);
+        }
+
+
+
         //user check 
         if (empty($opposite_user)
             //  || $opposite_user->email == auth()->user()->email
@@ -157,7 +169,6 @@ class EscrowController extends Controller
 
         $request_amount = $validated['amount'];
 
-        $policy = Policy::find($validated['policy_id']);
         foreach ($validated['field'] as $field => $amount) {
             if (in_array($field, fieldsAddedToAmount())) {
                 $request_amount += $amount;
@@ -315,6 +326,15 @@ class EscrowController extends Controller
         }
         $identifier = $request->identifier ?? session()->get('identifier');
         $tempData   = TemporaryData::where("identifier", $identifier)->first();
+        $sender_currency      = Currency::where('code', $tempData->data->escrow->escrow_currency)->first();
+
+        $policy = Policy::find($tempData->data->policy_id);
+        $checkDelivery = checkDelivery($policy, $sender_currency, $tempData->data->field->delivery_fee_amount);
+
+        if ($checkDelivery == 0) {
+            return redirect()->back()->withInput()->with(['error' => [__('Insufficient balance In delivery fee')]]);
+        }
+
         if ($tempData->data->escrow->role == EscrowConstants::SELLER_TYPE) {
             $this->createEscrow($tempData);
             return redirect()->route('user.my-escrow.index')->with(['success' => [__('Escrow created successfully')]]);
@@ -553,6 +573,7 @@ class EscrowController extends Controller
         $escrowData = $tempData->data->escrow;
         $policy_id = $tempData->data->policy_id ?? null;
         $fields = (array) $tempData->data->field ?? [];
+
         if ($setStatus == null) {
             $status = 0;
             if ($escrowData->role == "seller") {
@@ -600,6 +621,14 @@ class EscrowController extends Controller
             $escrowCreate->policies()->detach(); // Remove all existing policies first
 
             $policy = Policy::find($policy_id);
+
+            if ($policy->fields['delivery_fee_payer'] == 'seller') {
+                $sender_currency      = Currency::where('code', $escrowData->escrow_currency)->first();
+
+                $user_wallet = UserWallet::where(['user_id' => auth()->user()->id, 'currency_id' => $sender_currency->id])->first();
+                $user_wallet->balance -= $fields['delivery_fee_amount'];
+                $user_wallet->save();
+            }
 
             foreach ($fields as $field => $fee) {
 

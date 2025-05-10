@@ -1,0 +1,24 @@
+SSH into your droplet:
+bashssh username@your-droplet-ip
+
+Open the crontab editor:
+bashcrontab -e
+
+If this is your first time using crontab, it might ask you to choose an editor. Nano is often easiest for beginners (usually option 1).
+
+
+Add the Laravel scheduler command:
+In the editor, add this line (replace the path with your actual project path):
+* * * * * cd /var/www/your-project-folder && php artisan schedule:run >> /dev/null 2>&1
+For example, if your Laravel project is in /var/www/healthpay:
+* * * * * cd /var/www/healthpay && php artisan schedule:run >> /dev/null 2>&1
+
+Save and exit:
+
+If using nano: Press Ctrl+O to save, then Enter to confirm, then Ctrl+X to exit.
+If using vim: Press Esc, then type :wq and press Enter.
+
+
+Verify the crontab was saved:
+bashcrontab -l
+You should see your newly added cron job.
