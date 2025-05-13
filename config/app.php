@@ -211,7 +211,7 @@ return [
         // Get Client Browser Information
         Jenssegers\Agent\AgentServiceProvider::class,
         Unicodeveloper\Paystack\PaystackServiceProvider::class,
-        
+
 
         // Import/Export Excel
         Maatwebsite\Excel\ExcelServiceProvider::class,
@@ -239,5 +239,6 @@ return [
         'Paystack'  => Unicodeveloper\Paystack\Facades\Paystack::class,
     ])->toArray(),
 
-    'expire_seconds' => 1
+    'expire_seconds' => 1,
+    'peacepay_rate' => 0.005
 ];

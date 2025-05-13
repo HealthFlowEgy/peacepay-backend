@@ -108,7 +108,7 @@ class EscrowActionsController extends Controller
         }
 
         returnEscrowMoney($escrow);
-        
+
         return redirect()->route('user.my-escrow.index')->with(['success' => [__('You have canceled the payment')]]);
     }
     //payment approvel submit when seller will send payment request to buyer 
@@ -213,9 +213,23 @@ class EscrowActionsController extends Controller
         $user_wallet->balance -= $buyer_amount;
         $escrowData->escrowDetails->buyer_pay = $buyer_amount;
 
+        $advanced_payment_amount = 0;
+
+        foreach ($escrowData->policies as $policy) {
+            if ($policy->pivot->field == 'advanced_payment_amount') {
+                $advanced_payment_amount = $policy->pivot->fee;
+            }
+        }
+
+        $seller_wallet = UserWallet::where(['user_id' => $escrowData->user_id, 'currency_id' => $sender_currency->id])->first();
+
+        $fee = $advanced_payment_amount * config('app.peacepay_rate');
+        $seller_wallet->balance += ($advanced_payment_amount - $fee);
+
         DB::beginTransaction();
         try {
             $user_wallet->save();
+            $seller_wallet->save();
             $escrowData->escrowDetails->save();
             DB::commit();
             $this->approvelNotificationSend($escrowData->user, $escrowData);
