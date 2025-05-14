@@ -43,15 +43,16 @@ class RegisterController extends Controller
      *
      * @return \Illuminate\View\View
      */
-    public function showRegistrationForm() {
-        if($agree_policy = $this->basic_settings->user_registration == 0){
+    public function showRegistrationForm()
+    {
+        if ($agree_policy = $this->basic_settings->user_registration == 0) {
             return back()->with(['error' => ["User registration is now off"]]);
         }
         $client_ip = request()->ip() ?? false;
         $user_country = geoip()->getLocation($client_ip)['country'] ?? "";
 
         $page_title = setPageTitle("User Registration");
-        return view('user.auth.register',compact(
+        return view('user.auth.register', compact(
             'page_title',
             'user_country',
         ));
@@ -64,33 +65,33 @@ class RegisterController extends Controller
      * @return \Illuminate\Http\RedirectResponse|\Illuminate\Http\JsonResponse
      */
     public function register(Request $request)
-    { 
+    {
         $validated = $this->validator($request->all())->validate();
-        
+
         $existsUser = User::where([
             'mobile' => $validated['mobile'],
             'registered' => 1,
         ])->first();
-        if($existsUser){
+        if ($existsUser) {
             return redirect()->back()->with([
                 'error' => ['Mobile number already registered.'],
             ]);
         }
 
         $basic_settings             = $this->basic_settings;
-        
-        $validated = Arr::except($validated,['agree']);
-        $validated['email_verified']    = ($basic_settings->email_verification == true) ? false : true; 
+
+        $validated = Arr::except($validated, ['agree']);
+        $validated['email_verified']    = ($basic_settings->email_verification == true) ? false : true;
         $validated['sms_verified']      = ($basic_settings->sms_verification == true) ? false : true;
         $validated['kyc_verified']      = ($basic_settings->kyc_verification == true) ? false : true;
         $validated['password']          = Hash::make($validated['password']);
-        $validated['username']          = make_username($validated['firstname'],$validated['lastname']); 
+        $validated['username']          = make_username($validated['firstname'], $validated['lastname']);
         $validated['mobile_code']       = env('MOBILE_CODE');
-        $validated['full_mobile']       = env('MOBILE_CODE').$validated['mobile'];
-        $validated['email']             = env('MOBILE_CODE').$validated['mobile'].'_'.time().'@example.com';
-        $validated['user_exists']       = User::where('mobile',$validated['mobile'])->first() ? true:false;
+        $validated['full_mobile']       = env('MOBILE_CODE') . $validated['mobile'];
+        $validated['email']             = env('MOBILE_CODE') . $validated['mobile'] . '_' . time() . '@example.com';
+        $validated['user_exists']       = User::where('mobile', $validated['mobile'])->first() ? true : false;
         $validated['address']       = [
-            'country'   => 'Egypt'
+            'country'   => 'Saudi Arabia'
         ];
 
         event(new Registered($user = $this->create($validated)));
@@ -106,27 +107,28 @@ class RegisterController extends Controller
      * @param  array  $data
      * @return \Illuminate\Contracts\Validation\Validator
      */
-    public function validator(array $data) {
+    public function validator(array $data)
+    {
 
         $basic_settings = $this->basic_settings;
         $passowrd_rule = "required|string|min:6";
-        if($basic_settings->secure_password) {
-            $passowrd_rule = ["required",Password::min(8)->letters()->mixedCase()->numbers()->symbols()->uncompromised()];
+        if ($basic_settings->secure_password) {
+            $passowrd_rule = ["required", Password::min(8)->letters()->mixedCase()->numbers()->symbols()->uncompromised()];
         }
-        if($basic_settings->agree_policy){
+        if ($basic_settings->agree_policy) {
             $agree = 'required|in:on';
-        }else{
+        } else {
             $agree = 'nullable';
         }
         $messages = [
             'mobile.regex' => 'The mobile number must start with 0.',
         ];
-        return Validator::make($data,[
+        return Validator::make($data, [
             'firstname'     => 'required|string|max:60',
             'lastname'      => 'required|string|max:60',
             'type'          => 'required|string|max:60',
             'mobile'        => 'required|string|max:11|min:11|regex:/^0/',
-            'password'      => $passowrd_rule, 
+            'password'      => $passowrd_rule,
             'agree'         => $agree,
         ], $messages);
     }
@@ -140,7 +142,7 @@ class RegisterController extends Controller
      */
     protected function create(array $data)
     {
-        if($data['user_exists']){
+        if ($data['user_exists']) {
             $user = User::where('mobile', $data['mobile'])->first();
             $user->firstname = $data['firstname'];
             $user->lastname = $data['lastname'];

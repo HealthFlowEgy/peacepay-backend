@@ -55,7 +55,7 @@ class ProfileController extends Controller
         // $validated['full_mobile']   = $complete_phone;
         $validated                  = Arr::except($validated, ['agree', 'phone_code', 'phone']);
         $validated['address']       = [
-            'country'   => $validated['country'] ?? "Egypt",
+            'country'   => $validated['country'] ?? "Saudi Arabia",
             'state'     => $validated['state'] ?? "",
             'city'      => $validated['city'] ?? "",
             'zip'       => $validated['zip_code'] ?? "",
@@ -104,7 +104,7 @@ class ProfileController extends Controller
     }
     //user profile type update ajax call 
     public function profileTypeUpdate(Request $request)
-    {        
+    {
         $user = User::find(auth()->user()->id);
         $user->type = $request->user_type;
 
