@@ -37,7 +37,7 @@
                                 </ul>
                             </td>
                             <td>{{ __("App Name") }}</td>
-                            <td><span>{{ env("APP_NAME","AppDevs") }}</span></td>
+                            <td><span>{{ env("APP_NAME","") }}</span></td>
                         </tr>
                         <tr>
                             <td>
