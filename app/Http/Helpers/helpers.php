@@ -2131,18 +2131,75 @@ function mappingPolicyFields($amountField)
     return $fields[$amountField];
 }
 
-function checkDelivery($policy,$sender_currency,$delivery_fee_amount)
+function checkDelivery($policy, $sender_currency, $delivery_fee_amount)
 {
-    if($policy->fields['delivery_fee_payer'] == 'seller'){
+    if ($policy->fields['delivery_fee_payer'] == 'seller') {
         $user_wallet           = UserWallet::where(['user_id' => auth()->user()->id, 'currency_id' => $sender_currency->id])->first();
         $user_balance          = $user_wallet->balance;
 
-        if($delivery_fee_amount > $user_balance){
+        if ($delivery_fee_amount > $user_balance) {
             return 0;
         }
     }
 
     return 1;
+}
+
+function getDeliveryAmountOnBuyer($escrow)
+{
+    $delivery_fee_amount = 0;
+
+    foreach ($escrow->policies as $policy) {
+        if ($policy->pivot->field == 'delivery_fee_amount' && $policy->pivot->collected_from == 'buyer') {
+            $delivery_fee_amount = $policy->pivot->fee;
+        }
+    }
+
+    return $delivery_fee_amount;
+}
+
+function getDeliveryAmountOnSeller($escrow)
+{
+    $delivery_fee_amount = 0;
+
+    foreach ($escrow->policies as $policy) {
+        if ($policy->pivot->field == 'delivery_fee_amount' && $policy->pivot->collected_from == 'seller') {
+            $delivery_fee_amount = $policy->pivot->fee;
+        }
+    }
+
+    return $delivery_fee_amount;
+}
+
+function getAdvancedPaymentAmountOfEscrow($escrow)
+{
+    $advanced_payment_amount = 0;
+
+    foreach ($escrow->policies as $policy) {
+        if ($policy->pivot->field == 'advanced_payment_amount') {
+            $advanced_payment_amount = $policy->pivot->fee;
+        }
+    }
+
+    return $advanced_payment_amount;
+}
+
+function getAdvancedPaymentAmountOfEscrowPlusFee($escrow)
+{
+    $advanced_payment_amount = getAdvancedPaymentAmountOfEscrow($escrow);
+    $fee = $advanced_payment_amount * config('app.peacepay_rate');
+
+    $advanced_payment_amount = $advanced_payment_amount + $fee;
+    return $advanced_payment_amount;
+}
+
+function getAdvancedPaymentAmountOfEscrowMinusFee($escrow)
+{
+    $advanced_payment_amount = getAdvancedPaymentAmountOfEscrow($escrow);
+    $fee = $advanced_payment_amount * config('app.peacepay_rate');
+
+    $advanced_payment_amount = $advanced_payment_amount - $fee;
+    return $advanced_payment_amount;
 }
 
 function returnEscrowMoney($escrow)
@@ -2156,7 +2213,7 @@ function returnEscrowMoney($escrow)
                 $delivery_wallet->save();
             }
         }
-    
+
         $escrow->update([
             'status' => 7
         ]);
@@ -2165,14 +2222,11 @@ function returnEscrowMoney($escrow)
         DB::rollBack();
         throw new Exception($e->getMessage());
     }
-    
 }
 
 function fieldsAddedToAmount()
 {
-    $fields = [
-        
-    ];
+    $fields = [];
     return $fields;
 }
 
@@ -2184,19 +2238,20 @@ function fieldsAddedToAmountIfFromBuyer()
     return $fields;
 }
 
-function getValueFromGatewayCredentials($gateway, $keywords) {
+function getValueFromGatewayCredentials($gateway, $keywords)
+{
     $result = "";
     $outer_break = false;
-    foreach($keywords as $item) {
-        if($outer_break == true) {
+    foreach ($keywords as $item) {
+        if ($outer_break == true) {
             break;
         }
         $modify_item = \App\Http\Helpers\PaymentGateway::makePlainText($item);
-        foreach($gateway->credentials ?? [] as $gatewayInput) {
+        foreach ($gateway->credentials ?? [] as $gatewayInput) {
             $label = $gatewayInput->label ?? "";
             $label = \App\Http\Helpers\PaymentGateway::makePlainText($label);
 
-            if($label == $modify_item) {
+            if ($label == $modify_item) {
                 $result = $gatewayInput->value ?? "";
                 $outer_break = true;
                 break;
@@ -2258,7 +2313,7 @@ function getAuthHealthpayMerchant($gateway)
 }
 
 
-function loginHealthpayUser(string $mobile, string $lastName, string $firstName, ?string $email = null,$gateway,$merchantToken)
+function loginHealthpayUser(string $mobile, string $lastName, string $firstName, ?string $email = null, $gateway, $merchantToken)
 {
     $mutation = '
         mutation loginUser(
@@ -2355,7 +2410,7 @@ function authHealthpayUser(string $mobile, string $otp, bool $isProvider)
     return $data['data']['authUser'] ?? [];
 }
 
-function getUserHealthpayWallet($userToken,$gateway)
+function getUserHealthpayWallet($userToken, $gateway)
 {
     $query = '
         query userWallet($userToken: String!) {
@@ -2401,13 +2456,13 @@ function getUserHealthpayWallet($userToken,$gateway)
 
 
 
-function deductFromUser(string $userToken, float $amount, ?string $description = null,$gateway)
+function deductFromUser(string $userToken, float $amount, ?string $description = null, $gateway)
 {
     // Validate input
     if (empty($userToken)) {
         throw new \InvalidArgumentException('User token is required');
     }
-    
+
     if ($amount <= 0) {
         throw new \InvalidArgumentException('Amount must be greater than 0');
     }
@@ -2452,19 +2507,17 @@ function deductFromUser(string $userToken, float $amount, ?string $description =
 
         // Parse the response
         $data = $response->json();
-        
+
         if (isset($data['errors'])) {
             $errorMessages = array_map(function ($error) {
                 return $error['message'] ?? 'Unknown error';
             }, $data['errors']);
-            
+
             throw new \Exception('GraphQL errors: ' . implode(', ', $errorMessages));
         }
 
         return $data['data']['deductFromUser']['isSuccess'] ?? false;
-
     } catch (\Exception $e) {
         throw $e;
     }
 }
-

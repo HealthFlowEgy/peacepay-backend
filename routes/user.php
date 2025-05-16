@@ -117,6 +117,7 @@ Route::prefix("user")->name("user.")->group(function () {
         Route::post('escrow/conversation/file-upload', 'chatFileUpload')->name('conversation.file.upload');
         //dispute payment request
         Route::post('escrow/dispute-payment', 'disputePayment')->name('dispute.payment');
+        Route::post('escrow/return-payment', 'returnPayment')->name('return.payment');
         //release payment request
         Route::post('escrow/release-payment', 'releasePayment')->name('release.payment');
         Route::post('escrow/release-request', 'releaseRequest')->name('release.request');

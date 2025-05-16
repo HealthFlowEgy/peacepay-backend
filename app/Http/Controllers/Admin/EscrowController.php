@@ -116,27 +116,28 @@ class EscrowController extends Controller
     public function escrowChat($id)
     {
         $page_title = "Escrow Conversation";
-        $escrows = Escrow::with('escrowDetails','conversations')->findOrFail($id);
+        $escrows = Escrow::with('escrowDetails', 'conversations')->findOrFail($id);
         return view('admin.sections.escrow.conversation', compact(
             'page_title',
             'escrows'
         ));
     }
     //escrow conversation message send
-    public function messageSend(Request $request) {
-        $validator = Validator::make($request->all(),[
+    public function messageSend(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
             'message'       => 'required|string|max:200',
             'escrow_id' => 'required|string',
         ]);
-        if($validator->fails()) {
+        if ($validator->fails()) {
             $error = ['error' => $validator->errors()];
-            return Response::error($error,null,400);
+            return Response::error($error, null, 400);
         }
         $validated = $validator->validate();
-        
+
         $escrow = Escrow::findOrFail($validated['escrow_id']);
-        
-        if(!$escrow) return Response::error(['error' => ['This escrow is closed.']]);
+
+        if (!$escrow) return Response::error(['error' => ['This escrow is closed.']]);
 
         $data = [
             'escrow_id'    => $escrow->id,
@@ -146,60 +147,60 @@ class EscrowController extends Controller
             'receiver_type'             => "USER",
         ];
 
-        try{
-            $chat_data = EscrowChat::create($data); 
-        }catch(Exception $e) {
+        try {
+            $chat_data = EscrowChat::create($data);
+        } catch (Exception $e) {
             return $e;
             $error = ['error' => ['Message Sending faild! Please try again.']];
-            return Response::error($error,null,500);
+            return Response::error($error, null, 500);
         }
 
-        try{
-            event(new EscrowConversationEvent($escrow,$chat_data));
-        }catch(Exception $e) {
+        try {
+            event(new EscrowConversationEvent($escrow, $chat_data));
+        } catch (Exception $e) {
             return $e;
             $error = ['error' => ['SMS Sending faild! Please try again.']];
-            return Response::error($error,null,500);
+            return Response::error($error, null, 500);
         }
     }
     //payment release 
-    public function releasePayment(Request $request, $type){
-        $validator = Validator::make($request->all(),[
-            'target'       => 'required', 
+    public function releasePayment(Request $request, $type)
+    {
+        $validator = Validator::make($request->all(), [
+            'target'       => 'required',
         ]);
         $validated = $validator->validate();
         $escrow = Escrow::findOrFail($validated['target']);
-         //status check 
-        if($escrow->status != EscrowConstants::ACTIVE_DISPUTE) {
+        //status check 
+        if ($escrow->status != EscrowConstants::ACTIVE_DISPUTE) {
             return redirect()->back()->with(['error' => ['Something went wrong']]);
         }
         if ($escrow->role == $type) {
             $targetUserId = $escrow->user_id;
-        }else{
+        } else {
             $targetUserId = $escrow->buyer_or_seller_id;
         }
-        
+
         if ($type == "seller") {
             $currencyId = $escrow->escrowCurrency->id;
-        }else if($type == "buyer"){
+        } else if ($type == "buyer") {
             if ($escrow->payment_type == EscrowConstants::MY_WALLET) {
                 $currencyId = $escrow->escrowCurrency->id;
-            }else if($escrow->payment_type == EscrowConstants::GATEWAY){
+            } else if ($escrow->payment_type == EscrowConstants::GATEWAY) {
                 $currencyId = $escrow->paymentGatewayCurrency->currency->id;
             }
-            
         }
-        $userWallet = UserWallet::where('user_id',$targetUserId)->where('currency_id',$currencyId)->first(); 
+        $userWallet = UserWallet::where('user_id', $targetUserId)->where('currency_id', $currencyId)->first();
         //check release amount 
         if ($type == "seller") {
-            $releaseAmount = $escrow->escrowDetails->seller_get;
-        }else {
+            $releaseAmount = $escrow->escrowDetails->seller_get + getAdvancedPaymentAmountOfEscrowPlusFee($escrow);
+        } else {
             $releaseAmount = $escrow->escrowDetails->buyer_pay;
         }
-        $userWallet->balance += $releaseAmount;  
+        $userWallet->balance += $releaseAmount;
         $escrow->status = EscrowConstants::RELEASED;
         DB::beginTransaction();
-        try{ 
+        try {
             $userWallet->save();
             $escrow->save();
             DB::commit();
@@ -218,10 +219,10 @@ class EscrowController extends Controller
                     'user_id'  =>  $targetUserId,
                     'message'   => $notification_content,
                 ]);
-                $targetUser->notify(new EscrowReleased($targetUser,$escrow));
+                $targetUser->notify(new EscrowReleased($targetUser, $escrow));
                 //Push Notifications
-                event(new UserNotificationEvent($notification_content,$targetUser));
-                send_push_notification(["user-".$targetUser->id],[
+                event(new UserNotificationEvent($notification_content, $targetUser));
+                send_push_notification(["user-" . $targetUser->id], [
                     'title'     => $notification_content['title'],
                     'body'      => $notification_content['message'],
                     'icon'      => $notification_content['image'],
@@ -229,33 +230,33 @@ class EscrowController extends Controller
             } catch (\Throwable $th) {
                 //throw $th;
             }
-      
-        }catch(Exception $e) {
+        } catch (Exception $e) {
             DB::rollBack();
             throw new Exception($e->getMessage());
-        } 
+        }
 
         return  redirect()->back()->with(['success' => ['Payment released successfully']]);
     }
     //manual payment approval
-    public function manualPaymentApproved(Request $request){
-        $validator = Validator::make($request->all(),[
+    public function manualPaymentApproved(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
             'id' => 'required|integer',
         ]);
-        if($validator->fails()) {
+        if ($validator->fails()) {
             return back()->withErrors($validator)->withInput();
         }
         $escrow = Escrow::findOrFail($request->id);
         $escrow->status = EscrowConstants::ONGOING;
-        try{ 
+        try {
             $escrow->save();
             if ($escrow->role == "buyer") {
                 $targetUserId = $escrow->user_id;
-            }else{
+            } else {
                 $targetUserId = $escrow->buyer_or_seller_id;
             }
             $targetUser = User::findOrFail($targetUserId);
-            $targetUser->notify(new EscrowPaymentApprovel($targetUser,$escrow));
+            $targetUser->notify(new EscrowPaymentApprovel($targetUser, $escrow));
             $notification_content = [
                 'title'         => "Payment approved",
                 'message'       => "Admin approved your payment",
@@ -269,33 +270,34 @@ class EscrowController extends Controller
                 'message'   => $notification_content,
             ]);
             //Push Notifications
-            event(new UserNotificationEvent($notification_content,$targetUser));
-            send_push_notification(["user-".$targetUser->id],[
+            event(new UserNotificationEvent($notification_content, $targetUser));
+            send_push_notification(["user-" . $targetUser->id], [
                 'title'     => $notification_content['title'],
                 'body'      => $notification_content['message'],
                 'icon'      => $notification_content['image'],
             ]);
             return redirect()->back()->with(['success' => ['Escrow request approved successfully']]);
-        }catch(Exception $e){
+        } catch (Exception $e) {
             return back()->with(['error' => [$e->getMessage()]]);
         }
     }
     //manual payment rejection 
-    public function manualPaymentRejected(Request $request){
-        $validator = Validator::make($request->all(),[
+    public function manualPaymentRejected(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
             'id' => 'required|integer',
             'reject_reason' => 'required|string|max:200',
         ]);
-        if($validator->fails()) {
+        if ($validator->fails()) {
             return back()->withErrors($validator)->withInput();
-        } 
+        }
         $escrow = Escrow::findOrFail($request->id);
         $escrow->reject_reason = $request->reject_reason;
         $escrow->status = EscrowConstants::CANCELED;
-        try{ 
+        try {
             $escrow->save();
             return redirect()->back()->with(['success' => ['Escrow request rejected successfully']]);
-        }catch(Exception $e){
+        } catch (Exception $e) {
             return back()->with(['error' => [$e->getMessage()]]);
         }
     }

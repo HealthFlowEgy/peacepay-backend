@@ -213,18 +213,10 @@ class EscrowActionsController extends Controller
         $user_wallet->balance -= $buyer_amount;
         $escrowData->escrowDetails->buyer_pay = $buyer_amount;
 
-        $advanced_payment_amount = 0;
-
-        foreach ($escrowData->policies as $policy) {
-            if ($policy->pivot->field == 'advanced_payment_amount') {
-                $advanced_payment_amount = $policy->pivot->fee;
-            }
-        }
-
         $seller_wallet = UserWallet::where(['user_id' => $escrowData->user_id, 'currency_id' => $sender_currency->id])->first();
 
-        $fee = $advanced_payment_amount * config('app.peacepay_rate');
-        $seller_wallet->balance += ($advanced_payment_amount - $fee);
+
+        $seller_wallet->balance += getAdvancedPaymentAmountOfEscrowMinusFee($escrowData);
 
         DB::beginTransaction();
         try {
@@ -593,6 +585,42 @@ class EscrowActionsController extends Controller
             $message = ['success' => [__('File Uploaded Success')]];
             return Helpers::success($message, $data);
         }
+    }
+
+    public function returnPayment(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'target' => 'required',
+        ]);
+        $validated = $validator->validate();
+        $escrow    = Escrow::findOrFail($validated['target']);
+        $delivery_fee_amount_buyer = getDeliveryAmountOnBuyer($escrow);
+        $delivery_fee_amount_seller = getDeliveryAmountOnSeller($escrow);
+
+
+        $delivery_wallet = UserWallet::where('user_id', $escrow->delivery_id)->where('currency_id', $escrow->escrowCurrency->id)->first();
+        // $seller_wallet = UserWallet::where('user_id', $escrow->user_id)->where('currency_id', $escrow->escrowCurrency->id)->first();
+        $buyer_wallet = UserWallet::where('user_id', $escrow->buyer_or_seller_id)->where('currency_id', $escrow->escrowCurrency->id)->first();
+
+
+        $delivery_wallet->balance = $delivery_fee_amount_buyer + $delivery_fee_amount_seller;
+        // $seller_wallet->balance -= $delivery_fee_amount_seller;
+        $buyer_wallet->balance -= $delivery_fee_amount_buyer;
+
+        $escrow->status = EscrowConstants::REFUNDED;
+        DB::beginTransaction();
+        try {
+            $delivery_wallet->save();
+            // $seller_wallet->save();
+            $buyer_wallet->save();
+            $escrow->save();
+
+            DB::commit();
+        } catch (Exception $e) {
+            DB::rollBack();
+            return redirect()->back()->with(['error' => [__('Something went wrong')]]);
+        }
+        return redirect()->route('user.my-escrow.index')->with(['success' => [__('Returned Done')]]);
     }
     //dispute payment 
     public function disputePayment(Request $request)

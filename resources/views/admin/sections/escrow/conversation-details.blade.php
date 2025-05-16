@@ -14,7 +14,7 @@
                 <h5 class="title">{{ __("Escrow Details") }}</h5>
                 <ul class="support-profile-list">
                     <li>{{ __("Title") }} : <span>{{ $escrows->title }}</span></li> 
-                    <li>{{ __("Role") Payment Details}} : <span class="text-capitalize">{{ $escrows->role }}</span></li>
+                    <li>{{ __("Role") }}Payment Details : <span class="text-capitalize">{{ $escrows->role }}</span></li>
                     <li>{{ __("Created By") }} : <span class="text-capitalize">{{ $escrows->user->username }}</span></li>
                     <li>{{ __("Product Type") }} : <span>{{ $escrows->escrowCategory->name }}</span></li>
                     <li>{{ __("Total Price") }} : <span>{{ get_amount($escrows->amount,$escrows->escrow_currency) }}</span></li>

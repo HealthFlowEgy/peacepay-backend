@@ -27,6 +27,9 @@
                     {{-- escrow dispute action --}}
                     @if ($escrow->status == escrow_const()::ONGOING)
                         <button type="button" class="btn--base bg--warning disputePayment">{{ __('Dispute Payment') }}</button>
+                        @if (auth()->user()->type == "buyer")
+                            <button type="button" class="btn--base bg--danger returnItem">{{ __('Return Item') }}</button>
+                        @endif
                     @endif 
                 @endif 
             </div>
@@ -161,6 +164,12 @@
             var actionRoute =  "{{ setRoute('user.escrow-action.dispute.payment') }}";
             var target      = "{{ $escrow->id }}";
             var message     = `Are you sure to <strong>dispute this payment</strong>?`;
+            openAlertModal(actionRoute,target,message,"Confirm","POST");
+        });
+        $(".returnItem").click(function(){
+            var actionRoute =  "{{ setRoute('user.escrow-action.return.payment') }}";
+            var target      = "{{ $escrow->id }}";
+            var message     = `Are you sure to <strong>Return Item</strong>?`;
             openAlertModal(actionRoute,target,message,"Confirm","POST");
         });
         $(".releasePayment").click(function(){
