@@ -2172,6 +2172,27 @@ function getDeliveryAmountOnSeller($escrow)
     return $delivery_fee_amount;
 }
 
+function getDeliveryAmountOnEscrow($escrow)
+{
+    $policyDelivery  = $escrow->policies()->where('field', 'delivery_fee_amount')->first();
+    return $policyDelivery ? $policyDelivery->pivot->fee : 0;
+}
+
+function getDeliveryAmountOnEscrowMinusFees($escrow)
+{
+    $delivery_amount = getDeliveryAmountOnEscrow($escrow);
+    $fees = $delivery_amount * (getAdminDeliveryFeesPercentage() / 100);
+    return $delivery_amount - $fees;
+}
+
+function getDeliveryAmountOnEscrowFeesOnly($escrow)
+{
+    $delivery_amount = getDeliveryAmountOnEscrow($escrow);
+    $fees = $delivery_amount * (getAdminDeliveryFeesPercentage() / 100);
+    return $fees;
+}
+
+
 function getAdvancedPaymentAmountOfEscrow($escrow)
 {
     $advanced_payment_amount = 0;
@@ -2216,6 +2237,15 @@ function getAdvancedPaymentAmountOfEscrowMinusFee($escrow)
     $advanced_payment_amount = $advanced_payment_amount - $fee;
     return $advanced_payment_amount;
 }
+
+function getAdvancedPaymentAmountOfEscrowFeesOnly($escrow)
+{
+    $advanced_payment_amount = getAdvancedPaymentAmountOfEscrow($escrow);
+    $fee = $advanced_payment_amount * (getAdminAdvancedPaymentFeesPercentage() / 100);
+
+    return $fee;
+}
+
 
 function returnEscrowMoney($escrow)
 {

@@ -690,8 +690,8 @@ class EscrowActionsController extends Controller
 
         $validated = $validator->validate();
         $escrow    = Escrow::findOrFail($validated['target']);
-        $policyDelivery  = $escrow->policies()->where('field', 'delivery_fee_amount')->first();
-        $policyDeliveryAmount = $policyDelivery ? $policyDelivery->pivot->fee : 0;
+        $policyDeliveryAmount = getDeliveryAmountOnEscrow($escrow);
+        $getDeliveryAmountOnEscrowMinusFees = getDeliveryAmountOnEscrowMinusFees($escrow);
 
         $policyDSP  = $escrow->policies()->where('field', 'dsp_amount')->first();
         $policyDSPAmount = $policyDSP ? $policyDSP->pivot->fee : 0;
@@ -719,7 +719,7 @@ class EscrowActionsController extends Controller
         $delivery_wallet = UserWallet::where('user_id', $escrow->delivery_id)
             ->where('currency_id', $escrow->escrowCurrency->id)->first();
 
-        $delivery_wallet->balance = ($delivery_wallet->balance + $policyDeliveryAmount + $policyDSPAmount);
+        $delivery_wallet->balance = ($delivery_wallet->balance + $getDeliveryAmountOnEscrowMinusFees + $policyDSPAmount);
 
         $escrow->status = EscrowConstants::RELEASED;
         DB::beginTransaction();
