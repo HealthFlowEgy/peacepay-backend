@@ -37,7 +37,7 @@ class TrxSettingsController extends Controller
             $request->slug . '_fixed_charge'      => 'required|numeric',
             $request->slug . '_percent_charge'    => 'required|numeric',
         ];
-        if ($request->slug != 'delivery_fees') {
+        if ($request->slug != 'delivery_fees' && $request->slug != 'advanced_payment_fees') {
             $rules[] = [
                 $request->slug . '_min_limit'         => 'required|numeric',
                 $request->slug . '_max_limit'         => 'required|numeric',

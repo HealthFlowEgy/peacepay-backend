@@ -594,18 +594,27 @@ class EscrowActionsController extends Controller
         ]);
         $validated = $validator->validate();
         $escrow    = Escrow::findOrFail($validated['target']);
+
+        if ($escrow->status != escrow_const()::ONGOING) {
+            return redirect()->back()->with(['error' => [__('You can not return payment while escrow is ongoing')]]);
+        }
+
         $delivery_fee_amount_buyer = getDeliveryAmountOnBuyer($escrow);
         $delivery_fee_amount_seller = getDeliveryAmountOnSeller($escrow);
 
 
         $delivery_wallet = UserWallet::where('user_id', $escrow->delivery_id)->where('currency_id', $escrow->escrowCurrency->id)->first();
         // $seller_wallet = UserWallet::where('user_id', $escrow->user_id)->where('currency_id', $escrow->escrowCurrency->id)->first();
+
         $buyer_wallet = UserWallet::where('user_id', $escrow->buyer_or_seller_id)->where('currency_id', $escrow->escrowCurrency->id)->first();
 
 
         $delivery_wallet->balance = $delivery_fee_amount_buyer + $delivery_fee_amount_seller;
         // $seller_wallet->balance -= $delivery_fee_amount_seller;
-        $buyer_wallet->balance -= $delivery_fee_amount_buyer;
+
+
+        $buyer_wallet->balance += $escrow->amount - $delivery_fee_amount_buyer - getAdvancedPaymentAmountOfEscrow($escrow);
+
 
         $escrow->status = EscrowConstants::REFUNDED;
         DB::beginTransaction();

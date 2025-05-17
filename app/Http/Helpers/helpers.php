@@ -2192,11 +2192,17 @@ function getAdminDeliveryFeesPercentage()
     return $delivery_fee;
 }
 
+function getAdminAdvancedPaymentFeesPercentage()
+{
+    $getAdminDeliveryFees = TransactionSetting::where('slug', 'advanced_payment_fees')->first();
+    $delivery_fee = $getAdminDeliveryFees->percent_charge ?? 0;
+    return $delivery_fee;
+}
 
 function getAdvancedPaymentAmountOfEscrowPlusFee($escrow)
 {
     $advanced_payment_amount = getAdvancedPaymentAmountOfEscrow($escrow);
-    $fee = $advanced_payment_amount * (getAdminDeliveryFeesPercentage() / 100);
+    $fee = $advanced_payment_amount * (getAdminAdvancedPaymentFeesPercentage() / 100);
 
     $advanced_payment_amount = $advanced_payment_amount + $fee;
     return $advanced_payment_amount;
@@ -2205,7 +2211,7 @@ function getAdvancedPaymentAmountOfEscrowPlusFee($escrow)
 function getAdvancedPaymentAmountOfEscrowMinusFee($escrow)
 {
     $advanced_payment_amount = getAdvancedPaymentAmountOfEscrow($escrow);
-    $fee = $advanced_payment_amount * (getAdminDeliveryFeesPercentage() / 100);
+    $fee = $advanced_payment_amount * (getAdminAdvancedPaymentFeesPercentage() / 100);
 
     $advanced_payment_amount = $advanced_payment_amount - $fee;
     return $advanced_payment_amount;

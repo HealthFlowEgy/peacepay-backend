@@ -15,7 +15,7 @@
                         </div>
                         <div class="card-inner-body">
                             <div class="row">
-                                @if($data->slug != 'delivery_fees')
+                                @if($data->slug != 'delivery_fees' && $data->slug != 'advanced_payment_fees')
                                     <div class="col-xxl-12 col-xl-6 col-lg-6 form-group">
                                         <label>{{ __("Fixed Charge*") }}</label>
                                         <div class="input-group">
@@ -37,7 +37,7 @@
                 </div>
 
 
-                @if($data->slug != 'delivery_fees')
+                @if($data->slug != 'delivery_fees' && $data->slug != 'advanced_payment_fees')
                 <div class="col-xl-6 col-lg-6 mb-10">
                     <div class="custom-inner-card">
                         <div class="card-inner-header">
