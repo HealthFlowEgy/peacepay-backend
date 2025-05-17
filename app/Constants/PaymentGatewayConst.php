@@ -1,15 +1,19 @@
 <?php
+
 namespace App\Constants;
+
 use App\Models\UserWallet;
 use Illuminate\Support\Str;
 
-class PaymentGatewayConst {
-    
+class PaymentGatewayConst
+{
+
     const APP       = "APP";
     const TYPEADDMONEY      = "ADD-MONEY";
     const TYPEMONEYOUT      = "MONEY-OUT";
     const TYPEMONEYEXCHANGE = "MONEY-EXCHANGE";
     const TYPEADDSUBTRACTBALANCE = "ADD-SUBTRACT-BALANCE";
+    const TRANSFER = "TRANSFER";
     const AUTOMATIC = "AUTOMATIC";
     const MANUAL    = "MANUAL";
     const ADDMONEY  = "Add Money";
@@ -55,7 +59,7 @@ class PaymentGatewayConst {
     const STATUSHOLD     = 3;
     const STATUSREJECTED = 4;
     const STATUSWAITING     = 5;
-    
+
     const ENV_SANDBOX    = "SANDBOX";
     const ENV_PRODUCTION = "PRODUCTION";
 
@@ -64,15 +68,18 @@ class PaymentGatewayConst {
     const PROJECT_CURRENCY_SINGLE   = "PROJECT_CURRENCY_SINGLE";
     const PROJECT_CURRENCY_MULTIPLE = "PROJECT_CURRENCY_MULTIPLE";
 
-    public static function add_money_slug() {
+    public static function add_money_slug()
+    {
         return Str::slug(self::ADDMONEY);
     }
 
 
-    public static function money_out_slug() {
+    public static function money_out_slug()
+    {
         return Str::slug(self::MONEYOUT);
     }
-    public static function register($alias = null) {
+    public static function register($alias = null)
+    {
         $gateway_alias  = [
             self::HEALTHPAY     => "healthPayInit",
             self::PAYPAL        => "paypalInit",
@@ -89,27 +96,30 @@ class PaymentGatewayConst {
             self::PAYSTACK      => 'paystackInit'
         ];
 
-        if($alias == null) {
+        if ($alias == null) {
             return $gateway_alias;
         }
 
-        if(array_key_exists($alias,$gateway_alias)) {
+        if (array_key_exists($alias, $gateway_alias)) {
             return $gateway_alias[$alias];
         }
         return "init";
     }
-    public static function apiAuthenticateGuard() {
+    public static function apiAuthenticateGuard()
+    {
         return [
             'api'   => 'web',
         ];
     }
-    public static function registerWallet() {
+    public static function registerWallet()
+    {
         return [
             'web'       => UserWallet::class,
             'api'       => UserWallet::class,
         ];
     }
-    public static function registerRedirection() {
+    public static function registerRedirection()
+    {
         return [
             'web'       => [
                 'return_url'    => 'user.add.money.perfect-money.payment.success',
@@ -127,14 +137,15 @@ class PaymentGatewayConst {
             ],
         ];
     }
-    public static function registerGatewayRecognization() {
-        return [ 
+    public static function registerGatewayRecognization()
+    {
+        return [
             'isHealthPay'       => self::HEALTHPAY,
             'isPaypal'          => self::PAYPAL,
             'isCoinGate'        => self::COIN_GATE,
             'isQrpay'           => self::QRPAY,
             'isTatum'           => self::TATUM,
-            'isStripe'          => self::STRIPE, 
+            'isStripe'          => self::STRIPE,
             'isSslCommerz'      => self::SSLCOMMERZ,
             'isRazorpay'        => self::RAZORPAY,
             'isPerfectMoney'    => self::PERFECT_MONEY,

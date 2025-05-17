@@ -9,13 +9,13 @@
                 </div>
                 <div class="dashboard-list-user-content">
                     @if ($item->type == payment_gateway_const()::TYPEADDMONEY)
-                    <h4 class="title">{{ __("Add Balance via") }} <span class="text--warning">{{ $item->gateway_currency->name }}</span></h4>
+                        <h4 class="title">{{ __("Add Balance via") }} <span class="text--warning">{{ $item->gateway_currency->name }}</span></h4>
                     @elseif ($item->type == payment_gateway_const()::TYPEMONEYOUT)
                         <h4 class="title">{{ __("Money Out via") }} <span class="text--warning">{{ $item->gateway_currency->name }}</span></h4>
                     @elseif ($item->type == payment_gateway_const()::TYPEMONEYEXCHANGE)
-                    <h4 class="title">{{ __("Exchange Money") }} <span class="text--warning">{{ $item->sender_currency_code }} To {{ $item->details->charges->exchange_currency }}</span></h4>
+                        <h4 class="title">{{ __("Exchange Money") }} <span class="text--warning">{{ $item->sender_currency_code }} To {{ $item->details->charges->exchange_currency }}</span></h4>
                     @elseif ($item->type == payment_gateway_const()::TYPEADDSUBTRACTBALANCE)
-                    <h4 class="text--warning">{{ __("Balance Update From Admin (".$item->sender_currency_code.")") }} </h4>
+                        <h4 class="text--warning">{{ __("Balance Update From Admin (".$item->sender_currency_code.")") }} </h4>
                     @endif
                     <span class="{{ $item->stringStatus->class }}">{{ $item->stringStatus->value }} </span>
                 </div>
@@ -90,11 +90,16 @@
             </div>
             <div class="preview-list-right">
                 @if ($item->type == payment_gateway_const()::TYPEADDMONEY || $item->type == payment_gateway_const()::TYPEMONEYOUT)
-                <span>{{ @get_amount($item->transaction_details->total_charge,$item->gateway_currency->currency_code) }}</span>
+                    <span>{{ @get_amount($item->transaction_details->total_charge,$item->gateway_currency->currency_code) }}</span>
                 @elseif ($item->type == payment_gateway_const()::TYPEMONEYEXCHANGE)
-                <span>{{ get_amount($item->details->charges->total_charge,$item->sender_currency_code) }}</span> 
+                    <span>{{ get_amount($item->details->charges->total_charge,$item->sender_currency_code) }}</span> 
                 @elseif ($item->type == payment_gateway_const()::TYPEADDSUBTRACTBALANCE)
-                <span>0 {{ $item->sender_currency_code }}</span>
+                    <span>0 {{ $item->sender_currency_code }}</span>
+                @elseif ($item->type == payment_gateway_const()::TRANSFER)
+                    <span>
+                        {{ $item->attribute == 'SEND' ? '-' : '+' }}
+                         {{round($item->total_payable,2)}} {{ $item->sender_currency_code }}
+                    </span>
                 @endif
             </div>
         </div> 

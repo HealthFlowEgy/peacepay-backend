@@ -130,6 +130,7 @@ Route::prefix("user")->name("user.")->group(function () {
     // Transaction routes
     Route::controller(TransactionController::class)->prefix('transactions')->name('transactions.')->group(function () {
         Route::get('/{slug?}', 'index')->name('index');
+        Route::post('/transfer', 'transfer')->name('transfer');
     });
 
     Route::controller(HealthPayController::class)->prefix('healthpay')->name('healthpay.')->group(function () {
