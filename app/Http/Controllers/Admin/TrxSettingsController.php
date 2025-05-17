@@ -19,7 +19,7 @@ class TrxSettingsController extends Controller
     {
         $page_title = "Fees & Charges";
         $transaction_charges = TransactionSetting::all();
-        return view('admin.sections.trx-settings.index',compact(
+        return view('admin.sections.trx-settings.index', compact(
             'page_title',
             'transaction_charges'
         ));
@@ -30,28 +30,33 @@ class TrxSettingsController extends Controller
      * @param Request closer
      * @return back view
      */
-    public function trxChargeUpdate(Request $request) {
-        $validator = Validator::make($request->all(),[
+    public function trxChargeUpdate(Request $request)
+    {
+        $rules = [
             'slug'                              => 'required|string',
-            $request->slug.'_fixed_charge'      => 'required|numeric',
-            $request->slug.'_percent_charge'    => 'required|numeric',
-            $request->slug.'_min_limit'         => 'required|numeric',
-            $request->slug.'_max_limit'         => 'required|numeric', 
-        ]);
+            $request->slug . '_fixed_charge'      => 'required|numeric',
+            $request->slug . '_percent_charge'    => 'required|numeric',
+        ];
+        if ($request->slug != 'delivery_fees') {
+            $rules[] = [
+                $request->slug . '_min_limit'         => 'required|numeric',
+                $request->slug . '_max_limit'         => 'required|numeric',
+            ];
+        }
+        $validator = Validator::make($request->all(), $rules);
         $validated = $validator->validate();
 
-        $transaction_setting = TransactionSetting::where('slug',$request->slug)->first();
+        $transaction_setting = TransactionSetting::where('slug', $request->slug)->first();
 
-        if(!$transaction_setting) return back()->with(['error' => ['Transaction charge not found!']]);
-        $validated = replace_array_key($validated,$request->slug."_");
+        if (!$transaction_setting) return back()->with(['error' => ['Transaction charge not found!']]);
+        $validated = replace_array_key($validated, $request->slug . "_");
 
-        try{
+        try {
             $transaction_setting->update($validated);
-        }catch(Exception $e) {
+        } catch (Exception $e) {
             return back()->with(['error' => ["Something went wrong! Please try again."]]);
         }
 
         return back()->with(['success' => ['Charge Updated Successfully!']]);
-
-    } 
+    }
 }

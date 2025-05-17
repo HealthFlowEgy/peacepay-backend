@@ -15,13 +15,15 @@
                         </div>
                         <div class="card-inner-body">
                             <div class="row">
-                                <div class="col-xxl-12 col-xl-6 col-lg-6 form-group">
-                                    <label>{{ __("Fixed Charge*") }}</label>
-                                    <div class="input-group">
-                                        <input type="text" class="form--control number-input" value="{{ old($data->slug.'_fixed_charge',$data->fixed_charge) }}" name="{{$data->slug}}_fixed_charge">
-                                        <span class="input-group-text">{{ get_default_currency_code($default_currency) }}</span>
+                                @if($data->slug != 'delivery_fees')
+                                    <div class="col-xxl-12 col-xl-6 col-lg-6 form-group">
+                                        <label>{{ __("Fixed Charge*") }}</label>
+                                        <div class="input-group">
+                                            <input type="text" class="form--control number-input" value="{{ old($data->slug.'_fixed_charge',$data->fixed_charge) }}" name="{{$data->slug}}_fixed_charge">
+                                            <span class="input-group-text">{{ get_default_currency_code($default_currency) }}</span>
+                                        </div>
                                     </div>
-                                </div>
+                                @endif
                                 <div class="col-xxl-12 col-xl-6 col-lg-6 form-group">
                                     <label>{{ __("Percent Charge*") }}</label>
                                     <div class="input-group">
@@ -33,6 +35,9 @@
                         </div>
                     </div>
                 </div>
+
+
+                @if($data->slug != 'delivery_fees')
                 <div class="col-xl-6 col-lg-6 mb-10">
                     <div class="custom-inner-card">
                         <div class="card-inner-header">
@@ -58,6 +63,8 @@
                         </div>
                     </div>
                 </div>
+                @endif
+
             </div>
             <div class="row mb-10-none">
                 <div class="col-xl-12 col-lg-12 form-group">

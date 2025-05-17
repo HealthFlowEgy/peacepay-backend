@@ -38,6 +38,7 @@ use App\Providers\Admin\BasicSettingsProvider;
 use Illuminate\Validation\ValidationException;
 use Pusher\PushNotifications\PushNotifications;
 use App\Models\Admin\LiveExchangeRateApiSetting;
+use App\Models\Admin\TransactionSetting;
 use App\Notifications\User\Auth\SendAuthorizationCode;
 use Illuminate\Support\Facades\Http;
 
@@ -2184,10 +2185,18 @@ function getAdvancedPaymentAmountOfEscrow($escrow)
     return $advanced_payment_amount;
 }
 
+function getAdminDeliveryFeesPercentage()
+{
+    $getAdminDeliveryFees = TransactionSetting::where('slug', 'delivery_fees')->first();
+    $delivery_fee = $getAdminDeliveryFees->percent_charge ?? 0;
+    return $delivery_fee;
+}
+
+
 function getAdvancedPaymentAmountOfEscrowPlusFee($escrow)
 {
     $advanced_payment_amount = getAdvancedPaymentAmountOfEscrow($escrow);
-    $fee = $advanced_payment_amount * config('app.peacepay_rate');
+    $fee = $advanced_payment_amount * (getAdminDeliveryFeesPercentage() / 100);
 
     $advanced_payment_amount = $advanced_payment_amount + $fee;
     return $advanced_payment_amount;
@@ -2196,7 +2205,7 @@ function getAdvancedPaymentAmountOfEscrowPlusFee($escrow)
 function getAdvancedPaymentAmountOfEscrowMinusFee($escrow)
 {
     $advanced_payment_amount = getAdvancedPaymentAmountOfEscrow($escrow);
-    $fee = $advanced_payment_amount * config('app.peacepay_rate');
+    $fee = $advanced_payment_amount * (getAdminDeliveryFeesPercentage() / 100);
 
     $advanced_payment_amount = $advanced_payment_amount - $fee;
     return $advanced_payment_amount;
