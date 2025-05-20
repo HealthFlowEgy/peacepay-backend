@@ -2178,6 +2178,13 @@ function getDeliveryAmountOnEscrow($escrow)
     return $policyDelivery ? $policyDelivery->pivot->fee : 0;
 }
 
+function applyFeesDeliveryOnAmount($amount)
+{
+    $fees = $amount * (getAdminDeliveryFeesPercentage() / 100);
+    return $amount - $fees;
+}
+
+
 function getDeliveryAmountOnEscrowMinusFees($escrow)
 {
     $delivery_amount = getDeliveryAmountOnEscrow($escrow);

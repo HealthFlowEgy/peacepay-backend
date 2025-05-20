@@ -609,7 +609,7 @@ class EscrowActionsController extends Controller
         $buyer_wallet = UserWallet::where('user_id', $escrow->buyer_or_seller_id)->where('currency_id', $escrow->escrowCurrency->id)->first();
 
 
-        $delivery_wallet->balance = $delivery_fee_amount_buyer + $delivery_fee_amount_seller;
+        $delivery_wallet->balance = $delivery_wallet->balance + applyFeesDeliveryOnAmount($delivery_fee_amount_buyer + $delivery_fee_amount_seller);
         // $seller_wallet->balance -= $delivery_fee_amount_seller;
 
 
