@@ -39,6 +39,7 @@ use Illuminate\Validation\ValidationException;
 use Pusher\PushNotifications\PushNotifications;
 use App\Models\Admin\LiveExchangeRateApiSetting;
 use App\Models\Admin\TransactionSetting;
+use App\Models\Transaction;
 use App\Notifications\User\Auth\SendAuthorizationCode;
 use Illuminate\Support\Facades\Http;
 
@@ -2183,6 +2184,16 @@ function getDeliveryAmountOnEscrow($escrow)
 {
     $policyDelivery  = $escrow->policies()->where('field', 'delivery_fee_amount')->first();
     return $policyDelivery ? $policyDelivery->pivot->fee : 0;
+}
+
+function applyAdminFeesOnAmount($amount)
+{
+    $transactionSetting = TransactionSetting::where('slug', 'escrow')->first();
+    $fixed = $transactionSetting->fixed_charge ?? 0;
+    $percent = $transactionSetting->percent_charge ?? 0;
+    $fees = $amount * ($percent / 100);
+    $fees = $fees + $fixed;
+    return $amount - $fees;
 }
 
 function applyFeesDeliveryOnAmount($amount)

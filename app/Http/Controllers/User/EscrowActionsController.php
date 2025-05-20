@@ -721,7 +721,8 @@ class EscrowActionsController extends Controller
         if ($deliveryAmountOnBuyer <= 0) {
             $user_wallet->balance = ($user_wallet->balance + $escrow->escrowDetails->seller_get - ($advancedPaymentAmountOfEscrow));
         } else {
-            $user_wallet->balance = $user_wallet->balance + $escrow->amount - $deliveryAmountOnBuyer - applyAddFeesDeliveryOnAmount($advancedPaymentAmountOfEscrow);
+            $amount = applyAdminFeesOnAmount($escrow->amount - $deliveryAmountOnBuyer - $advancedPaymentAmountOfEscrow);
+            $user_wallet->balance = $user_wallet->balance + $amount;
         }
 
         $delivery_wallet = UserWallet::where('user_id', $escrow->delivery_id)
