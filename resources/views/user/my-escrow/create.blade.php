@@ -305,13 +305,14 @@
         document.getElementById('policy-select').addEventListener('change', function() {
             const container = document.getElementById('policy-fields-container');
             const fieldsContainer = document.getElementById('dynamic-policy-fields');
+            const paymentMethodSection = document.querySelector('.paymentMethodSelectForBuyer');
             fieldsContainer.innerHTML = '';
             
             if (!this.value) {
                 container.style.display = 'none';
                 return;
             }
-        
+
             const selectedOption = this.options[this.selectedIndex];
             const fieldsData = selectedOption.getAttribute('data-fields');
             
@@ -320,6 +321,14 @@
                 const fields = JSON.parse(decodedFields);
                 container.style.display = 'block';
                 
+                // Show payment method section by default
+                paymentMethodSection.style.display = 'block';
+                
+                // Hide payment method section if delivery_fee_payer is "buyer"
+                if (fields.delivery_fee_payer === 'buyer') {
+                    paymentMethodSection.style.display = 'none';
+                }
+
                 if (fields && typeof fields === 'object') {
                     // Create a mapping of field configurations
                     const fieldConfigurations = [
@@ -327,8 +336,9 @@
                             condition: fields.delivery_fee_payer,
                             label: '{{ __("Delivery Fee Amount") }}',
                             name: 'delivery_fee_amount',
-                            type: 'currency',
-                            required: true
+                            type: 'number',
+                            required: true,
+                            min: 1,
                         },
                         {
                             condition: fields.return_fee_payer,
@@ -338,7 +348,7 @@
                             required: true
                         },
                         {
-                            condition: fields.has_advanced_payment,
+                            condition: fields.has_advanced_payment == 1,
                             label: '{{ __("Advanced Payment Amount") }}',
                             name: 'advanced_payment_amount',
                             type: 'currency',
@@ -363,7 +373,7 @@
                             required: true
                         }
                     ];
-        
+
                     // Generate fields based on configuration
                     fieldConfigurations.forEach(config => {
                         if (config.condition) {
@@ -385,7 +395,8 @@
                 showErrorToast('Failed to load policy details');
             }
         });
-        
+
+
         /**
          * Decodes HTML entities in a string
          */
