@@ -2146,6 +2146,13 @@ function checkDelivery($policy, $sender_currency, $delivery_fee_amount)
     return 1;
 }
 
+function getDeliveryAmountOnBuyerPlusFees($escrow)
+{
+    $delivery_amount = getDeliveryAmountOnBuyer($escrow);
+    $fees = $delivery_amount * (getAdminDeliveryFeesPercentage() / 100);
+    return $delivery_amount + $fees;
+}
+
 function getDeliveryAmountOnBuyer($escrow)
 {
     $delivery_fee_amount = 0;
@@ -2184,6 +2191,11 @@ function applyFeesDeliveryOnAmount($amount)
     return $amount - $fees;
 }
 
+function applyAddFeesDeliveryOnAmount($amount)
+{
+    $fees = $amount * (getAdminDeliveryFeesPercentage() / 100);
+    return $amount + $fees;
+}
 
 function getDeliveryAmountOnEscrowMinusFees($escrow)
 {

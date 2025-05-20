@@ -715,7 +715,14 @@ class EscrowActionsController extends Controller
         $user_wallet           = UserWallet::where('user_id', $wallet_user_id)->where('currency_id', $escrow->escrowCurrency->id)->first();
         if (empty($user_wallet)) return redirect()->back()->with(['error' => [__('Seller Wallet not found')]]);
 
-        $user_wallet->balance = ($user_wallet->balance + $escrow->escrowDetails->seller_get);
+        $advancedPaymentAmountOfEscrow = getAdvancedPaymentAmountOfEscrow($escrow);
+        $deliveryAmountOnBuyer = getDeliveryAmountOnBuyer($escrow);
+
+        if ($deliveryAmountOnBuyer <= 0) {
+            $user_wallet->balance = ($user_wallet->balance + $escrow->escrowDetails->seller_get - ($advancedPaymentAmountOfEscrow));
+        } else {
+            $user_wallet->balance = $user_wallet->balance + $escrow->amount - $deliveryAmountOnBuyer - applyAddFeesDeliveryOnAmount($advancedPaymentAmountOfEscrow);
+        }
 
         $delivery_wallet = UserWallet::where('user_id', $escrow->delivery_id)
             ->where('currency_id', $escrow->escrowCurrency->id)->first();
