@@ -202,8 +202,11 @@ class DashboardController extends Controller
                 $result = (floatval($totalCharge) * floatval($walletRate));
                 $totalAmount += $result;
 
-                $totalAmount += getAdvancedPaymentAmountOfEscrowFeesOnly($escrow);
-                $totalAmount += getDeliveryAmountOnEscrowFeesOnly($escrow);
+                // $totalAmount += getAdvancedPaymentAmountOfEscrowFeesOnly($escrow);
+
+                if (getDeliveryAmountOnSeller($escrow) > 0) {
+                    $totalAmount += getDeliveryAmountOnEscrowFeesOnly($escrow);
+                }
             }
 
             foreach (Escrow::get()->where('status', EscrowConstants::REFUNDED) as $escrow) {
