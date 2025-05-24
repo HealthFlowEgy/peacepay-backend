@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rules\Password;
 use App\Providers\Admin\BasicSettingsProvider;
 use App\Http\Helpers\Api\Helpers as ApiResponse;
+use App\Models\UserWallet;
 
 class ProfileController extends Controller
 {
@@ -22,22 +23,29 @@ class ProfileController extends Controller
      *
      * @method GET
      * @return \Illuminate\Http\Response
-    */
+     */
 
-    public function profile(){
+    public function profile()
+    {
         $user = Auth::user();
 
-        $data =[
+        $userWallet = UserWallet::where('user_id', $user->id)->first();
+
+        $data = [
             'default_image' => "public/backend/images/default/profile-default.webp",
             "image_path"    => "public/frontend/user",
             "base_ur"       => url('/'),
             'user'          => $user,
             'countries'     => get_all_countries(),
+            'wallet' =>  [
+                'balance'               => $userWallet ? $userWallet->balance : 0,
+                'currency_code'         => $userWallet ? $userWallet->currency->code : null,
+            ]
         ];
 
-        $message =  ['success'=>[__('User Profile')]];
+        $message =  ['success' => [__('User Profile')]];
 
-        return ApiResponse::success($message,$data);
+        return ApiResponse::success($message, $data);
     }
 
     /**
@@ -46,14 +54,15 @@ class ProfileController extends Controller
      * @method POST
      * @param Illuminate\Http\Request $request
      * @return \Illuminate\Http\Response
-    */
-    public function profileUpdate(Request $request){
+     */
+    public function profileUpdate(Request $request)
+    {
 
-        $validator = Validator::make($request->all(),[
+        $validator = Validator::make($request->all(), [
             'firstname'     => "required|string|max:60",
             'lastname'      => "required|string|max:60",
-            'country'       => "nullable|string|max:50", 
-            'phone_code'    => "required|string|max:6", 
+            'country'       => "nullable|string|max:50",
+            'phone_code'    => "required|string|max:6",
             'phone'         => "nullable|string|max:20",
             'state'         => "nullable|string|max:50",
             'city'          => "nullable|string|max:50",
@@ -73,27 +82,27 @@ class ProfileController extends Controller
 
         $validated['mobile']        = remove_speacial_char($validated['phone']);
         $validated['mobile_code']   = remove_speacial_char($validated['phone_code']);
-        $complete_phone             = $validated['mobile_code'].$validated['mobile'];
+        $complete_phone             = $validated['mobile_code'] . $validated['mobile'];
         $validated['full_mobile']   = $complete_phone;
-        $validated                  = Arr::except($validated,['agree','phone']); 
+        $validated                  = Arr::except($validated, ['agree', 'phone']);
         $validated['address']       = [
-            'country'   =>$validated['country'] ?? "",
-            'state'     => $validated['state'] ?? "", 
-            'city'      => $validated['city'] ?? "", 
-            'zip'       => $validated['zip_code'] ?? "", 
+            'country'   => $validated['country'] ?? "",
+            'state'     => $validated['state'] ?? "",
+            'city'      => $validated['city'] ?? "",
+            'zip'       => $validated['zip_code'] ?? "",
             'address'   => $validated['address'] ?? "",
         ];
 
-        if($request->hasFile('image')){
+        if ($request->hasFile('image')) {
 
-            if($user->image == null){
+            if ($user->image == null) {
                 $oldImage = null;
-            }else{
+            } else {
                 $oldImage = $user->image;
             }
 
-            $image = upload_file($validated['image'],'user-profile', $oldImage);
-            $upload_image = upload_files_from_path_dynamic([$image['dev_path']],'user-profile');
+            $image = upload_file($validated['image'], 'user-profile', $oldImage);
+            $upload_image = upload_files_from_path_dynamic([$image['dev_path']], 'user-profile');
             delete_file($image['dev_path']);
             $validated['image']     = $upload_image;
         }
@@ -101,11 +110,11 @@ class ProfileController extends Controller
         try {
             $user->update($validated);
         } catch (\Throwable $th) {
-            $error = ['error'=>[__('Something went worng! Please try again')]];
+            $error = ['error' => [__('Something went worng! Please try again')]];
             return ApiResponse::error($error);
         }
 
-        $message =  ['success'=>[__('Profile successfully updated!')]];
+        $message =  ['success' => [__('Profile successfully updated!')]];
         return ApiResponse::onlySuccess($message);
     }
 
@@ -115,23 +124,24 @@ class ProfileController extends Controller
      * @method POST
      * @param Illuminate\Http\Request $request
      * @return \Illuminate\Http\Response
-    */
-    public function passwordUpdate(Request $request){
+     */
+    public function passwordUpdate(Request $request)
+    {
         $basic_settings = BasicSettingsProvider::get();
 
         $passowrd_rule = 'required|string|min:6|confirmed';
 
-        if($basic_settings->secure_password) {
-            $passowrd_rule = ["required",Password::min(8)->letters()->mixedCase()->numbers()->symbols()->uncompromised(),"confirmed"];
+        if ($basic_settings->secure_password) {
+            $passowrd_rule = ["required", Password::min(8)->letters()->mixedCase()->numbers()->symbols()->uncompromised(), "confirmed"];
         }
 
         $validator = Validator::make($request->all(), [
             'current_password' => 'required|string|min:6',
-            'password' =>$passowrd_rule,
+            'password' => $passowrd_rule,
         ]);
 
-        if($validator->fails()){
-            $error =  ['error'=>$validator->errors()->all()];
+        if ($validator->fails()) {
+            $error =  ['error' => $validator->errors()->all()];
             return ApiResponse::validation($error);
         }
 
@@ -158,11 +168,12 @@ class ProfileController extends Controller
      * @method POST
      * @param Illuminate\Http\Request $request
      * @return \Illuminate\Http\Response
-    */
-    public function deleteAccount(Request $request){
+     */
+    public function deleteAccount(Request $request)
+    {
 
         $user = Auth::guard(get_auth_guard())->user();
-        if(!$user){
+        if (!$user) {
             $message = ['success' =>  ['No user found']];
             return ApiResponse::error($message, []);
         }
@@ -186,8 +197,9 @@ class ProfileController extends Controller
      * @method Get
      * @param Illuminate\Http\Request $request
      * @return \Illuminate\Http\Response
-    */
-    public function google2FA(){
+     */
+    public function google2FA()
+    {
 
         $user = Auth::guard(get_auth_guard())->user();
 
@@ -200,15 +212,16 @@ class ProfileController extends Controller
             'qr_secrete' => $qr_secrete,
             'qr_status'  => intval($qr_status),
             'alert'      => __("Don't forget to add this application in your google authentication app. Otherwise, you can't login to your account"),
-        ]; 
+        ];
         return ApiResponse::success(['success' => [__('Data fetch Successfully')]], $data);
-    } 
-    public function google2FAStatusUpdate(Request $request){
-        $validator = Validator::make($request->all(),[
+    }
+    public function google2FAStatusUpdate(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
             'status'        => "required|numeric",
         ]);
 
-        if($validator->fails()){
+        if ($validator->fails()) {
             return ApiResponse::onlyValidation(['error' => $validator->errors()->all()]);
         }
 
@@ -217,25 +230,29 @@ class ProfileController extends Controller
         $user = Auth::guard(get_auth_guard())->user();
 
 
-        try{
+        try {
             $user->update([
                 'two_factor_status'         => $validated['status'],
                 'two_factor_verified'       => true,
             ]);
-        }catch(Exception $e) {
-           return ApiResponse::onlyError(['error' => [__('Something went wrong! Please try again')]]);
+        } catch (Exception $e) {
+            return ApiResponse::onlyError(['error' => [__('Something went wrong! Please try again')]]);
         }
 
         return ApiResponse::onlySuccess(['success' => [__('Google 2FA Updated Successfully!')]]);
     }
     //user profile type update ajax call 
-    public function profileTypeUpdate(){
-        $user = User::find(auth()->user()->id); 
-        ($user->type == 'buyer') ? $user->type = 'seller' : $user->type = 'buyer'; 
-        
-        if($user->update()){ 
+    public function profileTypeUpdate(Request $request)
+    {
+        $request->validate([
+            'user_type' => 'required|in:buyer,seller,delivery',
+        ]);
+
+        $user = User::find(auth()->user()->id);
+        $user->type = $request->user_type;
+
+        if ($user->update()) {
             return ApiResponse::onlySuccess(['success' => [__('Your profile type updated successfully')]]);
         }
-        
     }
 }

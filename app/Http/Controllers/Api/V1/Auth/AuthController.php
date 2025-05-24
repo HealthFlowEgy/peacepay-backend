@@ -121,7 +121,7 @@ class AuthController extends Controller
             'type'       => 'required|string|max:50',
             'first_name' => 'required|string|max:50',
             'last_name'  => 'required|string|max:50',
-            'email'      => 'required|email|max:160|unique:users',
+            // 'email'      => 'required|email|max:160|unique:users',
             'password'   => $passowrd_rule,
             'policy'     => $agree_policy,
             'mobile'        => 'required|string|max:11|min:11|unique:users,mobile|regex:/^0/',
@@ -139,13 +139,18 @@ class AuthController extends Controller
 
         $validated['firstname']      = $validated['first_name'];
         $validated['lastname']       = $validated['last_name'];
-        $validated['email_verified'] = ($basic_settings->email_verification == true) ? 0 : 1;
+        $validated['email_verified'] = 1;
         $validated['kyc_verified']   = ($basic_settings->kyc_verification == true) ? 0 : 1;
         $validated['sms_verified']   = ($basic_settings->sms_verification == true) ? 0 : 1;
         $validated['status']         = 1;
         $validated['mobile']         = $validated['mobile'];
+        $validated['type']           = 'seller';
         $validated['password']       = Hash::make($validated['password']);
         $validated['username']       = make_username($validated['first_name'], $validated['last_name']);
+
+        $validated['mobile_code']       = env('MOBILE_CODE');
+        $validated['full_mobile']       = env('MOBILE_CODE') . $validated['mobile'];
+        $validated['email']             = env('MOBILE_CODE') . $validated['mobile'] . '_' . time() . '@example.com';
 
         $user = User::create($validated);
 
