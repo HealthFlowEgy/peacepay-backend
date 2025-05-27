@@ -2,10 +2,19 @@
     <div class="support-profile-wrapper">
         <div class="support-profile-header escrow-profile-header">
             <div class="escrow-details-btn-wrapper">
+                @if ($escrow->status == escrow_const()::ONGOING &&
+                    (
+                        auth()->user()->type == "seller" && $escrow->delivery_id == null
+                    ) &&
+                    $escrow->user_id == auth()->user()->id 
+                    )
+                    <button type="button" class="btn--base bg--danger cancelItem">{{ __('Cancel Item') }}</button>
+                @endif
+
                 @if ($escrow->status == escrow_const()::ONGOING)
                     @if ($escrow->role == "seller")
                         @if ($escrow->user_id == auth()->user()->id)
-                        <button type="button" class="btn--base releaseRequest">{{ __('Release Request') }}</button>
+                            <button type="button" class="btn--base releaseRequest">{{ __('Release Request') }}</button>
                         @endif 
                         <!-- @if ($escrow->user_id != auth()->user()->id)
                         <button type="button" class="btn--base releasePayment">{{ __('Release Payment') }}</button>
@@ -172,6 +181,15 @@
             var message     = `Are you sure to <strong>Return Item</strong>?`;
             openAlertModal(actionRoute,target,message,"Confirm","POST");
         });
+
+        $(".cancelItem").click(function(){
+            var actionRoute =  "{{ setRoute('user.escrow-action.cancel.payment') }}";
+            var target      = "{{ $escrow->id }}";
+            var message     = `Are you sure to <strong>Cancel Item</strong>?`;
+            openAlertModal(actionRoute,target,message,"Confirm","POST");
+        });
+
+        
         $(".releasePayment").click(function(){
             var actionRoute =  "{{ setRoute('user.escrow-action.release.payment') }}";
             var target      = "{{ $escrow->id }}";

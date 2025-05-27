@@ -587,7 +587,7 @@ class EscrowActionsController extends Controller
         }
     }
 
-    public function returnPayment(Request $request)
+    public function returnPaymentFromBuyer(Request $request)
     {
         $validator = Validator::make($request->all(), [
             'target' => 'required',
@@ -599,38 +599,87 @@ class EscrowActionsController extends Controller
             return redirect()->back()->with(['error' => [__('You can not return payment while escrow is ongoing')]]);
         }
 
+        $resp = $this->moneyReturn($escrow, EscrowConstants::REFUNDED);
+
+        if ($resp == 0) {
+            return redirect()->back()->with(['error' => [__('Something went wrong')]]);
+        }
+        return redirect()->route('user.my-escrow.index')->with(['success' => [__('Returned Done')]]);
+    }
+
+    public function cancelPaymentFromMerchant(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'target' => 'required',
+        ]);
+        $validated = $validator->validate();
+        $escrow    = Escrow::findOrFail($validated['target']);
+
+        if ($escrow->status != escrow_const()::ONGOING) {
+            return redirect()->back()->with(['error' => [__('You can not cancel payment')]]);
+        }
+
+        $resp = $this->moneyReturn($escrow, EscrowConstants::CANCELED);
+
+        if ($resp == 0) {
+            return redirect()->back()->with(['error' => [__('Something went wrong')]]);
+        }
+
+        return redirect()->route('user.my-escrow.index')->with(['success' => [__('Cancel Payment Done')]]);
+    }
+
+    public function moneyReturn($escrow, $type)
+    {
         $delivery_fee_amount_buyer = getDeliveryAmountOnBuyer($escrow);
         $delivery_fee_amount_seller = getDeliveryAmountOnSeller($escrow);
 
 
         $delivery_wallet = UserWallet::where('user_id', $escrow->delivery_id)->where('currency_id', $escrow->escrowCurrency->id)->first();
-        // $seller_wallet = UserWallet::where('user_id', $escrow->user_id)->where('currency_id', $escrow->escrowCurrency->id)->first();
+        $seller_wallet = UserWallet::where('user_id', $escrow->user_id)->where('currency_id', $escrow->escrowCurrency->id)->first();
 
         $buyer_wallet = UserWallet::where('user_id', $escrow->buyer_or_seller_id)->where('currency_id', $escrow->escrowCurrency->id)->first();
 
 
-        $delivery_wallet->balance = $delivery_wallet->balance + applyFeesDeliveryOnAmount($delivery_fee_amount_buyer + $delivery_fee_amount_seller);
-        // $seller_wallet->balance -= $delivery_fee_amount_seller;
+        if ($delivery_wallet) {
+            $delivery_wallet->balance = $delivery_wallet->balance + applyFeesDeliveryOnAmount($delivery_fee_amount_buyer + $delivery_fee_amount_seller);
+        }
 
+        if ($type == EscrowConstants::CANCELED) {
+            $seller_wallet->balance -= getAdvancedPaymentAmountOfEscrowMinusFee($escrow);
+        }
 
-        $buyer_wallet->balance += $escrow->amount - $delivery_fee_amount_buyer - getAdvancedPaymentAmountOfEscrow($escrow);
+        $amountBuyerWillGet = $escrow->amount;
 
+        if ($escrow->delivery_id && EscrowConstants::REFUNDED){
+            $amountBuyerWillGet -= getDeliveryAmountOnEscrow($escrow);
+        }
+        
+        $buyer_wallet->balance += $amountBuyerWillGet;
 
-        $escrow->status = EscrowConstants::REFUNDED;
+        $escrow->status = $type;
+
         DB::beginTransaction();
         try {
-            $delivery_wallet->save();
-            // $seller_wallet->save();
+            if ($delivery_wallet) {
+                $delivery_wallet->save();
+            }
+
+            if ($type == EscrowConstants::CANCELED) {
+                $seller_wallet->save();
+            }
+
             $buyer_wallet->save();
             $escrow->save();
 
             DB::commit();
         } catch (Exception $e) {
             DB::rollBack();
-            return redirect()->back()->with(['error' => [__('Something went wrong')]]);
+            return 0;
         }
-        return redirect()->route('user.my-escrow.index')->with(['success' => [__('Returned Done')]]);
+
+        return 1;
     }
+
     //dispute payment 
     public function disputePayment(Request $request)
     {
