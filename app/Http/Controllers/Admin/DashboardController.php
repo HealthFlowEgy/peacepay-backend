@@ -194,24 +194,41 @@ class DashboardController extends Controller
         $chart_four_data = [$active_user, $banned_user, $unverified_user, $total_user];
 
         $escrow_profit = 0;
+        $fees = 0;
         try {
             $totalAmount = 0;
             foreach ($escrow->where('status', EscrowConstants::RELEASED) as $escrow) {
-                $totalCharge = $escrow->escrowDetails->fee ?? 0;
-                $walletRate = $escrow->escrowCurrency->rate;
-                $result = (floatval($totalCharge) * floatval($walletRate));
-                $totalAmount += $result;
+                // $totalCharge = $escrow->escrowDetails->fee ?? 0;
+                // $walletRate = $escrow->escrowCurrency->rate;
+                // $result = (floatval($totalCharge) * floatval($walletRate));
+                // $totalAmount += $result;
 
                 // $totalAmount += getAdvancedPaymentAmountOfEscrowFeesOnly($escrow);
 
-                if (getDeliveryAmountOnSeller($escrow) > 0) {
-                    $totalAmount += getDeliveryAmountOnEscrowFeesOnly($escrow);
+                // if (getDeliveryAmountOnSeller($escrow) > 0) {
+                //     $totalAmount += getDeliveryAmountOnEscrowFeesOnly($escrow);
+                // }
+
+                $deliveryFeesAdmin = getDeliveryAmountOnEscrowFeesOnly($escrow);
+                $adminAdvancedPaymentEscrowFees = getAdvancedPaymentAmountOfEscrowFeesOnly($escrow);
+
+                $amount = $escrow->amount;
+                $amount -= getDeliveryAmountOnEscrow($escrow);
+
+                if ($escrow->from_admin_to_user_id != $escrow->buyer_or_seller_id) {
+                    $fees = getAdminFeesOnAmount($amount);
                 }
+
+
+                $totalAmount += ($fees + $deliveryFeesAdmin);
+            }
+
+            foreach (Escrow::get()->where('status', EscrowConstants::REFUNDED)->whereNull('delivery_id') as $escrow) {
+                $totalAmount += getDeliveryAmountOnEscrowFeesOnly($escrow);
             }
 
             foreach (Escrow::get()->where('status', EscrowConstants::REFUNDED) as $escrow) {
                 $totalAmount += getAdvancedPaymentAmountOfEscrowFeesOnly($escrow);
-                $totalAmount += getDeliveryAmountOnEscrowFeesOnly($escrow);
             }
             $escrow_profit = $totalAmount ?? 0;
         } catch (Exception $e) {

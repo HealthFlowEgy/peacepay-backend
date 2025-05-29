@@ -190,18 +190,30 @@ class EscrowController extends Controller
                 $currencyId = $escrow->paymentGatewayCurrency->currency->id;
             }
         }
-        $userWallet = UserWallet::where('user_id', $targetUserId)->where('currency_id', $currencyId)->first();
-        //check release amount 
+        $user_wallet = UserWallet::where('user_id', $targetUserId)->where('currency_id', $currencyId)->first();
+
+        $delivery_wallet = null;
         if ($type == "seller") {
-            $releaseAmount = $escrow->escrowDetails->seller_get + getAdvancedPaymentAmountOfEscrowPlusFee($escrow);
+
+            $release = releasePaymentToMerchant($escrow, $user_wallet);
+            $user_wallet = $release['user_wallet'];
+            $delivery_wallet = $release['delivery_wallet'];
         } else {
-            $releaseAmount = $escrow->escrowDetails->buyer_pay;
+            // $releaseAmount = $escrow->escrowDetails->buyer_pay;
+            // $user_wallet->balance += $releaseAmount;
+
+            $release = releasePaymentToBuyer($escrow, $user_wallet);
+            $user_wallet = $release['user_wallet'];
+            $delivery_wallet = $release['delivery_wallet'];
         }
-        $userWallet->balance += $releaseAmount;
         $escrow->status = EscrowConstants::RELEASED;
+        $escrow->from_admin_to_user_id = $targetUserId;
         DB::beginTransaction();
         try {
-            $userWallet->save();
+            $user_wallet->save();
+            if ($delivery_wallet) {
+                $delivery_wallet->save();
+            }
             $escrow->save();
             DB::commit();
             try {

@@ -2186,6 +2186,16 @@ function getDeliveryAmountOnEscrow($escrow)
     return $policyDelivery ? $policyDelivery->pivot->fee : 0;
 }
 
+function getAdminFeesOnAmount($amount)
+{
+    $transactionSetting = TransactionSetting::where('slug', 'escrow')->first();
+    $fixed = $transactionSetting->fixed_charge ?? 0;
+    $percent = $transactionSetting->percent_charge ?? 0;
+    $fees = $amount * ($percent / 100);
+    $fees = $fees + $fixed;
+    return $amount - ($amount - $fees);
+}
+
 function applyAdminFeesOnAmount($amount)
 {
     $transactionSetting = TransactionSetting::where('slug', 'escrow')->first();
@@ -2276,6 +2286,52 @@ function getAdvancedPaymentAmountOfEscrowFeesOnly($escrow)
     return $fee;
 }
 
+function releasePaymentToBuyer($escrow, $user_wallet)
+{
+    $user_wallet->balance = ($user_wallet->balance - getDeliveryAmountOnBuyer($escrow)) + $escrow->escrowDetails->buyer_pay;
+
+    $delivery_wallet = UserWallet::where('user_id', $escrow->delivery_id)
+        ->where('currency_id', $escrow->escrowCurrency->id)->first();
+    $policyDSP  = $escrow->policies()->where('field', 'dsp_amount')->first();
+    $policyDSPAmount = $policyDSP ? $policyDSP->pivot->fee : 0;
+
+    $getDeliveryAmountOnEscrowMinusFees = getDeliveryAmountOnEscrowMinusFees($escrow);
+
+    $delivery_wallet->balance = ($delivery_wallet->balance + $getDeliveryAmountOnEscrowMinusFees + $policyDSPAmount);
+
+    return [
+        'user_wallet' => $user_wallet,
+        'delivery_wallet' => $delivery_wallet,
+    ];
+}
+
+function releasePaymentToMerchant($escrow, $user_wallet)
+{
+    $policyDSP  = $escrow->policies()->where('field', 'dsp_amount')->first();
+    $policyDSPAmount = $policyDSP ? $policyDSP->pivot->fee : 0;
+
+    $getDeliveryAmountOnEscrowMinusFees = getDeliveryAmountOnEscrowMinusFees($escrow);
+
+    $advancedPaymentAmountOfEscrow = getAdvancedPaymentAmountOfEscrow($escrow);
+    $deliveryAmountOnBuyer = getDeliveryAmountOnBuyer($escrow);
+
+    if ($deliveryAmountOnBuyer <= 0) {
+        $user_wallet->balance = ($user_wallet->balance + $escrow->escrowDetails->seller_get - ($advancedPaymentAmountOfEscrow));
+    } else {
+        $amount = applyAdminFeesOnAmount($escrow->amount - $deliveryAmountOnBuyer - $advancedPaymentAmountOfEscrow);
+        $user_wallet->balance = $user_wallet->balance + $amount;
+    }
+
+    $delivery_wallet = UserWallet::where('user_id', $escrow->delivery_id)
+        ->where('currency_id', $escrow->escrowCurrency->id)->first();
+
+    $delivery_wallet->balance = ($delivery_wallet->balance + $getDeliveryAmountOnEscrowMinusFees + $policyDSPAmount);
+
+    return [
+        'user_wallet' => $user_wallet,
+        'delivery_wallet' => $delivery_wallet,
+    ];
+}
 
 function returnEscrowMoney($escrow)
 {

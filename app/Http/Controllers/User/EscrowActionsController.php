@@ -739,13 +739,7 @@ class EscrowActionsController extends Controller
 
         $validated = $validator->validate();
         $escrow    = Escrow::findOrFail($validated['target']);
-        $policyDeliveryAmount = getDeliveryAmountOnEscrow($escrow);
-        $getDeliveryAmountOnEscrowMinusFees = getDeliveryAmountOnEscrowMinusFees($escrow);
-
-        $policyDSP  = $escrow->policies()->where('field', 'dsp_amount')->first();
-        $policyDSPAmount = $policyDSP ? $policyDSP->pivot->fee : 0;
-
-
+        
         if (!(auth()->user()->type == "delivery" && $escrow->delivery_id == auth()->user()->id)) {
             return redirect()->back()->with(['error' => [__('You are not authorized to access this page')]]);
         }
@@ -764,20 +758,9 @@ class EscrowActionsController extends Controller
         $user_wallet           = UserWallet::where('user_id', $wallet_user_id)->where('currency_id', $escrow->escrowCurrency->id)->first();
         if (empty($user_wallet)) return redirect()->back()->with(['error' => [__('Seller Wallet not found')]]);
 
-        $advancedPaymentAmountOfEscrow = getAdvancedPaymentAmountOfEscrow($escrow);
-        $deliveryAmountOnBuyer = getDeliveryAmountOnBuyer($escrow);
-
-        if ($deliveryAmountOnBuyer <= 0) {
-            $user_wallet->balance = ($user_wallet->balance + $escrow->escrowDetails->seller_get - ($advancedPaymentAmountOfEscrow));
-        } else {
-            $amount = applyAdminFeesOnAmount($escrow->amount - $deliveryAmountOnBuyer - $advancedPaymentAmountOfEscrow);
-            $user_wallet->balance = $user_wallet->balance + $amount;
-        }
-
-        $delivery_wallet = UserWallet::where('user_id', $escrow->delivery_id)
-            ->where('currency_id', $escrow->escrowCurrency->id)->first();
-
-        $delivery_wallet->balance = ($delivery_wallet->balance + $getDeliveryAmountOnEscrowMinusFees + $policyDSPAmount);
+        $release = releasePaymentToMerchant($escrow, $user_wallet);
+        $user_wallet = $release['user_wallet'];
+        $delivery_wallet = $release['delivery_wallet'];
 
         $escrow->status = EscrowConstants::RELEASED;
         DB::beginTransaction();
