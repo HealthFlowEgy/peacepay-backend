@@ -69,8 +69,10 @@
                     <div class="form-group">
                         <label for="usertype">User Type*</label>
                         <select name="user_type" class="form-control select2-auto-tokenize" required>
+                            <option value="">Select</option>
                             <option value="buyer" {{ old('user_type',$payment_gateway->user_type) == 'buyer' ? 'selected' : '' }}>buyer</option>
                             <option value="seller" {{ old('user_type',$payment_gateway->user_type) == 'seller' ? 'selected' : '' }}>seller</option>
+                            <option value="delivery" {{ old('user_type',$payment_gateway->user_type) == 'delivery' ? 'selected' : '' }}>delivery</option>
                         </select>
                     </div>
                 </div>
