@@ -210,7 +210,7 @@ class DashboardController extends Controller
                 // }
 
                 $deliveryFeesAdmin = getDeliveryAmountOnEscrowFeesOnly($escrow);
-                $adminAdvancedPaymentEscrowFees = getAdvancedPaymentAmountOfEscrowFeesOnly($escrow);
+                // $adminAdvancedPaymentEscrowFees = getAdvancedPaymentAmountOfEscrowFeesOnly($escrow);
 
                 $amount = $escrow->amount;
                 $amount -= getDeliveryAmountOnEscrow($escrow);
@@ -227,7 +227,11 @@ class DashboardController extends Controller
                 $totalAmount += getDeliveryAmountOnEscrowFeesOnly($escrow);
             }
 
-            foreach (Escrow::get()->where('status', EscrowConstants::REFUNDED) as $escrow) {
+            foreach (
+                Escrow::get()->whereNotIn('status', [
+                    EscrowConstants::APPROVAL_PENDING,
+                ])->where('payment_type', '!=', EscrowConstants::DID_NOT_PAID) as $escrow
+            ) {
                 $totalAmount += getAdvancedPaymentAmountOfEscrowFeesOnly($escrow);
             }
             $escrow_profit = $totalAmount ?? 0;
