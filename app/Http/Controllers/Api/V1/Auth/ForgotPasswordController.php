@@ -35,8 +35,8 @@ class ForgotPasswordController extends Controller
         }
 
         $column = "username";
-        if(check_email($request->credentials)) $column = "email";
-        $user = User::where($column,$request->credentials)->first();
+        if (check_email($request->credentials)) $column = "email";
+        $user = User::where($column, $request->credentials)->first();
 
         if (!$user) {
             $message =  ['error' => [__("User doesn't exists")]];
@@ -47,7 +47,7 @@ class ForgotPasswordController extends Controller
         $code = generate_random_code();
 
         try {
-            UserPasswordReset::where("user_id",$user->id)->delete();
+            UserPasswordReset::where("user_id", $user->id)->delete();
 
             $password_reset = UserPasswordReset::create([
                 'user_id'       => $user->id,
@@ -56,7 +56,6 @@ class ForgotPasswordController extends Controller
             ]);
 
             $user->notify(new PasswordResetEmail($user, $password_reset));
-
         } catch (Exception $e) {
             info($e);
             $message = ['error' =>  [__('Something went wrong! Please try again')]];
@@ -75,61 +74,60 @@ class ForgotPasswordController extends Controller
             'credentials'   => "required|string|max:100",
         ]);
         $column = "mobile";
-        $user = User::where($column,$request->credentials)->first();
-        if(!$user) {
+        $user = User::where($column, $request->credentials)->first();
+        if (!$user) {
             return response()->json([
                 'credentials'       => "User doesn't exists.",
-            ],400);
+            ], 400);
         }
         if ($user->status == false) {
-            return response()->json(['error' => [__('Something went wrong! Please try again')]],400);
+            return response()->json(['error' => [__('Something went wrong! Please try again')]], 400);
         }
 
-        try{
+        try {
             $update_data = [
                 'ver_code'          => generate_random_code(),
                 'ver_code_send_at'  => now(),
             ];
 
             $user->update($update_data);
-        }catch(Exception $e) {
-            return response()->json(['error' => ['Something went wrong! Please try again']],400);
+        } catch (Exception $e) {
+            return response()->json(['error' => ['Something went wrong! Please try again']], 400);
         }
-        return response()->json(['success' => [__('Varification code sended to your mobile')]],200);
+        return response()->json(['success' => [__('Varification code sended to your mobile')]], 200);
     }
 
     public function verifyCodeMobile(Request $request)
     {
-        $validated = Validator::make($request->all(),[
+        $validated = Validator::make($request->all(), [
             'mobile'          => "required|numeric",
             'code'          => "required|numeric",
         ])->validate();
 
-        $user = User::where('mobile',$request->mobile)->first();
+        $user = User::where('mobile', $request->mobile)->first();
 
-        if($user->code != $validated['code'] && $validated['code'] != '123456') {
+        if ($user->code != $validated['code'] && $validated['code'] != '123456') {
             return response()->json([
                 'code'      => "Verification Otp is Invalid",
-            ],400);
-        }else{
-            $user->update([
-                'ver_code'          => null,
-                'ver_code_send_at'  => null,
-                'sms_verified'      => 1
-            ]);
-            
-            $token = generate_unique_string("user_password_resets","token",80);
-            $code = generate_random_code();
+            ], 400);
+        } else {
+            $user->ver_code = null;
+            $user->ver_code_send_at = null;
+            $user->sms_verified = 1;
+            $user->save();
 
-            UserPasswordReset::where("user_id",$user->id)->delete();
-            $password_reset = UserPasswordReset::create([
-                'user_id'       => $user->id,
-                'token'         => $token,
-                'code'          => $code,
-            ]);
+            // $token = generate_unique_string("user_password_resets","token",80);
+            // $code = generate_random_code();
+
+            // UserPasswordReset::where("user_id",$user->id)->delete();
+            // $password_reset = UserPasswordReset::create([
+            //     'user_id'       => $user->id,
+            //     'token'         => $token,
+            //     'code'          => $code,
+            // ]);
         }
 
-        return response()->json(['success' => [__('mobile verified')]],200);
+        return response()->json(['success' => [__('mobile verified')]], 200);
     }
 
 
