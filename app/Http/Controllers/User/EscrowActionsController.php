@@ -650,10 +650,12 @@ class EscrowActionsController extends Controller
 
         $amountBuyerWillGet = $escrow->amount;
 
-        if ($escrow->delivery_id && EscrowConstants::REFUNDED){
+        if ($escrow->delivery_id && $type == EscrowConstants::REFUNDED) {
             $amountBuyerWillGet -= getDeliveryAmountOnEscrow($escrow);
+        } elseif ($escrow->delivery_id && $type == EscrowConstants::CANCELED) {
+            $seller_wallet->balance -= getDeliveryAmountOnEscrow($escrow);
         }
-        
+
         $buyer_wallet->balance += $amountBuyerWillGet;
 
         $escrow->status = $type;
@@ -739,7 +741,7 @@ class EscrowActionsController extends Controller
 
         $validated = $validator->validate();
         $escrow    = Escrow::findOrFail($validated['target']);
-        
+
         if (!(auth()->user()->type == "delivery" && $escrow->delivery_id == auth()->user()->id)) {
             return redirect()->back()->with(['error' => [__('You are not authorized to access this page')]]);
         }

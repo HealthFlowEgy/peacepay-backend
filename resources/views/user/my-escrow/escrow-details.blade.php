@@ -2,11 +2,10 @@
     <div class="support-profile-wrapper">
         <div class="support-profile-header escrow-profile-header">
             <div class="escrow-details-btn-wrapper">
-                @if ($escrow->status == escrow_const()::ONGOING &&
-                    (
-                        auth()->user()->type == "seller" && $escrow->delivery_id == null
-                    ) &&
-                    $escrow->user_id == auth()->user()->id 
+                @if (
+                        $escrow->status == escrow_const()::ONGOING &&
+                        (auth()->user()->type == "seller") &&
+                        $escrow->user_id == auth()->user()->id
                     )
                     <button type="button" class="btn--base bg--danger cancelItem">{{ __('Cancel Item') }}</button>
                 @endif

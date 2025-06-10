@@ -223,7 +223,10 @@ class DashboardController extends Controller
                 $totalAmount += ($fees + $deliveryFeesAdmin);
             }
 
-            foreach (Escrow::get()->where('status', EscrowConstants::REFUNDED)->whereNotNull('delivery_id') as $escrow) {
+            foreach (
+                Escrow::get()->whereIn('status', [EscrowConstants::REFUNDED, EscrowConstants::CANCELED])
+                    ->whereNotNull('delivery_id') as $escrow
+            ) {
                 $totalAmount += getDeliveryAmountOnEscrowFeesOnly($escrow);
             }
 
