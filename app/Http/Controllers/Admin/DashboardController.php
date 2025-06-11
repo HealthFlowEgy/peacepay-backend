@@ -214,6 +214,7 @@ class DashboardController extends Controller
 
                 $amount = $escrow->amount;
                 $amount -= getDeliveryAmountOnEscrow($escrow);
+                $amount -= getAdvancedPaymentAmountOfEscrow($escrow);
 
                 if ($escrow->from_admin_to_user_id != $escrow->buyer_or_seller_id) {
                     $fees = getAdminFeesOnAmount($amount);

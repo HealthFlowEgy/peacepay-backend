@@ -24,7 +24,7 @@
 @section('content')
 <div class="body-wrapper">
     <div class="custom-card support-card mt-10">
-        <div class="support-card-wrapper">
+        <!-- <div class="support-card-wrapper">
             <div class="card-header">
                 <div class="card-header-user-area"> 
                     <div class="card-header-user-content">
@@ -90,7 +90,7 @@
                     </div>
                 </div>
             </div>
-        </div>  
+        </div>   -->
         @include('user.my-escrow.escrow-details',['escrow' => $escrow])
     </div>
 </div>
