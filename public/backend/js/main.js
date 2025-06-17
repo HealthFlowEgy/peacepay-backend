@@ -1195,10 +1195,12 @@ function openDeleteModal(URL,target,message,actionBtnText = "Remove",method = "D
   );
 }
 
-function openAlertModal(URL,target,message,actionBtnText = "Remove",method = "DELETE"){
+function openAlertModal(URL, target, message, actionBtnText = "Remove", method = "DELETE", data = {}){
   if(URL == "" || target == "") {
       return false;
   }
+  
+  var escapedData = JSON.stringify(data).replace(/"/g, '&quot;');
 
   if(message == "") {
     message = "Are you sure to delete ?";
@@ -1210,6 +1212,7 @@ function openAlertModal(URL,target,message,actionBtnText = "Remove",method = "DE
                       <div class="card-body">
                           <form method="POST" action="${URL}">
                               <input type="hidden" name="_token" value="${laravelCsrf()}">
+                              <input type="hidden" name="data" value="${escapedData}">
                               ${method}
                               <div class="head mb-3">
                                   ${message}

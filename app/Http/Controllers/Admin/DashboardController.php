@@ -197,20 +197,8 @@ class DashboardController extends Controller
         $fees = 0;
         try {
             $totalAmount = 0;
-            foreach ($escrow->where('status', EscrowConstants::RELEASED) as $escrow) {
-                // $totalCharge = $escrow->escrowDetails->fee ?? 0;
-                // $walletRate = $escrow->escrowCurrency->rate;
-                // $result = (floatval($totalCharge) * floatval($walletRate));
-                // $totalAmount += $result;
-
-                // $totalAmount += getAdvancedPaymentAmountOfEscrowFeesOnly($escrow);
-
-                // if (getDeliveryAmountOnSeller($escrow) > 0) {
-                //     $totalAmount += getDeliveryAmountOnEscrowFeesOnly($escrow);
-                // }
-
+            foreach ($escrow->where('status', EscrowConstants::RELEASED)->where('total_amount_get_for_all_users' ,0) as $escrow) {
                 $deliveryFeesAdmin = getDeliveryAmountOnEscrowFeesOnly($escrow);
-                // $adminAdvancedPaymentEscrowFees = getAdvancedPaymentAmountOfEscrowFeesOnly($escrow);
 
                 $amount = $escrow->amount;
                 $amount -= getDeliveryAmountOnEscrow($escrow);
@@ -224,6 +212,9 @@ class DashboardController extends Controller
                 $totalAmount += ($fees + $deliveryFeesAdmin);
             }
 
+            foreach ($escrow->where('status', EscrowConstants::RELEASED)->where('total_amount_get_for_all_users', '!=' ,0) as $escrow) {
+                $totalAmount += ($escrow->amount - $escrow->total_amount_get_for_all_users);
+            }
             foreach (
                 Escrow::get()->whereIn('status', [EscrowConstants::REFUNDED, EscrowConstants::CANCELED])
                     ->whereNotNull('delivery_id') as $escrow

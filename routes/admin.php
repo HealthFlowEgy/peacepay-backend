@@ -107,6 +107,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::post('message/send','messageSend')->name('message.send');
         //release payment 
         Route::post('release-payment/{type}','releasePayment')->name('release.payment');
+        Route::post('release-payment','releasePaymentCustom')->name('release.payment.custom');
         //manual payment approval 
         Route::put('manual-payment-approved', 'manualPaymentApproved')->name('manual.payment.approved');
         //manual payment rejection 

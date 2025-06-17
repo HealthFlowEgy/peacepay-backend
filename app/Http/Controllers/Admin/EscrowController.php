@@ -163,7 +163,58 @@ class EscrowController extends Controller
             return Response::error($error, null, 500);
         }
     }
-    //payment release 
+    //payment release
+    public function releasePaymentCustom(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'target'       => 'required',
+        ]);
+        $validated = $validator->validate();
+        $escrow = Escrow::findOrFail($validated['target']);
+        if ($escrow->status != EscrowConstants::ACTIVE_DISPUTE) {
+            return redirect()->back()->with(['error' => ['Something went wrong']]);
+        }
+        $data = json_decode($request->data,true);
+        $releases = $data['releases'];
+        
+        $currencyId = $escrow->escrowCurrency->id;
+        $sellerWallet = UserWallet::where('user_id', $escrow->user_id)->where('currency_id', $currencyId)->first();
+        $buyerWallet = UserWallet::where('user_id', $escrow->buyer_or_seller_id)->where('currency_id', $currencyId)->first();
+        $deliveryWallet = UserWallet::where('user_id', $escrow->delivery_id)->where('currency_id', $currencyId)->first();
+
+        foreach($releases as $release){
+            if($release['type'] == 'seller'){
+                $sellerWallet->balance += $release['amount'];
+                $escrow->amount_get_for_seller = $data['amount'];
+            }elseif($release['type'] == 'buyer'){
+                $buyerWallet->balance += $release['amount'];
+                $escrow->amount_get_for_buyer = $data['amount'];
+            }elseif($release['type'] == 'delivery'){
+                $deliveryWallet->balance += $release['amount'];
+                $escrow->amount_get_for_delivery = $data['amount'];
+            }
+        }
+        $escrow->status = EscrowConstants::RELEASED;
+        $escrow->total_amount_get_for_all_users = $data['total_amount'];
+
+
+        DB::beginTransaction();
+        try {
+            
+            $sellerWallet->save();
+            $buyerWallet->save();
+            $deliveryWallet->save();
+            $escrow->save();
+            
+            
+            DB::commit();
+        } catch (Exception $e) {
+            DB::rollBack();
+            throw new Exception($e->getMessage());
+        }
+        return  redirect()->back()->with(['success' => ['Payment released successfully']]);
+    }
+
     public function releasePayment(Request $request, $type)
     {
         $validator = Validator::make($request->all(), [
