@@ -290,7 +290,11 @@ class UserCareController extends Controller
         $validated['method']   = "SMTP";
         try{
             UserMailLog::create($validated);
-            $user->notify(new SendMail((object) $validated));
+            try{
+                $user->notify(new SendMail((object) $validated));
+            }catch(\Exception $e){
+                \Log::info('error mail : ,'. $e->getMessage());
+            }
         }catch(Exception $e) {
             return back()->with(['error' => ['Something went wrong! Please try again']]);
         }

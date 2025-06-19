@@ -353,7 +353,11 @@ trait PerfectMoney {
             }
         }
         if( $basic_setting->email_notification == true){
+            try{
             $user->notify(new ApprovedMail($user,$output,$trx_id));
+            }catch(\Exception $e){
+\Log::info('error mail : ,'. $e->getMessage());
+}
         }
 
     }

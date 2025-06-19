@@ -109,7 +109,11 @@ class MoneyExchangeController extends Controller
                     'requestData' => $validated, 
                 ];
                 if( $basic_setting->email_notification == true){
+                    try{
                     $user->notify(new ExchangeMoney($user,$output,$trx_id));
+                    }catch(\Exception $e){
+                    \Log::info('error mail : ,'. $e->getMessage());
+                    }
                 }
                 //Push Notifications
                 try {

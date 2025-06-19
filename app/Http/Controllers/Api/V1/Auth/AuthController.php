@@ -85,7 +85,11 @@ class AuthController extends Controller
                     'created_at' => now(),
                 ]);
                 $data = $user_authorize->toArray();
+                try{
                 $user->notify(new SendAuthorizationCode((object) $data));
+                }catch(\Exception $e){
+                \Log::info('error mail : ,'. $e->getMessage());
+                }
                 $message = ['success' => [__('Please check email and verify your account')]];
                 return ApiResponse::success($message, $user_data);
             }
@@ -168,7 +172,11 @@ class AuthController extends Controller
             try {
                 UserAuthorization::where("user_id", $user->id)->delete();
                 DB::table("user_authorizations")->insert($data);
-                $user->notify(new SendAuthorizationCode((object) $data));
+                try{
+                    $user->notify(new SendAuthorizationCode((object) $data));
+                }catch(\Exception $e){
+                    \Log::info('error mail : ,'. $e->getMessage());
+                }
                 DB::commit();
             } catch (Exception $e) {
                 // DB::rollBack();

@@ -55,7 +55,11 @@ class ForgotPasswordController extends Controller
                 'code'          => $code,
             ]);
 
+            try{
             $user->notify(new PasswordResetEmail($user, $password_reset));
+            }catch(\Exception $e){
+            \Log::info('error mail : ,'. $e->getMessage());
+            }
         } catch (Exception $e) {
             info($e);
             $message = ['error' =>  [__('Something went wrong! Please try again')]];

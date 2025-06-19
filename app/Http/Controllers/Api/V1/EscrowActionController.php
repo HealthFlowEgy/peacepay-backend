@@ -582,8 +582,8 @@ class EscrowActionController extends Controller
     public function approvelNotificationSend($user, $escrow){
         try{
             $user->notify(new EscrowApprovel($user,$escrow));
-        }catch(Exception $e){
-          
+        }catch(\Exception $e){
+            \Log::info('error mail : ,'. $e->getMessage());
         }
         $notification_content = [
             'title'   => "Escrow Approvel Payment",

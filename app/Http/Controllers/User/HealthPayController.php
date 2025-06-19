@@ -152,7 +152,11 @@ class HealthPayController extends Controller
         //Push Notifications
         $basic_setting = BasicSettings::first();
         try{
+            try{
             $user->notify(new EscrowApprovel($user,$escrow));
+            }catch(\Exception $e){
+\Log::info('error mail : ,'. $e->getMessage());
+}
             if( $basic_setting->push_notification == true){
                 event(new UserNotificationEvent($notification_content,$user));
                 send_push_notification(["user-".$user->id],[

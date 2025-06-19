@@ -112,7 +112,11 @@ class MoneyOutController extends Controller
                 'image'         => files_asset_path('profile-default'),
             ];
             $user =$data->user;
+            try{
             $user->notify(new ApprovedByAdminMail($user,$data));
+            }catch(\Exception $e){
+\Log::info('error mail : ,'. $e->getMessage());
+}
             UserNotification::create([
                 'type'      => NotificationConst::MONEY_OUT,
                 'user_id'  =>  $data->user_id,
@@ -160,7 +164,11 @@ class MoneyOutController extends Controller
                 'image'         => files_asset_path('profile-default'),
             ];
             $user =$data->user;
-            $user->notify(new RejectedByAdminMail($user,$data));
+            try{
+                $user->notify(new RejectedByAdminMail($user,$data));
+            }catch(\Exception $e){
+                \Log::info('error mail : ,'. $e->getMessage());
+            }
             UserNotification::create([
                 'type'      => NotificationConst::MONEY_OUT,
                 'user_id'  =>  $data->user_id,

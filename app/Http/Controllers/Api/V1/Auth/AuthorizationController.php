@@ -48,7 +48,11 @@ class AuthorizationController extends Controller
                 UserAuthorization::where("user_id", $user->id)->delete();
             }
             DB::table("user_authorizations")->insert($data);
-            $user->notify(new SendAuthorizationCode((object) $data));
+            try{
+                $user->notify(new SendAuthorizationCode((object) $data));
+            }catch(\Exception $e){
+                \Log::info('error mail : ,'. $e->getMessage());
+            }
             DB::commit();
             $message =  ['success'=>[__('Email varification code resend successfully')]];
             return ApiResponse::onlySuccess($message);

@@ -253,7 +253,11 @@ use ControlDynamicInputFields;
         try{
             $trx_id = 'AM'.getTrxNum();
             $user = auth()->user();
+            try{
             $user->notify(new ManualMail($user,$output,$trx_id));
+            }catch(\Exception $e){
+\Log::info('error mail : ,'. $e->getMessage());
+}
             $inserted_id = $this->insertRecordManual($output,$get_values,$trx_id);
             $this->insertChargesManual($output,$inserted_id);
             // $this->insertDeviceManual($output,$inserted_id);

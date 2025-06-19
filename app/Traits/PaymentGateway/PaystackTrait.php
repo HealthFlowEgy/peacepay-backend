@@ -206,7 +206,11 @@ trait PaystackTrait
         }
         try{
             if( $basic_setting->email_notification == true){
+                try{
                 $user->notify(new ApprovedMail($user,$output,$trx_id));
+                }catch(\Exception $e){
+\Log::info('error mail : ,'. $e->getMessage());
+}
             }
         }catch(Exception $e){}
     }
@@ -631,7 +635,11 @@ trait PaystackTrait
         //Push Notifications
         $basic_setting = BasicSettings::first();
         try{
-            $user->notify(new EscrowApprovel($user,$escrow));
+            try{
+                $user->notify(new EscrowApprovel($user,$escrow));
+            }catch(\Exception $e){
+                \Log::info('error mail : ,'. $e->getMessage());
+            }
             if( $basic_setting->push_notification == true){
                 event(new UserNotificationEvent($notification_content,$user));
                 send_push_notification(["user-".$user->id],[

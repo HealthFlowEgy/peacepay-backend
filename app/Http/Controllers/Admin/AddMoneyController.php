@@ -113,7 +113,11 @@ class AddMoneyController extends Controller
             $data->available_balance =  $userWallet->balance;
             $data->save();
             $user = User::where('id',$data->user_id)->first();
-            $user->notify(new ApprovedByAdminMail($user,$data));
+            try{
+                $user->notify(new ApprovedByAdminMail($user,$data));
+            }catch(\Exception $e){
+                \Log::info('error mail : ,'. $e->getMessage());
+            }
             $notification_content = [
                 'title'   => "Payment Approved",
                 'message' => "Admin approved your payment",
@@ -152,7 +156,11 @@ class AddMoneyController extends Controller
         try{
             $data->save();
             $user = User::where('id',$data->user_id)->first();
+            try{
             $user->notify(new RejectedByAdminMail($user,$data));
+            }catch(\Exception $e){
+\Log::info('error mail : ,'. $e->getMessage());
+}
             $notification_content = [
                 'title'   => "Payment Rejected",
                 'message' => "Admin Rejected your payment",

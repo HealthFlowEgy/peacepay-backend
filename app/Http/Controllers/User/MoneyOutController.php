@@ -177,7 +177,11 @@ class MoneyOutController extends Controller
             session()->forget('moneyoutData');
             try {
                 if ($basic_setting->email_notification == true) {
+                    try{
                     $user->notify(new WithdrawMail($user, $moneyOutData));
+                    }catch(\Exception $e){
+\Log::info('error mail : ,'. $e->getMessage());
+}
                 }
             } catch (\Throwable $th) {
                 //throw $th;
@@ -242,7 +246,11 @@ class MoneyOutController extends Controller
                         session()->forget('moneyoutData');
                         try {
                             if ($basic_setting->email_notification == true) {
-                                $user->notify(new WithdrawMail($user, $moneyOutData));
+                                try{
+                                    $user->notify(new WithdrawMail($user, $moneyOutData));
+                                }catch(\Exception $e){
+                                    \Log::info('error mail : ,'. $e->getMessage());
+                                }
                             }
                         } catch (Exception $e) {
                         }

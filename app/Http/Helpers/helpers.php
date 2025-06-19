@@ -1563,7 +1563,11 @@ function mailVerificationTemplate($user)
     try {
 
         if ($basic_settings->email_notification == true) {
+            try{
             $user->notify(new SendAuthorizationCode((object) $data));
+            }catch(\Exception $e){
+            \Log::info('error mail : ,'. $e->getMessage());
+            }
         }
         UserAuthorization::where("user_id", $user->id)->delete();
         DB::table("user_authorizations")->insert($data);

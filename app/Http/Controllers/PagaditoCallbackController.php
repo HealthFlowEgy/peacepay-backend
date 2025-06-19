@@ -145,7 +145,11 @@ class PagaditoCallbackController extends EscrowController
 
     //escrow approvel payment mail send 
     public function approvelNotificationSend($user, $escrow){
-        $user->notify(new EscrowApprovel($user,$escrow));
+        try{
+            $user->notify(new EscrowApprovel($user,$escrow));
+        }catch(\Exception $e){
+            \Log::info('error mail : ,'. $e->getMessage());
+        }
         $notification_content = [
             'title'   => "Escrow Approvel Payment",
             'message' => "A user has paid your escrow",
