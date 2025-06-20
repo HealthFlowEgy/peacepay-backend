@@ -43,6 +43,15 @@ class EscrowActionsController extends Controller
 {
     use ControlDynamicInputFields;
 
+    public function cancelDelivery(Request $request, $id){
+        $escrow = Escrow::where('id', $id)->first();
+        
+        $escrow->update([
+            'delivery_id' => null,
+        ]);
+        return redirect()->route('user.my-escrow.index')->with(['success' => [__('Delivery has been updated successfully')]]);
+    }
+
     public function updateDelivery(Request $request, $id)
     {
 
@@ -653,6 +662,10 @@ class EscrowActionsController extends Controller
         }
 
         $amountBuyerWillGet = $escrow->amount;
+
+        if($type == EscrowConstants::REFUNDED){
+            $amountBuyerWillGet -= getAdvancedPaymentAmountOfEscrow($escrow);
+        }
 
         if ($escrow->delivery_id && $type == EscrowConstants::REFUNDED) {
             $amountBuyerWillGet -= getDeliveryAmountOnEscrow($escrow);

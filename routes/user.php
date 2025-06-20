@@ -90,6 +90,7 @@ Route::prefix("user")->name("user.")->group(function () {
     // Escrow action routes
     Route::controller(EscrowActionsController::class)->name('escrow-action.')->group(function () {
         Route::post('/update-delivery/{id}', 'updateDelivery')->name('update-delivery');
+        Route::get('/cancel-delivery/{id}', 'cancelDelivery')->name('cancel-delivery');
         Route::get('escrow/payment/approval-pending/{id}', 'paymentApprovalPending')->middleware('confirm.pin')->name('paymentApprovalPending');
         Route::get('escrow/payment/approval-cancel/{id}', 'paymentCancel')->name('paymentCancel');
         Route::post('escrow/payment/approval-submit/{id}', 'paymentApprovalSubmit')->name('paymentApprovalSubmit');

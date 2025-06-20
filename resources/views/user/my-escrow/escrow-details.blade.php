@@ -31,12 +31,21 @@
 
                     @if (auth()->user()->type == "delivery" && $escrow->delivery_id == auth()->user()->id)
                         <button type="button" class="btn--base releasePayment">{{ __('Release Payment') }}</button>
+
+                        <a href="{{route('user.escrow-action.cancel-delivery',$escrow->id)}}" class="btn--base">{{ __('Cancel Delivery') }}</a>
+
                     @endif 
                     {{-- escrow dispute action --}}
                     @if ($escrow->status == escrow_const()::ONGOING)
                         <button type="button" class="btn--base bg--warning disputePayment">{{ __('Dispute Payment') }}</button>
                         @if (auth()->user()->type == "buyer")
-                            <button type="button" class="btn--base bg--danger returnItem">{{ __('Return Item') }}</button>
+                            <button type="button" class="btn--base bg--danger returnItem">
+                                @if($escrow->delivery_id)
+                                    {{ __('Return Item') }}
+                                @else
+                                    {{ __('Cancel Order') }}
+                                @endif
+                            </button>
                         @endif
                     @endif 
                 @endif 
