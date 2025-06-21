@@ -5167,8 +5167,8 @@ option {
 
 .support-profile-wrapper {
   background-color: #010314;
-  /* width: 500px; */
-  width: 100%;
+  width: 500px;
+  /* width: 100%; */
   -webkit-transition: all 0.5s;
   transition: all 0.5s;
 }

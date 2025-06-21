@@ -41,9 +41,9 @@
                         @if (auth()->user()->type == "buyer")
                             <button type="button" class="btn--base bg--danger returnItem">
                                 @if($escrow->delivery_id)
-                                    {{ __('Return Item') }}
-                                @else
                                     {{ __('Cancel Order') }}
+                                @else
+                                    {{ __('Return Item') }}
                                 @endif
                             </button>
                         @endif
@@ -78,14 +78,16 @@
                                 {{__("Wallet Number") }} : 
                                 <span class="text-right">
                                     {{ $escrow->delivery?->full_mobile }}
-                                </span>
-                            @else
-                                <form action="{{ setRoute('user.escrow-action.update-delivery' , $escrow->id) }}" method="POST" class="form--base">
+                                </span>                                
+                            @endif
+
+                            @if($escrow->status == escrow_const()::ONGOING)
+                                <form action="{{ setRoute('user.escrow-action.update-delivery' , $escrow->id) }}" method="POST" class="form--base mt-10">
                                     @csrf
                                     <div class="row">
                                         <div class="col-lg-12 form-group">
-                                            <label>{{__("Wallet Number") }}<span>*</span></label>
-                                            <input type="text" name="mobile" class="form--control mobile" value="" required="">                                                <small class="pin-code-error text-danger" style="display: none;">Please enter a 6-digit PIN code</small>
+                                            @if(!$escrow->delivery_id) <label>{{__("Wallet Number") }}<span>*</span></label> @endif
+                                            <input type="text" name="mobile" placeholder='{{ __("Wallet Number") }}' class="form--control mobile" value="" required="">                                                <small class="pin-code-error text-danger" style="display: none;">Please enter a 6-digit PIN code</small>
                                         </div>
                                         <div class="col-xl-12 col-lg-12">
                                             <button type="submit" class="btn--base w-100">{{__('Update')}}</button>
@@ -93,6 +95,7 @@
                                     </div>
                                 </form>
                             @endif
+                                    
                         </li>
                     </ul>
                 </div>
