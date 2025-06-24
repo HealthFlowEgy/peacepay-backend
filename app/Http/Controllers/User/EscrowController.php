@@ -101,13 +101,7 @@ class EscrowController extends Controller
 
         $validator  = Validator::make($request->all(), [
             'title'                 => 'required|string',
-            'escrow_category'       => 'required|integer',
-            // 'role'                  => 'required|string',
-            'who_will_pay_options'  => 'required|string',
             'buyer_seller_identify' => 'required',
-            'amount'                => 'required|numeric',
-            'return_price'          => 'nullable|numeric',
-            'delivery_timeframe'    => 'nullable|numeric',
             'amount'                => 'required|numeric',
             'escrow_currency'       => 'required|string',
             'payment_gateway'       => 'nullable',
@@ -123,7 +117,11 @@ class EscrowController extends Controller
 
         $validated            = $validator->validate();
         $validated['role']    = 'seller';
-        $escrowCategory       = EscrowCategory::find($validated['escrow_category']);
+        $validated['who_will_pay_options']    = 'me';
+
+        $escrowCategory       = EscrowCategory::first();
+        $validated['escrow_category'] = $escrowCategory->id;
+
         $getEscrowChargeLimit = TransactionSetting::find(1);
         $sender_currency      = Currency::where('code', $validated['escrow_currency'])->first();
         $digitShow            = $sender_currency->type == "CRYPTO" ? 6 : 2;
@@ -140,10 +138,7 @@ class EscrowController extends Controller
 
 
         //user check 
-        if (empty($opposite_user)
-            //  || $opposite_user->email == auth()->user()->email
-        ) {
-            // return redirect()->back()->withInput()->with(['error' => [__('User not found')]]);
+        if (empty($opposite_user)) {
             $basic_settings = BasicSettingsProvider::get();
             $data['email_verified']    = ($basic_settings->email_verification == true) ? false : true;
             $data['sms_verified']      = ($basic_settings->sms_verification == true) ? false : true;
@@ -289,6 +284,7 @@ class EscrowController extends Controller
                 return back()->with(['error' => [__('Opps! Failed to upload attachment. Please try again')]]);
             }
         }
+        
         $identifier = generate_unique_string("escrows", "escrow_id", 16);
         $tempData = [
             'trx'              => $identifier,
