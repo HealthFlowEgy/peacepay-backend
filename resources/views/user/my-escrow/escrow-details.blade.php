@@ -41,9 +41,9 @@
                         @if (auth()->user()->type == "buyer")
                             <button type="button" class="btn--base bg--danger returnItem">
                                 @if($escrow->delivery_id)
-                                    {{ __('Cancel Order') }}
-                                @else
                                     {{ __('Return Item') }}
+                                @else
+                                    {{ __('Cancel Order') }}
                                 @endif
                             </button>
                         @endif
