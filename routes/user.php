@@ -20,7 +20,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Pusher\PushNotifications\PushNotifications;
 
-Route::prefix("user")->name("user.")->group(function () {
+Route::prefix("user")->name("user.")->middleware(['check.user.status'])->group(function () {
 
     Route::get('/pin-code-confirm', [GeeralConrtoller::class, 'pinCodeConfirm'])->name('pin.code.confirm');
     Route::post('/pin-code-confirm', [GeeralConrtoller::class, 'pinCodeConfirmPost'])->name('pin.code.confirm');

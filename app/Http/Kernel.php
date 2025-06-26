@@ -88,5 +88,6 @@ class Kernel extends HttpKernel
         'system.maintenance' => SystemMaintenance::class,
         'system.maintenance.api' => SystemMaintenanceApi::class,
         'confirm.pin' => ConfirmPINCode::class,
+        'check.user.status' => \App\Http\Middleware\CheckUserStatus::class, // Add this line
     ];
 }
