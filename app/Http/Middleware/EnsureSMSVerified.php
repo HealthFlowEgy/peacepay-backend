@@ -38,9 +38,9 @@ class EnsureSMSVerified
         $device = UserDevice::where('user_id', $user->id)
             ->where('device_fingerprint', $fingerprint)
             ->first();
-        
+
         // If user is verified but using a new device, reset sms_verified status
-        if ($user->sms_verified && !$device) {
+        if ($user->sms_verified && !$device && $request->header('Content-Type') != 'application/json') {
             $user->sms_verified = false;
             $user->save();
             
