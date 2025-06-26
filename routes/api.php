@@ -13,7 +13,7 @@ use App\Http\Controllers\Api\V1\EscrowActionController;
 use App\Http\Controllers\Api\V1\MoneyExchangeController;
 use App\Http\Controllers\Api\V1\Auth\AuthorizationController;
 use App\Http\Controllers\Api\V1\Auth\ForgotPasswordController;
-
+use App\Http\Controllers\Api\V1\PolicyController;
 
 /*
 |--------------------------------------------------------------------------
@@ -149,6 +149,9 @@ Route::prefix("v1")->name('api.v1.')->group(function () {
         Route::get('dashboard', [DashboardController::class, 'dashboard']);
         Route::get('user-notification', [DashboardController::class, 'userNotification']);
         Route::get('all-transactions', [DashboardController::class, 'allTransactions']);
+        
+        Route::resource('policies', PolicyController::class);
+        
         // User Profile
         Route::controller(ProfileController::class)->prefix('profile')->group(function () {
             Route::get('/', 'profile');

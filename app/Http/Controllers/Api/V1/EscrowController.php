@@ -140,6 +140,8 @@ class EscrowController extends Controller
             'remarks'               => 'nullable|string',
             'file.*'                => "nullable|file|max:100000|mimes:jpg,jpeg,png,pdf,zip",
             'field'                 => 'required',
+            'field.delivery_fee_amount'                 => 'required',
+            'field.advanced_payment_amount'                 => 'required',
             'policy_id'             => 'required',
         ]);
 
