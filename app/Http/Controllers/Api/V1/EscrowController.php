@@ -35,6 +35,7 @@ use App\Events\User\NotificationEvent as UserNotificationEvent;
 class EscrowController extends Controller
 {
     use ControlDynamicInputFields;
+    
     public function index()
     {
         $escrowData = Escrow::with('escrowCategory', 'escrowDetails')->where('user_id', auth()->user()->id)->orWhere('buyer_or_seller_id', auth()->user()->id)->latest()->get()->map(function ($data) {
@@ -51,6 +52,8 @@ class EscrowController extends Controller
                 'charge_payer'    => $data->string_who_will_pay->value,
                 'status'          => $data->status,
                 'remarks'          => $data->remark,
+                'pin_code'          => $data->pin_code,
+                'fields'          => $data->policies->pluck('pivot'),
                 'attachments' => collect($data->file)->map(function ($data) {
                     return [
                         'file_name' => $data->attachment,
@@ -68,6 +71,8 @@ class EscrowController extends Controller
         $message = ['success' => [__('Escrow Information')]];
         return ApiResponse::success($message, $data);
     }
+
+
     public function create()
     {
         $user = auth()->user();
@@ -128,6 +133,7 @@ class EscrowController extends Controller
         $message = ['success' => [__('Escrow Create Data')]];
         return ApiResponse::success($message, $data);
     }
+
     //escrow submit
     public function submit(Request $request)
     {
@@ -363,6 +369,7 @@ class EscrowController extends Controller
         $message = ['success' => [__('Escrow Inserted Successfully')]];
         return ApiResponse::success($message, $data);
     }
+
     //escrow temp data insert
     public function addEscrowTempData($identifier, $data)
     {

@@ -192,6 +192,11 @@ Route::prefix("v1")->name('api.v1.')->group(function () {
         });
         //escrow action routes
         Route::controller(EscrowActionController::class)->prefix('api-escrow-action')->name('api-escrow-action.')->group(function () {
+
+            Route::post('/update-delivery/{id}', 'updateDelivery')->name('update-delivery');
+            Route::get('/cancel-delivery/{id}', 'cancelDelivery')->name('cancel-delivery');
+        
+
             Route::get('payment/approval-pending/{id}', 'paymentApprovalPending')->name('paymentApprovalPending');
             Route::post('escrow/payment/approval-submit/{id}', 'paymentApprovalSubmit')->name('paymentApprovalSubmit');
             Route::post('/approval-pending/manual/confirm', 'manualPaymentConfirm')->name('manual.confirm');
@@ -200,6 +205,10 @@ Route::prefix("v1")->name('api.v1.')->group(function () {
             Route::post('message/send', 'messageSend')->name('message.send');
             //dispute payment request
             Route::post('dispute-payment', 'disputePayment')->name('dispute.payment');
+
+            Route::post('return-payment', 'returnPaymentFromBuyer')->name('return.payment');
+            Route::post('cancel-payment', 'cancelPaymentFromMerchant')->name('cancel.payment');
+
             //release payment request
             Route::post('release-payment', 'releasePayment')->name('release.payment');
             Route::post('release-request', 'releaseRequest')->name('release.request');
