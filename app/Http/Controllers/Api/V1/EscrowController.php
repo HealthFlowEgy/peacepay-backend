@@ -38,7 +38,18 @@ class EscrowController extends Controller
     
     public function index()
     {
-        $escrowData = Escrow::with('escrowCategory', 'escrowDetails')->where('user_id', auth()->user()->id)->orWhere('buyer_or_seller_id', auth()->user()->id)->latest()->get()->map(function ($data) {
+        $escrowData = Escrow::with('escrowCategory', 'escrowDetails')
+        ->when(auth()->user()->type == 'seller', function ($q) {
+            $q->where('user_id', auth()->user()->id);
+        })
+        ->when(auth()->user()->type == 'buyer', function ($q) {
+            $q->where('buyer_or_seller_id', auth()->user()->id);
+        })
+        ->when(auth()->user()->type == 'delivery', function ($q) {
+            $q->where('delivery_id', auth()->user()->id);
+        })
+        ->latest()->get()
+        ->map(function ($data) {
             return [
                 'id'              => $data->id,
                 'user_id'              => $data->user_id,

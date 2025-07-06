@@ -898,9 +898,12 @@ class EscrowActionController extends Controller
         ]);
 
         $validated = $validator->validate();
-        $escrow    = Escrow::findOrFail($validated['target']);
+        $escrow    = Escrow::where('pin_code' , $validated['pin_code'])->first();
 
-        if (!(auth()->user()->type == "delivery" && $escrow->delivery_id == auth()->user()->id)) {
+        if(!$escrow){
+            return ApiResponse::onlyError(['error' => [__('You are not authorized to access this page')]]);
+        }
+        if (!(auth()->user()->type == "delivery")) {
             return ApiResponse::onlyError(['error' => [__('You are not authorized to access this page')]]);
         }
 
@@ -908,6 +911,9 @@ class EscrowActionController extends Controller
             return ApiResponse::onlyError(['error' => [__('Pin code is not matched')]]);
         }
 
+        $escrow->delivery_id = auth()->user()->id;
+        $escrow->save();
+        
         $user      = User::findOrFail($escrow->user_id == auth()->user()->id ? $escrow->buyer_or_seller_id : $escrow->user_id);
         //status check 
         if ($escrow->status != EscrowConstants::ONGOING) {
