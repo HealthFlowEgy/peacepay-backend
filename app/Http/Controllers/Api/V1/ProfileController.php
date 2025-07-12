@@ -48,6 +48,72 @@ class ProfileController extends Controller
         return ApiResponse::success($message, $data);
     }
 
+    public function checkPin(Request $request){
+        $rules = [
+            'pin_code' => 'required|string|min:6|max:6|regex:/^\d{6}$/',
+        ];
+        $messages = [
+            'pin_code.regex' => 'The PIN code must contain exactly 6 digits.',
+        ];
+        $validator = Validator::make($request->all(), $rules, $messages);
+
+        if ($validator->fails()) {
+            $error =  ['error' => $validator->errors()->all()];
+            return ApiResponse::validation($error);
+        }
+
+        $user = auth()->user();
+        if ($user->pin_code != $request['pin_code']) {
+            return ApiResponse::validation(['pin_code' => 'The PIN code is incorrect.']);
+        }
+
+        return ApiResponse::success(['success' => [__('PIN success!')]]);
+    }
+
+    public function pinEditOrCrete(Request $request)
+    {
+        $user = auth()->user();
+
+        // Validation rules
+        $rules = [
+            'pin_code' => 'required|string|min:6|max:6|regex:/^\d{6}$/',
+        ];
+
+        $messages = [
+            'pin_code.regex' => 'The PIN code must contain exactly 6 digits.',
+        ];
+
+        // If user already has a PIN code, validate current PIN
+        if ($user->pin_code) {
+            $rules['current_pin_code'] = 'required|string';
+            $rules['pin_code_confirmation'] = 'required|same:pin_code';
+
+            // Add confirmation validation
+            $messages['pin_code_confirmation.same'] = 'The confirmation PIN code does not match.';
+        }
+
+        $validator = Validator::make($request->all(), $rules, $messages);
+
+        if ($validator->fails()) {
+            $error =  ['error' => $validator->errors()->all()];
+            return ApiResponse::validation($error);
+        }
+
+        // If user has a current PIN, verify it
+        if ($user->pin_code) {
+            if ($request->current_pin_code != $user->pin_code) {
+                return ApiResponse::validation(['current_pin_code' => 'The current PIN code is incorrect.']);
+            }
+        }
+
+        // Update PIN code
+        $user->update([
+            'pin_code' => $request->pin_code,
+        ]);
+
+        return ApiResponse::success(['success' => [__('PIN successfully updated!')]]);
+    }
+    
     /**
      * Profile Update
      *

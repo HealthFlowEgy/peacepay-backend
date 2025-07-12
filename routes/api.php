@@ -154,6 +154,9 @@ Route::prefix("v1")->name('api.v1.')->group(function () {
         
         // User Profile
         Route::controller(ProfileController::class)->prefix('profile')->group(function () {
+            Route::put('/pin', 'pinEditOrCrete')->name('pin');
+            Route::post('/check/pin', 'checkPin')->name('check.pin');
+
             Route::get('/', 'profile');
             Route::post('update', 'profileUpdate')->middleware('app.mode.api');
             Route::post('password/update', 'passwordUpdate')->middleware('app.mode.api');

@@ -63,6 +63,7 @@ class AuthController extends Controller
                 'two_factor_verified' => $user->two_factor_verified,
                 'two_factor_secret'   => $user->two_factor_secret,
                 'two_factor_status'   => $user->two_factor_status,
+                'has_pin'             => $user->pin_code? true : false,
             ];
         }
 

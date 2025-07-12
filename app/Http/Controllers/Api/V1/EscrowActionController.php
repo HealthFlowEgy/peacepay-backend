@@ -893,7 +893,6 @@ class EscrowActionController extends Controller
     public function releasePayment(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'target'   => 'required',
             'pin_code' => 'required|numeric',
         ]);
 
