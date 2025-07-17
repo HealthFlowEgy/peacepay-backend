@@ -91,7 +91,8 @@
             <li>
                 @if (@$item->type == "file")
                     @php
-                        $file_link = get_file_link("kyc-files",$item->value);
+                        // $file_link = get_file_link("kyc-files",$item->value);
+                            $file_link = $item->value;
                     @endphp
                     <span class="kyc-title">{{ $item->label }}:</span>
                     @if (its_image($item->value))

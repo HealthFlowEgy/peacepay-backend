@@ -192,6 +192,53 @@ function delete_files_from_fileholder(array $files_link)
     return true;
 }
 
+function upload_file($file, $destination_path, $old_file = null)
+{
+    if (File::isFile($file)) {
+        $save_path = get_files_path($destination_path);
+        $file_extension = $file->getClientOriginalExtension();
+        $file_type = File::mimeType($file);
+        $file_size = File::size($file);
+        $file_original_name = $file->getClientOriginalName();
+
+        $file_base_name = explode(".", $file_original_name);
+        array_pop($file_base_name);
+        $file_base_name = implode("-", $file_base_name);
+
+        $file_name = Str::uuid() . "." . $file_extension;
+
+        $file_public_link   = $save_path . "/" . $file_name;
+        $file_asset_link    = files_asset_path($destination_path) . "/" . $file_name;
+
+        $file_info = [
+            'name'                  => $file_name,
+            'type'                  => $file_type,
+            'extension'             => $file_extension,
+            'size'                  => $file_size,
+            'file_link'             => $file_asset_link,
+            'dev_path'              => $file_public_link,
+            'original_name'         => $file_original_name,
+            'original_base_name'    => $file_base_name,
+        ];
+
+        try {
+
+            if ($old_file) {
+                $old_file_link = $save_path . "/" . $old_file;
+                delete_file($old_file_link);
+            }
+
+            File::move($file, $file_public_link);
+        } catch (Exception $e) {
+            return false;
+        }
+
+        return $file_info;
+    }
+
+    return false;
+}
+
 function upload_files_from_path_dynamic($files_path, $destination_path, $old_files = null)
 {
     $output_files_name = [];
@@ -1447,52 +1494,7 @@ function generate_random_number($length = 12)
     }
     return $randomString;
 }
-function upload_file($file, $destination_path, $old_file = null)
-{
-    if (File::isFile($file)) {
-        $save_path = get_files_path($destination_path);
-        $file_extension = $file->getClientOriginalExtension();
-        $file_type = File::mimeType($file);
-        $file_size = File::size($file);
-        $file_original_name = $file->getClientOriginalName();
 
-        $file_base_name = explode(".", $file_original_name);
-        array_pop($file_base_name);
-        $file_base_name = implode("-", $file_base_name);
-
-        $file_name = Str::uuid() . "." . $file_extension;
-
-        $file_public_link   = $save_path . "/" . $file_name;
-        $file_asset_link    = files_asset_path($destination_path) . "/" . $file_name;
-
-        $file_info = [
-            'name'                  => $file_name,
-            'type'                  => $file_type,
-            'extension'             => $file_extension,
-            'size'                  => $file_size,
-            'file_link'             => $file_asset_link,
-            'dev_path'              => $file_public_link,
-            'original_name'         => $file_original_name,
-            'original_base_name'    => $file_base_name,
-        ];
-
-        try {
-
-            if ($old_file) {
-                $old_file_link = $save_path . "/" . $old_file;
-                delete_file($old_file_link);
-            }
-
-            File::move($file, $file_public_link);
-        } catch (Exception $e) {
-            return false;
-        }
-
-        return $file_info;
-    }
-
-    return false;
-}
 
 function delete_files($files_link)
 {
