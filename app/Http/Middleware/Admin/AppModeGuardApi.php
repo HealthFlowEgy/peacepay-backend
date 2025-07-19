@@ -29,10 +29,10 @@ class AppModeGuardApi
             $request_path = array_pop($request_path);
             
             if(!in_array($request_path,$ignore_routes)) {
-                if(env("APP_MODE") != 'live') {
-                    $message = ['error'=>[__("Can\'t change anything for demo application")]];
-                    return Helpers::unauthorized($message, $data = null);
-                }
+                // if(env("APP_MODE") != 'live') {
+                //     $message = ['error'=>[__("Can\'t change anything for demo application")]];
+                //     return Helpers::unauthorized($message, $data = null);
+                // }
             }
 
         }
