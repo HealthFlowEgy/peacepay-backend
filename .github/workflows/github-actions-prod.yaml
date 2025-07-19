@@ -27,7 +27,7 @@ jobs:
             git pull origin main
             php artisan config:clear
             php artisan cache:clear
-            php artisan config:cache
+            php artisan config:cache
             chown -R www-data:www-data .
           EOF
 
@@ -38,6 +38,6 @@ jobs:
             git pull origin main
             php artisan config:clear
             php artisan cache:clear
-            php artisan config:cache
+            php artisan config:cache
             chown -R www-data:www-data .
           EOF
