@@ -25,6 +25,8 @@ jobs:
           ssh ${{ secrets.PROD_USER }}@${{ secrets.PROD_01_HOST }} << 'EOF'
             cd /var/www/peacepay-backend
             git pull origin main
+            php artisan migrate
+            composer install
             php artisan config:clear
             php artisan cache:clear
             php artisan config:cache
@@ -36,6 +38,8 @@ jobs:
           ssh ${{ secrets.PROD_USER }}@${{ secrets.PROD_02_HOST }} << 'EOF'
             cd /var/www/peacepay-backend
             git pull origin main
+            php artisan migrate
+            composer install
             php artisan config:clear
             php artisan cache:clear
             php artisan config:cache
