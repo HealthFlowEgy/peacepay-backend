@@ -13,13 +13,6 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Set up SSH for pulling private repo
-        run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.ACTIONS_DEPLOY_KEY }}" > ~/.ssh/id_ed25519
-          chmod 600 ~/.ssh/id_ed25519
-          ssh-keyscan github.com >> ~/.ssh/known_hosts
-
       - name: Set up SSH
         run: |
           mkdir -p ~/.ssh
@@ -32,6 +25,7 @@ jobs:
         run: |
           ssh ${{ secrets.PROD_USER }}@${{ secrets.PROD_01_HOST }} << 'EOF'
             cd /var/www/peacepay-backend
+            git remote set-url origin git@github.com:peacepay-eg/peacepay-backend.git
             git pull origin main
             php artisan migrate --force
             composer install
