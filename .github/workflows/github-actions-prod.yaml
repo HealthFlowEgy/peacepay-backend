@@ -1,8 +1,10 @@
 name: Manual Deploy Laravel to Production
 
 on:
-  workflow_dispatch:
-
+  push:
+    branches:
+      - main
+      - stage
 jobs:
   deploy:
     name: Deploy to prod-01 and prod-02
