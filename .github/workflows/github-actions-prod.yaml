@@ -40,6 +40,7 @@ jobs:
         run: |
           ssh ${{ secrets.PROD_USER }}@${{ secrets.PROD_02_HOST }} << 'EOF'
             cd /var/www/peacepay-backend
+            git remote set-url origin git@github.com:peacepay-eg/peacepay-backend.git
             git pull origin main
             php artisan migrate --force
             composer install
