@@ -1,8 +1,9 @@
 name: Manual Deploy Laravel to Production
 
-# on:
-#   workflow_dispatch:
-
+on:
+  push:
+    branches:
+      - main
 jobs:
   deploy:
     name: Deploy to prod-01 and prod-02
@@ -24,7 +25,8 @@ jobs:
         run: |
           ssh ${{ secrets.PROD_USER }}@${{ secrets.PROD_01_HOST }} << 'EOF'
             cd /var/www/peacepay-backend
-            git pull origin main
+            git fetch origin
+            git reset --hard origin/main
             php artisan migrate --force
             composer install
             php artisan config:clear
@@ -38,7 +40,8 @@ jobs:
         run: |
           ssh ${{ secrets.PROD_USER }}@${{ secrets.PROD_02_HOST }} << 'EOF'
             cd /var/www/peacepay-backend
-            git pull origin main
+            git fetch origin
+            git reset --hard origin/main
             php artisan migrate --force
             composer install
             php artisan config:clear
