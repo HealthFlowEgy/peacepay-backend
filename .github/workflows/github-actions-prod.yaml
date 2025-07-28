@@ -1,52 +1,57 @@
-name: Manual Deploy Laravel to Production
+# name: Manual Deploy Laravel to Production
 
-on:
-  push:
-    branches:
-      - main
-jobs:
-  deploy:
-    name: Deploy to prod-01 and prod-02
-    runs-on: ubuntu-latest
+# on:
+#   push:
+#     branches:
+#       - main
+# jobs:
+#   deploy:
+#     name: Deploy to prod-01 and prod-02
+#     runs-on: ubuntu-latest
 
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
+#     steps:
+#       - name: Checkout Code
+#         uses: actions/checkout@v4
 
-      - name: Set up SSH
-        run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -H ${{ secrets.PROD_01_HOST }} >> ~/.ssh/known_hosts
-          ssh-keyscan -H ${{ secrets.PROD_02_HOST }} >> ~/.ssh/known_hosts
+#       - name: Set up SSH for pulling private repo
+#         run: |
+#           mkdir -p ~/.ssh
+#           echo "${{ secrets.ACTIONS_DEPLOY_KEY }}" > ~/.ssh/id_ed25519
+#           chmod 600 ~/.ssh/id_ed25519
+#           ssh-keyscan github.com >> ~/.ssh/known_hosts
 
-      - name: Deploy to prod-01
-        run: |
-          ssh ${{ secrets.PROD_USER }}@${{ secrets.PROD_01_HOST }} << 'EOF'
-            cd /var/www/peacepay-backend
-            git fetch origin
-            git reset --hard origin/main
-            php artisan migrate --force
-            composer install
-            php artisan config:clear
-            php artisan cache:clear
-            php artisan config:cache
-            php artisan view:clear
-            chown -R www-data:www-data .
-          EOF
+#       - name: Set up SSH
+#         run: |
+#           mkdir -p ~/.ssh
+#           echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+#           chmod 600 ~/.ssh/id_rsa
+#           ssh-keyscan -H ${{ secrets.PROD_01_HOST }} >> ~/.ssh/known_hosts
+#           ssh-keyscan -H ${{ secrets.PROD_02_HOST }} >> ~/.ssh/known_hosts
 
-      - name: Deploy to prod-02
-        run: |
-          ssh ${{ secrets.PROD_USER }}@${{ secrets.PROD_02_HOST }} << 'EOF'
-            cd /var/www/peacepay-backend
-            git fetch origin
-            git reset --hard origin/main
-            php artisan migrate --force
-            composer install
-            php artisan config:clear
-            php artisan cache:clear
-            php artisan config:cache
-            php artisan view:clear
-            chown -R www-data:www-data .
-          EOF
+#       - name: Deploy to prod-01
+#         run: |
+#           ssh ${{ secrets.PROD_USER }}@${{ secrets.PROD_01_HOST }} << 'EOF'
+#             cd /var/www/peacepay-backend
+#             git pull origin main
+#             php artisan migrate --force
+#             composer install
+#             php artisan config:clear
+#             php artisan cache:clear
+#             php artisan config:cache
+#             php artisan view:clear
+#             chown -R www-data:www-data .
+#           EOF
+
+#       - name: Deploy to prod-02
+#         run: |
+#           ssh ${{ secrets.PROD_USER }}@${{ secrets.PROD_02_HOST }} << 'EOF'
+#             cd /var/www/peacepay-backend
+#             git pull origin main
+#             php artisan migrate --force
+#             composer install
+#             php artisan config:clear
+#             php artisan cache:clear
+#             php artisan config:cache
+#             php artisan view:clear
+#             chown -R www-data:www-data .
+#           EOF
