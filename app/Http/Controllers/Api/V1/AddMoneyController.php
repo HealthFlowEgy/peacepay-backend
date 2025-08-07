@@ -97,9 +97,7 @@ class AddMoneyController extends Controller
         try{  
             $instance = PaymentGatewayHelper::init($request->all())->gateway()->api()->get();   
             $trx = $instance['response']['id']??$instance['response']['trx']??$instance['response']['reference_id']??$instance['response']['tokenValue']?? $instance['response']['url'] ?? $instance['response']['temp_identifier']??$instance['order_id']??$instance['response']??"";
-           
             $temData = TemporaryData::where('identifier',$trx)->first(); 
-            
             if(!$temData){
                 $error = ['error'=>["Invalid Request"]];
                 return ApiResponse::onlyError($error);
@@ -117,7 +115,12 @@ class AddMoneyController extends Controller
            ];
 
             if($payment_gateway->type == "AUTOMATIC") {
-                if($temData->type == PaymentGatewayConst::STRIPE) {
+                if($temData->type == PaymentGatewayConst::HEALTHPAY) {
+                    return response()->json([
+                        'trx'       => $temData->identifier,
+                        'message'   => 'Please complete your payment to go to confirm your number.',
+                    ]);
+                }else if($temData->type == PaymentGatewayConst::STRIPE) {
                  $data =[
                      'gateway_type'          => $payment_gateway->type,
                      'gateway_currency_name' => $payment_gateway_currency->name,

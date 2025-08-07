@@ -102,7 +102,35 @@ trait HealthPay
     }
 
 
-    public function loginUser($output, $clientUser)
+    public function healthPayInitApi($output = null)
+    {
+        $credentials = $this->getCredentialsHealthPay($output);
+        $client = $this->getStaticClient($credentials['baseURL'], $credentials['apiHeader']);
+
+        $response = $client->query('
+            mutation authMerchant($apiKey: String!) {
+                authMerchant(apiKey: $apiKey) {
+                    token
+                }
+            }
+        ', [
+            'apiKey' => $credentials['apiKey']
+        ]);
+
+        if ($response->hasErrors()) {
+            throw new \Exception('Error fetching merchant token: ' . json_encode($response->getErrors()));
+        }
+
+        $merchantToken = $response->getData()['authMerchant']['token'];
+
+        $clientUser = $this->getStaticClientUser($credentials['baseURL'], $credentials['apiHeader'], $merchantToken);
+
+        $loginUser = $this->loginUser($output, $clientUser,true,$merchantToken);
+
+        return $loginUser;
+    }
+
+    public function loginUser($output, $clientUser, $api = false,$merchantToken = null)
     {
         $query = '
             mutation loginUser(
@@ -144,6 +172,30 @@ trait HealthPay
             throw new \Exception('Error logging in user: ' . json_encode($response->getErrors()));
         }
 
+
+        if($api){
+            $data = [
+                'currency' => $output['wallet']->currency->id,
+                'gateway' => $output['gateway']->id,
+                'mobile'    => $user['full_mobile'],
+                'firstName' => $user['firstname'] ?? '',
+                'lastName'  => $user['lastname'] ?? '',
+                'email'     => $user['email'] ?? '',
+                'amount' => $output['amount'],
+                'merchantToken' => $merchantToken,
+            ];
+            $ident = $response->getData()['loginUser']['uid'] . '-' . strtotime(now());
+            TemporaryData::create([
+                'type'       => PaymentGatewayConst::HEALTHPAY,
+                'identifier' => $ident,
+                'data'       => $data,
+            ]);
+            return [
+                'data' => $data,
+                'temp_identifier' => $ident,
+                'message' => 'User logged in successfully.',
+            ];
+        }
 
         return redirect()->route('user.healthpay.showConfirmMobile');
     }
