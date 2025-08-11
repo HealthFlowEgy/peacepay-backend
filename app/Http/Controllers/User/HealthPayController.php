@@ -55,7 +55,7 @@ class HealthPayController extends Controller
        ';
 
 
-        $mobileHealthPay = session()->get('mobileHealthPay');
+        $mobileHealthPay = formatMobileNumber(session()->get('mobileHealthPay'));
         $output['gateway'] = PaymentGateway::where('alias','healthpay')->first();
         $credentials = $this->getCredentialsHealthPay($output);
 
@@ -73,37 +73,45 @@ class HealthPayController extends Controller
         ]);
 
         if ($response->hasErrors()) {
-            throw new \Exception('Error authenticating user: ' . json_encode($response->getErrors()));
+            return back()->with('error', 'invaid otp : ' . json_encode($response->getErrors()));
         }
 
         $userToken = $response->getData()['authUser']['userToken'];
         session()->put('userTokenHealthPay', $userToken);
-        
 
         $userHealthpayWallet = getUserHealthpayWallet($userToken,$output['gateway']);
 
         $deductAmount = (float) session()->get('topupAmountHealthPay');
+
         if($deductAmount > (float) $userHealthpayWallet['total']) {
             $amount = $deductAmount - (float) $userHealthpayWallet['total'];
             $topupWalletUser = $this->topupWalletUser($clientUser,$amount);
             return redirect()->to($topupWalletUser['iframeUrl']);
         }else{
             $id = session()->get('escrowId');
-            $escrow    = Escrow::findOrFail($id);
+            $escrow    = Escrow::find($id);
+            if($escrow){            
+                $this->escrowWalletPayment($escrow);
+                $escrow->payment_type = EscrowConstants::GATEWAY;
+                $escrow->status       = EscrowConstants::ONGOING;
+
+                deductFromUser($userToken, $deductAmount , 'deduct ' . $deductAmount,$output['gateway']);
+
+                $escrow->save();
+
+                return redirect()->route('user.my-escrow.index', [
+                    'id' => $escrow->id,
+                ])->with([
+                    'success' => ['Payment successful'],
+                ]);
+            }else{
+                deductFromUser($userToken, $deductAmount , 'deduct ' . $deductAmount,$output['gateway']);
+
+                return redirect()->route('user.my-escrow.index')->with([
+                    'success' => ['deducted from ur wallet successful'],
+                ]);
+            }
             
-            $this->escrowWalletPayment($escrow);
-            $escrow->payment_type = EscrowConstants::GATEWAY;
-            $escrow->status       = EscrowConstants::ONGOING;
-
-            deductFromUser($userToken, $deductAmount , 'deduct ' . $deductAmount,$output['gateway']);
-
-            $escrow->save();
-
-            return redirect()->route('user.my-escrow.index', [
-                'id' => $escrow->id,
-            ])->with([
-                'success' => ['Payment successful'],
-            ]);
         }
         
         

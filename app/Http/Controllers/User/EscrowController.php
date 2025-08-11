@@ -71,10 +71,11 @@ class EscrowController extends Controller
         $page_title                  = "Create New Escrow";
         $currencies                  = Currency::where('status', true)->get();
         $escrowCategories            = EscrowCategory::where('status', true)->latest()->get();
-        $payment_gateways_currencies = PaymentGatewayCurrency::whereHas('gateway', function ($gateway) {
-            $gateway->where('slug', PaymentGatewayConst::add_money_slug());
-            $gateway->where('status', 1);
-        })->get();
+        $payment_gateways_currencies = [];
+        // PaymentGatewayCurrency::whereHas('gateway', function ($gateway) {
+        //     $gateway->where('slug', PaymentGatewayConst::add_money_slug());
+        //     $gateway->where('status', 1);
+        // })->get();
         $user_pass_data = $request->all();
         $policies = Policy::where('user_id', auth()->user()->id)->get();
 

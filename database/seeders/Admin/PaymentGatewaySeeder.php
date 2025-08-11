@@ -258,13 +258,13 @@ class PaymentGatewaySeeder extends Seeder
 
 
         //============================Health money out automatic start=================================================
-        // $data =   array('slug' => 'money-out','code' => '60000','type' => 'MANUAL','name' => 'Bank','title' => 'Bank Gateway','alias' => 'bank','image' => NULL,'credentials' => NULL,'supported_currencies' => '["EGP"]','crypto' => '0','desc' => '<strong>Bank Transfer</strong></p><ol style="list-style-type:none;"><li>Visit your local bank or access your online banking platform.</li><li>Initiate a new fund transfer or payment.</li><li>Enter the recipient’s bank account details:</li></ol><ul style="list-style-type:none;"></p>','input_fields' => '[{"type":"file","label":"Screenshot","name":"screenshot","required":true,"validation":{"max":"10","mimes":["jpg","png","webp","svg"],"min":0,"options":[],"required":true}},{"type":"text","label":"Transaction ID","name":"transaction_id","required":true,"validation":{"max":"60","mimes":[],"min":"1","options":[],"required":true}}]','env' => NULL,'status' => '1','last_edit_by' => '1','created_at' => NULL,'updated_at' => NULL);
-        // $gateway_id = PaymentGateway::insertGetId($data);
+        $data =   array('slug' => 'money-out','code' => '60000','type' => 'MANUAL','name' => 'Bank','title' => 'Bank Gateway','alias' => 'bank','image' => NULL,'credentials' => NULL,'supported_currencies' => '["EGP"]','crypto' => '0','desc' => '<strong>Bank Transfer</strong></p><ol style="list-style-type:none;"><li>Visit your local bank or access your online banking platform.</li><li>Initiate a new fund transfer or payment.</li><li>Enter the recipient’s bank account details:</li></ol><ul style="list-style-type:none;"></p>','input_fields' => '[{"type":"file","label":"Screenshot","name":"screenshot","required":true,"validation":{"max":"10","mimes":["jpg","png","webp","svg"],"min":0,"options":[],"required":true}},{"type":"text","label":"Transaction ID","name":"transaction_id","required":true,"validation":{"max":"60","mimes":[],"min":"1","options":[],"required":true}}]','env' => NULL,'status' => '1','last_edit_by' => '1','created_at' => NULL,'updated_at' => NULL);
+        $gateway_id = PaymentGateway::insertGetId($data);
 
-        // $gateway_currency = array(
-        //     array('payment_gateway_id' => $gateway_id,'name' => 'Bank EGP','alias' => 'money-out-bank-egp-manual','currency_code' => 'EGP','currency_symbol' => 'EGP','image' => NULL,'min_limit' => '10.00000000','max_limit' => '5000.00000000','percent_charge' => '2.00000000','fixed_charge' => '1.00000000','rate' => '1.00000000','created_at' => '2023-10-28 04:01:10','updated_at' => '2023-10-28 04:01:10'),
-        // );
-        // PaymentGatewayCurrency::insert($gateway_currency);
+        $gateway_currency = array(
+            array('payment_gateway_id' => $gateway_id,'name' => 'Bank EGP','alias' => 'money-out-bank-egp-manual','currency_code' => 'EGP','currency_symbol' => 'EGP','image' => NULL,'min_limit' => '10.00000000','max_limit' => '5000.00000000','percent_charge' => '2.00000000','fixed_charge' => '1.00000000','rate' => '1.00000000','created_at' => '2023-10-28 04:01:10','updated_at' => '2023-10-28 04:01:10'),
+        );
+        PaymentGatewayCurrency::insert($gateway_currency);
         //============================Health money out automatic end=================================================
     
 

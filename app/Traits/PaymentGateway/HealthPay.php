@@ -93,7 +93,6 @@ trait HealthPay
         }
 
         $merchantToken = $response->getData()['authMerchant']['token'];
-
         $clientUser = $this->getStaticClientUser($credentials['baseURL'], $credentials['apiHeader'], $merchantToken);
 
         $loginUser = $this->loginUser($output, $clientUser);
@@ -157,27 +156,26 @@ trait HealthPay
             ])->first();
             $output['wallet'] = $userWallet;
         }
-
         $user = $output['wallet']->user;
+        $mobile = formatMobileNumber($user['full_mobile']);
         $response = $clientUser->query($query, [
-            'mobile'    => $user['full_mobile'],
+            'mobile'    => $mobile,
             'firstName' => $user['firstname'] ?? '',
             'lastName'  => $user['lastname'] ?? '',
             'email'     => $user['email'] ?? '',
         ]);
 
-        session()->put('mobileHealthPay', $user['full_mobile']);
+        session()->put('mobileHealthPay', $mobile);
 
         if ($response->hasErrors()) {
             throw new \Exception('Error logging in user: ' . json_encode($response->getErrors()));
         }
 
-
         if($api){
             $data = [
                 'currency' => $output['wallet']->currency->id,
                 'gateway' => $output['gateway']->id,
-                'mobile'    => $user['full_mobile'],
+                'mobile'    => $mobile,
                 'firstName' => $user['firstname'] ?? '',
                 'lastName'  => $user['lastname'] ?? '',
                 'email'     => $user['email'] ?? '',

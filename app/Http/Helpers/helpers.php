@@ -2658,3 +2658,15 @@ function deductFromUser(string $userToken, float $amount, ?string $description =
         throw $e;
     }
 }
+
+function formatMobileNumber($mobile) {
+    // Remove any whitespace
+    $mobile = trim($mobile);
+    
+    // Check if the number doesn't start with 2
+    if (!str_starts_with($mobile, '2')) {
+        $mobile = '2' . $mobile;
+    }
+    
+    return $mobile;
+}

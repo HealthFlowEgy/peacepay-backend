@@ -100,10 +100,11 @@ class EscrowActionsController extends Controller
         }
 
 
-        $payment_gateways_currencies = PaymentGatewayCurrency::whereHas('gateway', function ($gateway) {
-            $gateway->where('slug', PaymentGatewayConst::add_money_slug());
-            $gateway->where('status', 1);
-        })->get();
+        $payment_gateways_currencies = [];
+        // PaymentGatewayCurrency::whereHas('gateway', function ($gateway) {
+        //     $gateway->where('slug', PaymentGatewayConst::add_money_slug());
+        //     $gateway->where('status', 1);
+        // })->get();
         session()->put('topupAmountHealthPay', $escrow->amount);
         $user_wallet = UserWallet::where(['user_id' => auth()->user()->id, 'currency_id' => $escrow->escrowCurrency->id])->first();
 

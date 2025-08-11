@@ -25,6 +25,23 @@
                             }
                         );
                     @endforeach
+                @else
+                        $.notify(
+                            {
+                                title: "",
+                                message: "{{ __(session('error')) }}",
+                                icon: 'las la-exclamation-triangle',
+                            },
+                            {
+                                type: "danger",
+                                allow_dismiss: true,
+                                delay: 5000,
+                                placement: {
+                                from: "top",
+                                align: "right"
+                                },
+                            }
+                        );
                 @endif
             @elseif (session('success'))
                 @if (is_array(session('success')))
@@ -46,6 +63,23 @@
                             }
                         );
                     @endforeach
+                @else
+                        $.notify(
+                            {
+                                title: "",
+                                message: "{{ __(session('success')) }}",
+                                icon: 'las la-check-circle',
+                            },
+                            {
+                                type: "success",
+                                allow_dismiss: true,
+                                delay: 5000,
+                                placement: {
+                                from: "top",
+                                align: "right"
+                                },
+                            }
+                        );
                 @endif
             @elseif (session('warning')) 
                 @if (is_array(session('warning')))
