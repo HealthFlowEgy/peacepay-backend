@@ -247,7 +247,7 @@ class PaymentGatewaySeeder extends Seeder
 
 
         //============================Health automatic start=================================================
-        $data =  array('slug' => 'add-money','code' => '50000','type' => 'AUTOMATIC','name' => 'HealthPay','title' => 'Health Gateway','alias' => 'healthpay','image' => 'seeder/file.jpeg','credentials' => '[{"label":"baseURL","placeholder":"enter baseURL","name":"base-url","value":"https://sword.beta.healthpay.tech/graphql"},{"label":"api-header","placeholder":"enter api-header","name":"api-header","value":"H_PeAceP@y"},{"label":"api-key","placeholder":"enter api-key","name":"api-key","value":"k_PeAceP@y"}]','supported_currencies' => '["EGP"]','crypto' => '0','desc' => NULL,'input_fields' => NULL,'status' => '1','last_edit_by' => '1','created_at' => now(),'updated_at' => now(),'env' => 'SANDBOX');
+        $data =  array('slug' => 'add-money','code' => '50000','type' => 'AUTOMATIC','name' => 'HealthPay','title' => 'Health Gateway','alias' => 'healthpay','image' => 'seeder/file.jpeg','credentials' => '[{"label":"baseURL","placeholder":"enter baseURL","name":"base-url","value":"https://sword.beta.healthpay.tech/graphql"},{"label":"api-header","placeholder":"enter api-header","name":"api-header","value":"H_001PeacEpAy"},{"label":"api-key","placeholder":"enter api-key","name":"api-key","value":"k_001PeacEpAy"}]','supported_currencies' => '["EGP"]','crypto' => '0','desc' => NULL,'input_fields' => NULL,'status' => '1','last_edit_by' => '1','created_at' => now(),'updated_at' => now(),'env' => 'SANDBOX');
         $gateway_id = PaymentGateway::insertGetId($data);
 
         $gateway_currency = array(
