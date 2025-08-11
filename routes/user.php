@@ -138,7 +138,7 @@ Route::prefix("user")->name("user.")->middleware(['check.user.status'])->group(f
     Route::controller(HealthPayController::class)->prefix('healthpay')->name('healthpay.')->group(function () {
         Route::get('mobile/confirmation', 'showConfirmMobile')->name('showConfirmMobile');
         Route::post('mobile/confirmation', 'verifyMobile')->name('verifyMobile');
-        Route::post('callback', 'callback')->name('callback');
+        Route::get('callback', 'callback')->name('callback');
     });
 
     //add money routes

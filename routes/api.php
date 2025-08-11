@@ -31,6 +31,7 @@ Route::prefix("v1")->name('api.v1.')->group(function () {
 
     Route::controller(HealthPayController::class)->prefix('healthpay')->name('healthpay.')->group(function () {
         Route::post('mobile/confirmation', 'verifyMobile')->name('verifyMobile');
+        Route::post('callback', 'callback')->name('callback');
     });
 
     
