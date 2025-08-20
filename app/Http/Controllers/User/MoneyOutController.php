@@ -19,6 +19,7 @@ use Illuminate\Support\Facades\Auth;
 use App\Constants\PaymentGatewayConst;
 use App\Models\Admin\AdminNotification;
 use App\Traits\ControlDynamicInputFields;
+use App\Traits\MoneyOutLimitChecker;
 use Illuminate\Support\Facades\Validator;
 use App\Models\Admin\PaymentGatewayCurrency;
 use App\Notifications\User\Withdraw\WithdrawMail;
@@ -26,7 +27,7 @@ use App\Events\User\NotificationEvent as UserNotificationEvent;
 
 class MoneyOutController extends Controller
 {
-    use ControlDynamicInputFields;
+    use ControlDynamicInputFields, MoneyOutLimitChecker;
     /**
      * Display a listing of the resource.
      *
@@ -96,6 +97,12 @@ class MoneyOutController extends Controller
         $reduceAbleTotal = $amount;
         if ($reduceAbleTotal > $userWallet->balance) {
             return back()->with(['error' => [__('Insuficiant Balance')]]);
+        }
+
+        // Check periodic limits
+        $limitCheck = $this->checkMoneyOutLimits($user->id, $amount, $sender_currency->code);
+        if (!$limitCheck['status']) {
+            return back()->with(['error' => [$limitCheck['message']]]);
         }
         $data['user_id'] = $user->id;
         $data['gateway_name'] = $gate->gateway->name;

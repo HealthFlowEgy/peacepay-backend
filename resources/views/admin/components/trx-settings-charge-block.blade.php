@@ -6,7 +6,7 @@
         <form class="card-form" method="POST" action="{{ $route ?? "" }}">
             @csrf
             @method("PUT")
-            <input type="hidden" value="{{ $item->slug }}" name="slug">
+            <input type="hidden" value="{{ $data->slug }}" name="slug">
             <div class="row">
                 <div class="col-xl-6 col-lg-6 mb-10">
                     <div class="custom-inner-card">
@@ -58,6 +58,44 @@
                                         <input type="text" class="form--control number-input" value="{{ old($data->slug.'_max_limit',$data->max_limit) }}" name="{{$data->slug}}_max_limit">
                                         <span class="input-group-text">{{ get_default_currency_code($default_currency) }}</span>
                                     </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                @endif
+
+                @if($data->slug == 'money-out')
+                <div class="col-xl-12 col-lg-12 mb-10">
+                    <div class="custom-inner-card">
+                        <div class="card-inner-header">
+                            <h5 class="title">{{ __("Periodic Limits") }}</h5>
+                        </div>
+                        <div class="card-inner-body">
+                            <div class="row">
+                                <div class="col-xxl-4 col-xl-6 col-lg-6 form-group">
+                                    <label>{{ __("Daily Limit") }}</label>
+                                    <div class="input-group">
+                                        <input type="text" class="form--control number-input" value="{{ old($data->slug.'_daily_limit',$data->daily_limit) }}" name="{{$data->slug}}_daily_limit">
+                                        <span class="input-group-text">{{ get_default_currency_code($default_currency) }}</span>
+                                    </div>
+                                    <small class="text-muted">{{ __("Maximum amount per user per day (0 = no limit)") }}</small>
+                                </div>
+                                <div class="col-xxl-4 col-xl-6 col-lg-6 form-group">
+                                    <label>{{ __("Weekly Limit") }}</label>
+                                    <div class="input-group">
+                                        <input type="text" class="form--control number-input" value="{{ old($data->slug.'_weekly_limit',$data->weekly_limit) }}" name="{{$data->slug}}_weekly_limit">
+                                        <span class="input-group-text">{{ get_default_currency_code($default_currency) }}</span>
+                                    </div>
+                                    <small class="text-muted">{{ __("Maximum amount per user per week (0 = no limit)") }}</small>
+                                </div>
+                                <div class="col-xxl-4 col-xl-6 col-lg-6 form-group">
+                                    <label>{{ __("Monthly Limit") }}</label>
+                                    <div class="input-group">
+                                        <input type="text" class="form--control number-input" value="{{ old($data->slug.'_monthly_limit',$data->monthly_limit) }}" name="{{$data->slug}}_monthly_limit">
+                                        <span class="input-group-text">{{ get_default_currency_code($default_currency) }}</span>
+                                    </div>
+                                    <small class="text-muted">{{ __("Maximum amount per user per month (0 = no limit)") }}</small>
                                 </div>
                             </div>
                         </div>

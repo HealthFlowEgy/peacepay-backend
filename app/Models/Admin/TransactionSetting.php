@@ -23,6 +23,7 @@ class TransactionSetting extends Model
         'max_limit'      => 'double',
         'monthly_limit'  => 'double',
         'daily_limit'    => 'double',
+        'weekly_limit'   => 'double',
         'status'         => 'integer',
         'created_at'     => 'datetime',
         'updated_at'     => 'datetime',

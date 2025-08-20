@@ -24,17 +24,17 @@ class CheckUserStatus
             // Check if user status is 0 (banned)
             if ($user->status == 0) {
                 // Log out the user
-                Auth::logout();
+                // Auth::logout();
                 
-                // Invalidate the session
-                $request->session()->invalidate();
-                $request->session()->regenerateToken();
+                // // Invalidate the session
+                // $request->session()->invalidate();
+                // $request->session()->regenerateToken();
                 
                 // Flash error message
                 Session::flash('error', 'Your account has been banned. Please contact support for assistance.');
                 
                 // Redirect to login page
-                return redirect()->route('user.login')->with([
+                return redirect()->route('user.dashboard')->with([
                     'error' => ['Your account has been banned. Please contact support for assistance.']
                 ]);
             }

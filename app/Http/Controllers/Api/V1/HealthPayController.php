@@ -182,33 +182,24 @@ class HealthPayController extends Controller
             Log::info('callback log');
             Log::info($request->all());
 
-            // Get the request body data
             $body = $request->all();
 
-            // Your secret signature key (store this securely, preferably in environment variables)
             $secretSignature = env('PAYMENT_SECRET_SIGNATURE', 'merchant_04Bgnehn45_k_0003BgNehneM');
 
-            // Extract the signature from the request (assuming it's sent separately or in headers)
             $receivedSignature = $request->header('X-Signature') ?? $request->input('signature');
 
-            // Step 1: Collect all values from the body object
-            // Remove the signature field if it's included in the body to avoid circular validation
             $bodyForValidation = $body;
             unset($bodyForValidation['signature']);
 
-            // Step 2: Concatenate all values in the order they appear
             $concatenatedValues = '';
             foreach ($bodyForValidation as $key => $value) {
                 $concatenatedValues .= $value;
             }
 
-            // Step 3: Add the secret signature to the concatenated string
             $stringToHash = $concatenatedValues . $secretSignature;
 
-            // Step 4 & 5: Hash the string using SHA-256 and convert to hex
             $calculatedSignature = hash('sha256', $stringToHash);
 
-            // Validate the signature
             if (!hash_equals($calculatedSignature, $receivedSignature)) {
                 Log::warning('Invalid signature in payment callback', [
                     'received_signature' => $receivedSignature,
