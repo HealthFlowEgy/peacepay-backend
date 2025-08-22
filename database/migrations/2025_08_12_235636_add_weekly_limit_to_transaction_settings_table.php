@@ -15,7 +15,7 @@ return new class extends Migration
     {
         Schema::table('transaction_settings', function (Blueprint $table) {
             $table->decimal('weekly_limit', 28, 8, true)->default(0)->after('daily_limit');
-            $table->decimal('monthly_limit', 28, 8, true)->default(0)->after('weekly_limit');
+            // $table->decimal('monthly_limit', 28, 8, true)->default(0)->after('weekly_limit');
         });
     }
 
@@ -27,7 +27,9 @@ return new class extends Migration
     public function down()
     {
         Schema::table('transaction_settings', function (Blueprint $table) {
-            $table->dropColumn(['weekly_limit', 'monthly_limit']);
+            $table->dropColumn(['weekly_limit'
+            // , 'monthly_limit'
+        ]);
         });
     }
 };
