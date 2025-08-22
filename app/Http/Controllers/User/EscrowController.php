@@ -43,10 +43,9 @@ class EscrowController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function index(Request $request)
     {
         $page_title = "My Escrow";
-
 
         $escrowData = Escrow::with('escrowCategory', 'escrowDetails')
             ->when(auth()->user()->type == 'seller', function ($q) {
@@ -58,8 +57,66 @@ class EscrowController extends Controller
             ->when(auth()->user()->type == 'delivery', function ($q) {
                 $q->where('delivery_id', auth()->user()->id);
             })
-            ->latest()->paginate(20);
+            ->when($request->search, function ($q) use ($request) {
+                $q->where(function ($query) use ($request) {
+                    $query->where('escrow_id', 'like', '%' . $request->search . '%')
+                          ->orWhere('title', 'like', '%' . $request->search . '%');
+                });
+            })
+            ->when($request->status_filter, function ($q) use ($request) {
+                $q->where('status', $request->status_filter);
+            })
+            ->when($request->date_from, function ($q) use ($request) {
+                $q->whereDate('created_at', '>=', $request->date_from);
+            })
+            ->when($request->date_to, function ($q) use ($request) {
+                $q->whereDate('created_at', '<=', $request->date_to);
+            })
+            ->when($request->amount_sort, function ($q) use ($request) {
+                $q->orderBy('amount', $request->amount_sort);
+            }, function ($q) {
+                $q->latest();
+            })
+            ->paginate(20);
+            
         return view('user.my-escrow.index', compact('page_title', 'escrowData'));
+    }
+    
+    public function search(Request $request)
+    {
+        $escrowData = Escrow::with('escrowCategory', 'escrowDetails')
+            ->when(auth()->user()->type == 'seller', function ($q) {
+                $q->where('user_id', auth()->user()->id);
+            })
+            ->when(auth()->user()->type == 'buyer', function ($q) {
+                $q->where('buyer_or_seller_id', auth()->user()->id);
+            })
+            ->when(auth()->user()->type == 'delivery', function ($q) {
+                $q->where('delivery_id', auth()->user()->id);
+            })
+            ->when($request->search, function ($q) use ($request) {
+                $q->where(function ($query) use ($request) {
+                    $query->where('escrow_id', 'like', '%' . $request->search . '%')
+                          ->orWhere('title', 'like', '%' . $request->search . '%');
+                });
+            })
+            ->when($request->status_filter, function ($q) use ($request) {
+                $q->where('status', $request->status_filter);
+            })
+            ->when($request->date_from, function ($q) use ($request) {
+                $q->whereDate('created_at', '>=', $request->date_from);
+            })
+            ->when($request->date_to, function ($q) use ($request) {
+                $q->whereDate('created_at', '<=', $request->date_to);
+            })
+            ->when($request->amount_sort, function ($q) use ($request) {
+                $q->orderBy('amount', $request->amount_sort);
+            }, function ($q) {
+                $q->latest();
+            })
+            ->paginate(20);
+
+        return view('user.my-escrow.search-result', compact('escrowData'));
     }
     /**
      * Show the form for creating a new resource.

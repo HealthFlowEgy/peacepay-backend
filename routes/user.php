@@ -87,6 +87,8 @@ Route::prefix("user")->name("user.")->middleware([])->group(function () {
             Route::get('/available-balance-by-currency', 'availableBalanceByCurrency')->name('available.balance.byCurrency');
             //check user is avaibleable
             Route::get('user-check', 'userCheck')->name('userCheck');
+            //search escrow
+            Route::get('/search-escrow', 'search')->name('search');
         });
         // Escrow action routes
         Route::controller(EscrowActionsController::class)->name('escrow-action.')->group(function () {
