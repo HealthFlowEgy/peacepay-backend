@@ -198,6 +198,7 @@ trait HealthPay
                 'message' => 'User logged in successfully.',
             ];
         }
+        Log::info('HealthPay Login User Id: ' . $response->getData()['loginUser']['uid']);
 
         return redirect()->route('user.healthpay.showConfirmMobile');
     }
