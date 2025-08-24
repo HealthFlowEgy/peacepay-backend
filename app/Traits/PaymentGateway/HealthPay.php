@@ -19,6 +19,7 @@ use App\Models\Admin\AdminNotification;
 use App\Models\Admin\Currency;
 use App\Models\Admin\PaymentGateway as AdminPaymentGateway;
 use App\Models\UserWallet;
+use Illuminate\Support\Facades\Log;
 
 trait HealthPay
 {
@@ -158,6 +159,9 @@ trait HealthPay
         }
         $user = $output['wallet']->user;
         $mobile = formatMobileNumber($user['full_mobile']);
+        
+        Log::info('HealthPay Login User Mobile: ' . $mobile);
+
         $response = $clientUser->query($query, [
             'mobile'    => $mobile,
             'firstName' => $user['firstname'] ?? '',
