@@ -2663,6 +2663,11 @@ function formatMobileNumber($mobile) {
     // Remove any whitespace
     $mobile = trim($mobile);
     
+    // Remove '+' if the number starts with it
+    if (str_starts_with($mobile, '+')) {
+        $mobile = substr($mobile, 1);
+    }
+    
     // Check if the number doesn't start with 2
     if (!str_starts_with($mobile, '2')) {
         $mobile = '2' . $mobile;

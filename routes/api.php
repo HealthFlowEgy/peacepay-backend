@@ -42,7 +42,7 @@ Route::prefix("v1")->name('api.v1.')->group(function () {
     });
     Route::controller(AuthController::class)->prefix("user")->name("user.")->group(function () {
         Route::post('/login', 'login')->name('login');
-        Route::post('/register', 'register')->name('register');
+        // Route::post('/register', 'register')->name('register');
     });
 
 

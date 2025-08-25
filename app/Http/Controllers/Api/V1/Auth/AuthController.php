@@ -38,18 +38,37 @@ class AuthController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'mobile'    => 'required|max:11|min:11',
-            'password' => 'required|min:6',
+            // 'password' => 'required|min:6',
         ]);
 
         if ($validator->fails()) {
             $error = ['error' => $validator->errors()->all()];
             return ApiResponse::onlyValidation($error);
         }
+        $basic_settings = $this->basic_settings;
 
         $user = User::where('mobile', $request->mobile)->first();
         if (!$user) {
-            $error = ['error' => [__('The credentials does not match')]];
-            return ApiResponse::onlyValidation($error);
+            // Create new user with mobile only
+            $user = User::create([
+                'firstname' => 'User',
+                'lastname' => substr($request->mobile, -4),
+                'username' => 'user_' . $request->mobile,
+                'email' => $request->mobile . '_' . time() . '@example.com',
+                'mobile_code' => env('MOBILE_CODE', '+20'),
+                'mobile' => $request->mobile,
+                'full_mobile' => env('MOBILE_CODE', '+20') . $request->mobile,
+                'password' => Hash::make($request->mobile),
+                'type' => 'seller',
+                'email_verified' => 1,
+                'kyc_verified' => ($basic_settings->kyc_verification == true) ? 0 : 1,
+                'sms_verified' => ($basic_settings->sms_verification == true) ? 0 : 1,
+                'status' => 1,
+                'two_factor_verified' => 0,
+                'two_factor_status' => 0,
+            ]);
+            
+            $this->createUserWallets($user);
         }
 
         $user->two_factor_verified = 0;
@@ -74,7 +93,7 @@ class AuthController extends Controller
             'user'          => $userArray
         ];
 
-        if (Hash::check($request->password, $user->password)) {
+        // if (Hash::check($request->mobile, $user->password)) {
             if ($user->status == 0) {
                 $error = ['error' => [__('Account Has been Suspended')]];
                 return ApiResponse::onlyValidation($error);
@@ -100,10 +119,10 @@ class AuthController extends Controller
 
             $message = ['success' => [__('Login Successfull')]];
             return ApiResponse::success($message, $user_data);
-        } else {
-            $error = ['error' => [__('The credentials does not match')]];
-            return ApiResponse::onlyError($error);
-        }
+        // } else {
+        //     $error = ['error' => [__('The credentials does not match')]];
+        //     return ApiResponse::onlyError($error);
+        // }
     }
 
     /**
