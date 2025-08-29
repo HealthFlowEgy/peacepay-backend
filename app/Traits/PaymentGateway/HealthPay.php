@@ -74,8 +74,9 @@ trait HealthPay
         return $client;
     }
 
-    public function healthPayInit($output = null)
-    {
+
+    public function getHealthPayMerchantToken(){
+        return env('MERCHANT_TOKEN');
         $credentials = $this->getCredentialsHealthPay($output);
         $client = $this->getStaticClient($credentials['baseURL'], $credentials['apiHeader']);
 
@@ -94,6 +95,14 @@ trait HealthPay
         }
 
         $merchantToken = $response->getData()['authMerchant']['token'];
+        return $merchantToken;
+    }
+    
+    public function healthPayInit($output = null)
+    {
+        $credentials = $this->getCredentialsHealthPay($output);
+        $merchantToken = $this->getHealthPayMerchantToken();
+
         $clientUser = $this->getStaticClientUser($credentials['baseURL'], $credentials['apiHeader'], $merchantToken);
 
         $loginUser = $this->loginUser($output, $clientUser);
@@ -160,7 +169,6 @@ trait HealthPay
         $user = $output['wallet']->user;
         $mobile = formatMobileNumber($user['full_mobile']);
         
-        Log::info('HealthPay Login User Mobile: ' . $mobile);
 
         $response = $clientUser->query($query, [
             'mobile'    => $mobile,
@@ -205,7 +213,7 @@ trait HealthPay
 
 
 
-    public function topupWalletUser($clientUser, $amount=0)
+    public function topupWalletUser($clientUser, $amount = 0, $fromMerchant = 0)
     {
         $query = '
                 mutation topupWalletUser($userToken: String!, $amount: Float!) {
@@ -220,7 +228,7 @@ trait HealthPay
         ';
 
         $response = $clientUser->query($query, [
-            'userToken'     => session()->get('userTokenHealthPay'),
+            'userToken'     => env('MERCHANT_USER_TOKEN'),
             'amount'        => $amount ?? (float) session()->get('topupAmountHealthPay')
         ]);
 
@@ -231,7 +239,10 @@ trait HealthPay
         TemporaryData::create([
             'type'       => PaymentGatewayConst::HEALTHPAY,
             'identifier' => $response->getData()['topupWalletUser']['uid'],
-            'data'       => $response->getData()['topupWalletUser'],
+            'data'       => array_merge($response->getData()['topupWalletUser'],
+            [
+                'user_id'=> auth()->user()->id
+            ]),
         ]);
         return $response->getData()['topupWalletUser'];
     }

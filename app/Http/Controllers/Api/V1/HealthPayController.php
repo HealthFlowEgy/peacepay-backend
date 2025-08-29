@@ -29,7 +29,6 @@ class HealthPayController extends Controller
     {
         $request->validate([
             'otp' => 'required',
-            'mobile' => 'required|numeric',
             'amount' => 'required|numeric',
             'trx' => 'required|string',
         ]);
@@ -56,8 +55,10 @@ class HealthPayController extends Controller
            }
        ';
 
+        $user = auth()->user();
+        $mobile = $user->mobile;
 
-        $mobileHealthPay = formatMobileNumber($request['mobile']);
+        $mobileHealthPay = formatMobileNumber($mobile);
         $output['gateway'] = PaymentGateway::where('alias', 'healthpay')->first();
         $credentials = $this->getCredentialsHealthPay($output);
 
@@ -87,7 +88,7 @@ class HealthPayController extends Controller
         $deductAmount = (float) $request->amount;
         if ($deductAmount > (float) $userHealthpayWallet['total']) {
             $amount = $deductAmount - (float) $userHealthpayWallet['total'];
-            $topupWalletUser = $this->topupWalletUser($clientUser, $amount);
+            $topupWalletUser = $this->topupWalletUser($clientUser, $amount, 1);
             return response()->json([
                 'iframeUrl' => $topupWalletUser['iframeUrl'],
                 'message' => 'Please top up your wallet to proceed with the escrow payment.',
@@ -100,7 +101,11 @@ class HealthPayController extends Controller
             // $escrow->payment_type = EscrowConstants::GATEWAY;
             // $escrow->status       = EscrowConstants::ONGOING;
 
-            // deductFromUser($userToken, $deductAmount , 'deduct ' . $deductAmount,$output['gateway']);
+            deductFromUser($userToken, $deductAmount, 'deduct ' . $deductAmount, $output['gateway']);
+
+            return response()->json([
+                'message' => 'Money Deducted Successfully From your Wallet',
+            ]);
 
             // $escrow->save();
 
@@ -184,7 +189,7 @@ class HealthPayController extends Controller
 
             $body = $request->all();
 
-            $secretSignature = env('PAYMENT_SECRET_SIGNATURE', 'merchant_04Bgnehn45_k_0003BgNehneM');
+            $secretSignature = env('PAYMENT_SECRET_SIGNATURE', 'merchant_Peacepay_key_peacepay');
 
             $receivedSignature = $request->header('X-Signature') ?? $request->input('signature');
 
@@ -220,62 +225,25 @@ class HealthPayController extends Controller
             $transactionId = $body['transaction_id'] ?? null;
             $uuid = $body['uuid'] ?? null;
 
-            // Update your order/payment record based on the callback data
-            if ($orderId && $status) {
-                // Find and update the order
-                $order = Order::where('order_id', $orderId)->first();
-
-                if ($order) {
-                    $order->update([
-                        'payment_status' => $status,
-                        'transaction_id' => $transactionId,
-                        'payment_uuid' => $uuid,
-                        'payment_amount' => $amount,
-                        'updated_at' => now()
-                    ]);
-
-                    // Handle different payment statuses
-                    switch (strtoupper($status)) {
-                        case 'SUCCESS':
-                            // Payment successful - mark order as paid
-                            $order->markAsPaid();
-                            \Log::info('Payment successful for order: ' . $orderId);
-                            break;
-
-                        case 'FAILED':
-                            // Payment failed - mark order as failed
-                            $order->markAsFailed();
-                            \Log::info('Payment failed for order: ' . $orderId);
-                            break;
-
-                        case 'PENDING':
-                            // Payment pending - keep as pending
-                            $order->markAsPending();
-                            \Log::info('Payment pending for order: ' . $orderId);
-                            break;
-
-                        default:
-                            \Log::warning('Unknown payment status: ' . $status . ' for order: ' . $orderId);
+            DB::beginTransaction();
+            try {
+                $temporaryData = TemporaryData::where('identifier', $transactionId)->first();
+                
+                if ($temporaryData) {
+                    $userId = $temporaryData->data->user_id;
+                    $temporaryData->delete();
+                    
+                    if ($status) {
+                        UserWallet::where('user_id', $userId)->increment('balance', $amount);
                     }
-
-                    // Send notifications, emails, etc. based on payment status
-                    // $this->sendPaymentNotification($order, $status);
-
-                } else {
-                    \Log::warning('Order not found for callback', ['order_id' => $orderId]);
-                    return response()->json([
-                        'status' => 'error',
-                        'message' => 'Order not found'
-                    ], 404);
                 }
+                
+                DB::commit();
+            } catch (\Exception $e) {
+                DB::rollback();
+                throw $e;
             }
 
-            // Log successful callback processing
-            \Log::info('Payment callback processed successfully', [
-                'order_id' => $orderId,
-                'status' => $status,
-                'transaction_id' => $transactionId
-            ]);
 
             // Return success response
             return response()->json([

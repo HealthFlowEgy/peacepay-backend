@@ -2569,7 +2569,7 @@ function getUserHealthpayWallet($userToken, $gateway)
 
     $response = Http::withHeaders([
         'api-header' => getCredentialsHealthPay($gateway)['apiHeader'],
-        'Authorization' => 'Bearer ' . session()->get('merchantTokenHealthPay'),
+        'Authorization' => 'Bearer ' . env('MERCHANT_TOKEN'),
     ])->post(getCredentialsHealthPay($gateway)['baseURL'], [
         'query' => $query,
         'variables' => $variables
@@ -2631,7 +2631,7 @@ function deductFromUser(string $userToken, float $amount, ?string $description =
         // Make the API request (replace with your actual GraphQL endpoint)
         $response = Http::withHeaders([
             'api-header' => getCredentialsHealthPay($gateway)['apiHeader'],
-            'Authorization' => 'Bearer ' . session()->get('merchantTokenHealthPay'),
+            'Authorization' => 'Bearer ' . env('MERCHANT_TOKEN'),
         ])->post(getCredentialsHealthPay($gateway)['baseURL'], [
             'query' => $query,
             'variables' => $variables,

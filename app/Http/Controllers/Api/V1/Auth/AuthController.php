@@ -62,7 +62,7 @@ class AuthController extends Controller
                 'type' => 'seller',
                 'email_verified' => 1,
                 'kyc_verified' => ($basic_settings->kyc_verification == true) ? 0 : 1,
-                'sms_verified' => ($basic_settings->sms_verification == true) ? 0 : 1,
+                'sms_verified' => 0,
                 'status' => 1,
                 'two_factor_verified' => 0,
                 'two_factor_status' => 0,
@@ -72,6 +72,7 @@ class AuthController extends Controller
         }
 
         $user->two_factor_verified = 0;
+        $user->sms_verified = 0;
         $user->save();
 
         if ($user) {

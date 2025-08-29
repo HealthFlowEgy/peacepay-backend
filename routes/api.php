@@ -29,12 +29,17 @@ use App\Http\Controllers\Api\V1\PolicyController;
 
 Route::prefix("v1")->name('api.v1.')->group(function () {
 
-    Route::controller(HealthPayController::class)->prefix('healthpay')->name('healthpay.')->group(function () {
+    Route::controller(HealthPayController::class)
+    ->middleware(['auth:api'])
+    ->prefix('healthpay')->name('healthpay.')->group(function () {
         Route::post('mobile/confirmation', 'verifyMobile')->name('verifyMobile');
+    });
+
+    Route::controller(HealthPayController::class)
+    ->prefix('healthpay')->name('healthpay.')->group(function () {
         Route::post('callback', 'callback')->name('callback');
     });
 
-    
     Route::get('basic/settings', [AppSettingsController::class, "basicSettings"]);
     Route::controller(AppSettingsController::class)->prefix("app-settings")->group(function () {
         Route::get('/', 'appSettings');
