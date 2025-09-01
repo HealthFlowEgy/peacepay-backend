@@ -21,74 +21,74 @@ class EnsureSMSVerified
      */
     public function handle($request, Closure $next, $redirectToRoute = null)
     {
-        $user = $request->user();
+        // $user = $request->user();
         
-        if (!$user) {
-            // Handle case when no user is logged in
-            if ($request->expectsJson()) {
-                return response()->json(['error' => 'Unauthenticated'], 401);
-            }
-            return redirect()->route('login');
-        }
+        // if (!$user) {
+        //     // Handle case when no user is logged in
+        //     if ($request->expectsJson()) {
+        //         return response()->json(['error' => 'Unauthenticated'], 401);
+        //     }
+        //     return redirect()->route('login');
+        // }
 
-        // Generate device fingerprint
-        $fingerprint = $this->generateDeviceFingerprint($request);
+        // // Generate device fingerprint
+        // $fingerprint = $this->generateDeviceFingerprint($request);
         
-        // Check if device is registered for this user
-        $device = UserDevice::where('user_id', $user->id)
-            ->where('device_fingerprint', $fingerprint)
-            ->first();
+        // // Check if device is registered for this user
+        // $device = UserDevice::where('user_id', $user->id)
+        //     ->where('device_fingerprint', $fingerprint)
+        //     ->first();
 
-        // If user is verified but using a new device, reset sms_verified status
-        if ($user->sms_verified && !$device && $request->header('Content-Type') != 'application/json') {
-            $user->sms_verified = false;
-            $user->save();
+        // // If user is verified but using a new device, reset sms_verified status
+        // if ($user->sms_verified && !$device && $request->header('Content-Type') != 'application/json') {
+        //     $user->sms_verified = false;
+        //     $user->save();
             
-            // Create new unverified device record
-            UserDevice::create([
-                'user_id' => $user->id,
-                'device_fingerprint' => $fingerprint,
-                'ip_address' => $request->ip(),
-                'user_agent' => $request->header('agent') ?? $request->userAgent(),
-                'last_used_at' => Carbon::now(),
-            ]);
-        }
+        //     // Create new unverified device record
+        //     UserDevice::create([
+        //         'user_id' => $user->id,
+        //         'device_fingerprint' => $fingerprint,
+        //         'ip_address' => $request->ip(),
+        //         'user_agent' => $request->header('agent') ?? $request->userAgent(),
+        //         'last_used_at' => Carbon::now(),
+        //     ]);
+        // }
         
-        // Now check if SMS is verified
-        if (!$user->sms_verified) {
-            if ($request->expectsJson()) {
-                return response()->json([
-                    'success' => false,
-                    'error' => [
-                        'code' => 'SMS_NOT_VERIFIED',
-                        'message' => 'Your mobile number is not verified for this device.',
-                        'details' => [
-                            'action' => 'Verify your mobile number',
-                        ]
-                    ]
-                ], 403);
-            }
+        // // Now check if SMS is verified
+        // if (!$user->sms_verified) {
+        //     if ($request->expectsJson()) {
+        //         return response()->json([
+        //             'success' => false,
+        //             'error' => [
+        //                 'code' => 'SMS_NOT_VERIFIED',
+        //                 'message' => 'Your mobile number is not verified for this device.',
+        //                 'details' => [
+        //                     'action' => 'Verify your mobile number',
+        //                 ]
+        //             ]
+        //         ], 403);
+        //     }
             
-            return Redirect::guest(URL::route($redirectToRoute ?: 'user.code.verify.mobile'));
-        }
+        //     return Redirect::guest(URL::route($redirectToRoute ?: 'user.code.verify.mobile'));
+        // }
         
-        // If device exists but we got here, it means user is verified on this device
-        // Update the last_used_at timestamp
-        if ($device) {
-            $device->update([
-                'last_used_at' => Carbon::now(),
-                'ip_address' => $request->ip(),
-            ]);
-        } else {
-            // Create a new verified device record
-            UserDevice::create([
-                'user_id' => $user->id,
-                'device_fingerprint' => $fingerprint,
-                'ip_address' => $request->ip(),
-                'user_agent' => $request->header('agent') ?? $request->userAgent(),
-                'last_used_at' => Carbon::now(),
-            ]);
-        }
+        // // If device exists but we got here, it means user is verified on this device
+        // // Update the last_used_at timestamp
+        // if ($device) {
+        //     $device->update([
+        //         'last_used_at' => Carbon::now(),
+        //         'ip_address' => $request->ip(),
+        //     ]);
+        // } else {
+        //     // Create a new verified device record
+        //     UserDevice::create([
+        //         'user_id' => $user->id,
+        //         'device_fingerprint' => $fingerprint,
+        //         'ip_address' => $request->ip(),
+        //         'user_agent' => $request->header('agent') ?? $request->userAgent(),
+        //         'last_used_at' => Carbon::now(),
+        //     ]);
+        // }
         
         return $next($request);
     }
