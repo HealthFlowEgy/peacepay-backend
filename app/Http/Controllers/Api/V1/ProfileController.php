@@ -82,14 +82,14 @@ class ProfileController extends Controller
         $messages = [
             'pin_code.regex' => 'The PIN code must contain exactly 6 digits.',
         ];
+        
+        $rules['pin_code_confirmation'] = 'required|same:pin_code';
 
+        // Add confirmation validation
+        $messages['pin_code_confirmation.same'] = 'The confirmation PIN code does not match.';
         // If user already has a PIN code, validate current PIN
         if ($user->pin_code) {
             $rules['current_pin_code'] = 'required|string';
-            $rules['pin_code_confirmation'] = 'required|same:pin_code';
-
-            // Add confirmation validation
-            $messages['pin_code_confirmation.same'] = 'The confirmation PIN code does not match.';
         }
 
         $validator = Validator::make($request->all(), $rules, $messages);
