@@ -169,6 +169,9 @@ Route::prefix("v1")->name('api.v1.')->group(function () {
         Route::controller(ProfileController::class)->prefix('profile')->group(function () {
             Route::put('/pin', 'pinEditOrCrete')->name('pin');
             Route::post('/check/pin', 'checkPin')->name('check.pin');
+            Route::post('/forget-pin/send-otp', 'forgetPinSendOtp')->name('forget.pin.send.otp');
+            Route::post('/forget-pin/verify-otp', 'forgetPinVerifyOtp')->name('forget.pin.verify.otp');
+            Route::post('/forget-pin/reset', 'resetPinWithToken')->name('forget.pin.reset');
 
             Route::get('/', 'profile');
             Route::post('update', 'profileUpdate')->middleware('app.mode.api');

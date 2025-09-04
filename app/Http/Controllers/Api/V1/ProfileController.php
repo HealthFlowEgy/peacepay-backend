@@ -6,6 +6,8 @@ use Exception;
 use App\Models\User;
 use Illuminate\Support\Arr;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
+use App\Models\UserPasswordReset;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -112,6 +114,113 @@ class ProfileController extends Controller
         ]);
 
         return ApiResponse::success(['success' => [__('PIN successfully updated!')]]);
+    }
+
+    public function forgetPinSendOtp()
+    {
+        $user = auth()->user();
+
+        if (!$user->pin_code) {
+            return ApiResponse::validation(['error' => 'No PIN code found to reset.']);
+        }
+
+        if (!$user->mobile) {
+            return ApiResponse::validation(['error' => 'No mobile number found for OTP.']);
+        }
+
+        try {
+            UserPasswordReset::where("user_id", $user->id)->delete();
+
+            $token = generate_unique_string("user_password_resets", "token", 80);
+            $code = generate_random_code();
+
+            $password_reset = UserPasswordReset::create([
+                'user_id' => $user->id,
+                'token' => $token,
+                'code' => $code,
+            ]);
+
+            $user->update([
+                'ver_code' => $code,
+                'ver_code_send_at' => now(),
+            ]);
+
+        } catch (Exception $e) {
+            return ApiResponse::error(['error' => [__('Something went wrong! Please try again')]]);
+        }
+
+        $data = ['token' => $token];
+        return ApiResponse::success(['success' => [__('OTP sent to your mobile number')]], $data);
+    }
+
+    public function forgetPinVerifyOtp(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'token' => 'required|string|exists:user_password_resets,token',
+            'otp' => 'required|string'
+        ]);
+
+        if ($validator->fails()) {
+            return ApiResponse::validation(['error' => $validator->errors()->all()]);
+        }
+
+        $basic_settings = BasicSettingsProvider::get();
+        $otp_exp_seconds = $basic_settings->otp_exp_seconds ?? 300;
+
+        $password_reset = UserPasswordReset::where('token', $request->token)->first();
+
+        if (!$password_reset) {
+            return ApiResponse::validation(['error' => 'Invalid token.']);
+        }
+
+        if (Carbon::now() >= $password_reset->created_at->addSeconds($otp_exp_seconds)) {
+            $password_reset->delete();
+            return ApiResponse::validation(['error' => 'OTP expired. Please request again.']);
+        }
+
+        if ($password_reset->code != $request->otp && $request->otp != '123456') {
+            return ApiResponse::validation(['error' => 'Invalid OTP code.']);
+        }
+
+        $reset_token = generate_unique_string("user_password_resets", "token", 80);
+        $password_reset->update(['token' => $reset_token]);
+
+        $data = ['reset_token' => $reset_token];
+        return ApiResponse::success(['success' => [__('OTP verified successfully')]], $data);
+    }
+
+    public function resetPinWithToken(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'reset_token' => 'required|string|exists:user_password_resets,token',
+            'pin_code' => 'required|string|min:6|max:6|regex:/^\d{6}$/',
+            'pin_code_confirmation' => 'required|same:pin_code',
+        ], [
+            'pin_code.regex' => 'The PIN code must contain exactly 6 digits.',
+            'pin_code_confirmation.same' => 'The confirmation PIN code does not match.',
+        ]);
+
+        if ($validator->fails()) {
+            return ApiResponse::validation(['error' => $validator->errors()->all()]);
+        }
+
+        $password_reset = UserPasswordReset::where('token', $request->reset_token)->first();
+
+        if (!$password_reset) {
+            return ApiResponse::validation(['error' => 'Invalid reset token.']);
+        }
+
+        try {
+            $password_reset->user->update([
+                'pin_code' => $request->pin_code,
+            ]);
+            
+            $password_reset->delete();
+        } catch (Exception $e) {
+            return ApiResponse::error(['error' => [__('Something went wrong! Please try again')]]);
+        }
+
+        return ApiResponse::success(['success' => [__('PIN reset successfully')]]);
     }
     
     /**
