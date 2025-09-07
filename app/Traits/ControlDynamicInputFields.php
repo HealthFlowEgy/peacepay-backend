@@ -41,7 +41,7 @@ trait ControlDynamicInputFields {
                     // delete_file($get_file_link['dev_path']);
                     // $value = $upload_file;
                     $path = $form_file->store($this->file_store_location, 'spaces');
-                    $value = Storage::disk('spaces')->url($path);
+                    $value = !empty($path) ? Storage::disk('spaces')->url($path) : "";
                 }
             }elseif($item->type == "select") {
                 $value = $form_data[$item->name] ?? "";
