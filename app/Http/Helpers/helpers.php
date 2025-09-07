@@ -43,6 +43,18 @@ use App\Models\Transaction;
 use App\Notifications\User\Auth\SendAuthorizationCode;
 use Illuminate\Support\Facades\Http;
 
+function mshastra($message, $to){
+    $message = urlencode($message);
+    $mobile = formatMobileNumber($to);
+
+    $url = "https://mshastra.com/sendurlcomma.aspx?user=" . env('MSHASTRA_USERNAME') .
+            "&pwd=" . env('MSHASTRA_PASSWORD') .
+            "&senderid=" . env('SENDER_ID') .
+            "&CountryCode=ALL&mobileno=$mobile&msgtext=$message&priority=High";
+
+    $test = @file_get_contents($url);
+}
+
 function setRoute($route_name, $param = null)
 {
     if (Route::has($route_name)) {
