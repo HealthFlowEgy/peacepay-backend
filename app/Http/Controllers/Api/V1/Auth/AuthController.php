@@ -98,20 +98,15 @@ class AuthController extends Controller
             if ($user->status == 0) {
                 $error = ['error' => [__('Account Has been Suspended')]];
                 return ApiResponse::onlyValidation($error);
-            } elseif ($user->email_verified == 0) {
-                $user_authorize = UserAuthorization::where("user_id", $user->id)->first();
+            } elseif ($user->sms_verified == 0) {
+                
                 $resend_code    = generate_random_code();
-                $user_authorize->update([
-                    'code'       => $resend_code,
-                    'created_at' => now(),
+                $user->update([
+                    'ver_code'       => $resend_code,
+                    'ver_code_send_at' => now(),
                 ]);
-                $data = $user_authorize->toArray();
-                try{
-                $user->notify(new SendAuthorizationCode((object) $data));
-                }catch(\Exception $e){
-                \Log::info('error mail : ,'. $e->getMessage());
-                }
-                $message = ['success' => [__('Please check email and verify your account')]];
+                mshastra('OTP : ', $user->mobile);
+                $message = ['success' => [__('Please check sms mobile and verify your account')]];
                 return ApiResponse::success($message, $user_data);
             }
 

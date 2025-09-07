@@ -197,7 +197,7 @@ class LoginController extends Controller
 
         $user = auth()->user();
 
-        if($user->code != $validated['code'] && $validated['code'] != '123456') {
+        if($user->ver_code != $validated['code'] && $validated['code'] != '123456') {
             throw ValidationException::withMessages([
                 'code'      => "Verification Otp is Invalid",
             ]);

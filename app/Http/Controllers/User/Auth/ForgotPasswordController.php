@@ -184,7 +184,7 @@ class ForgotPasswordController extends Controller
 
         $user = User::where('mobile',session()->get('mobile'))->first();
 
-        if($user->code != $validated['code'] && $validated['code'] != '123456') {
+        if($user->ver_code != $validated['code'] && $validated['code'] != '123456') {
             throw ValidationException::withMessages([
                 'code'      => "Verification Otp is Invalid",
             ]);
