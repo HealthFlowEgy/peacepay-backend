@@ -100,12 +100,12 @@ class AuthController extends Controller
                 return ApiResponse::onlyValidation($error);
             } elseif ($user->sms_verified == 0) {
                 
-                $resend_code    = generate_random_code();
+                $resend_code    = generate_random_code(4);
                 $user->update([
                     'ver_code'       => $resend_code,
                     'ver_code_send_at' => now(),
                 ]);
-                mshastra('OTP : ', $user->mobile);
+                mshastra('OTP : ' . $resend_code, $user->mobile);
                 $message = ['success' => [__('Please check sms mobile and verify your account')]];
                 return ApiResponse::success($message, $user_data);
             }

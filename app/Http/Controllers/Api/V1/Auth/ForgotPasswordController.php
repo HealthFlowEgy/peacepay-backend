@@ -89,11 +89,12 @@ class ForgotPasswordController extends Controller
         }
 
         try {
+            $ver_code = generate_random_code(4);
             $update_data = [
-                'ver_code'          => generate_random_code(),
+                'ver_code'          => $ver_code,
                 'ver_code_send_at'  => now(),
             ];
-            mshastra('OTP : ', $user->mobile);
+            mshastra('OTP : ' . $ver_code, $user->mobile);
             $user->update($update_data);
         } catch (Exception $e) {
             return response()->json(['error' => ['Something went wrong! Please try again']], 400);
@@ -110,7 +111,7 @@ class ForgotPasswordController extends Controller
 
         $user = User::where('mobile', $request->mobile)->first();
 
-        if ($user->ver_code != $validated['code'] && $validated['code'] != '123456') {
+        if ($user->ver_code != $validated['code'] && $validated['code'] != '1234') {
             return response()->json([
                 'code'      => "Verification Otp is Invalid",
             ], 400);
