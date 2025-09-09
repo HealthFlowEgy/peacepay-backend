@@ -42,6 +42,7 @@ class PolicyController extends Controller
             'fields' => 'required',
             'fields.delivery_fee_payer' => 'required',
             'fields.has_advanced_payment' => 'required',
+            'fields.who_will_deliver' => 'required|in:shipping_company,merchant',
         ]);
 
 
