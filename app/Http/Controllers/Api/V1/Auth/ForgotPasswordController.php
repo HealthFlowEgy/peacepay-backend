@@ -75,7 +75,7 @@ class ForgotPasswordController extends Controller
     public function sendCodeMobile(Request $request)
     {
         $request->validate([
-            'credentials'   => "required|string|max:100",
+            'credentials'   => "required|string|max:100|regex:/^01/",
         ]);
         $column = "mobile";
         $user = User::where($column, $request->credentials)->first();
@@ -105,7 +105,7 @@ class ForgotPasswordController extends Controller
     public function verifyCodeMobile(Request $request)
     {
         $validated = Validator::make($request->all(), [
-            'mobile'          => "required|numeric",
+            'mobile'          => "required|string|regex:/^01/",
             'code'          => "required|numeric",
         ])->validate();
 

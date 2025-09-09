@@ -37,7 +37,7 @@ class AuthController extends Controller
     public function login(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'mobile'    => 'required|max:11|min:11',
+            'mobile'    => 'required|max:11|min:11|regex:/^01/',
             // 'password' => 'required|min:6',
         ]);
 
@@ -144,7 +144,7 @@ class AuthController extends Controller
             // 'email'      => 'required|email|max:160|unique:users',
             'password'   => $passowrd_rule,
             'policy'     => $agree_policy,
-            'mobile'        => 'required|string|max:11|min:11|unique:users,mobile|regex:/^0/',
+            'mobile'        => 'required|string|max:11|min:11|unique:users,mobile|regex:/^01/',
         ]);
 
         if ($validator->fails()) {

@@ -8,6 +8,7 @@
         "php": "^8.0.2",
         "aws/aws-sdk-php": "^3.337",
         "buglinjo/laravel-webp": "^2.3",
+        "doctrine/dbal": "^3.0",
         "flutterwavedev/flutterwave-v3": "^1.0",
         "guzzlehttp/guzzle": "^7.2",
         "intervention/image": "^2.7",
