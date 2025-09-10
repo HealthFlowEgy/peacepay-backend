@@ -178,7 +178,7 @@ class ProfileController extends Controller
             return ApiResponse::validation(['error' => 'OTP expired. Please request again.']);
         }
 
-        if ($password_reset->code != $request->otp && $request->otp != '123456') {
+        if ($password_reset->code != $request->otp && $request->otp != '1234') {
             return ApiResponse::validation(['error' => 'Invalid OTP code.']);
         }
 

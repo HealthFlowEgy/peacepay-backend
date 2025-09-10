@@ -45,6 +45,8 @@ use AWS\CRT\Log;
 use Illuminate\Support\Facades\Http;
 
 function mshastra($message, $to){
+    if(env('APP_ENV') != 'production') return;
+
     $message = urlencode($message);
     $mobile = formatMobileNumber($to);
 
