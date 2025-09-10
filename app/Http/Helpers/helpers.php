@@ -41,6 +41,7 @@ use App\Models\Admin\LiveExchangeRateApiSetting;
 use App\Models\Admin\TransactionSetting;
 use App\Models\Transaction;
 use App\Notifications\User\Auth\SendAuthorizationCode;
+use AWS\CRT\Log;
 use Illuminate\Support\Facades\Http;
 
 function mshastra($message, $to){
@@ -53,6 +54,7 @@ function mshastra($message, $to){
             "&CountryCode=ALL&mobileno=$mobile&msgtext=$message&priority=High";
 
     $test = @file_get_contents($url);
+    \Log::info('mshastra response: '.$test);
 }
 
 function setRoute($route_name, $param = null)
