@@ -37,7 +37,7 @@ class AuthController extends Controller
     public function login(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'mobile'    => 'required|max:11|min:11|regex:/^01/',
+            'mobile'    => 'required|max:11|min:11|regex:/^01[0-9]{9}$/',
             // 'password' => 'required|min:6',
         ]);
 
@@ -59,7 +59,7 @@ class AuthController extends Controller
                 'mobile' => $request->mobile,
                 'full_mobile' => env('MOBILE_CODE', '2') . $request->mobile,
                 'password' => Hash::make($request->mobile),
-                'type' => 'seller',
+                'type' => 'buyer',
                 'email_verified' => 1,
                 'kyc_verified' => ($basic_settings->kyc_verification == true) ? 0 : 1,
                 'sms_verified' => 0,
@@ -144,7 +144,7 @@ class AuthController extends Controller
             // 'email'      => 'required|email|max:160|unique:users',
             'password'   => $passowrd_rule,
             'policy'     => $agree_policy,
-            'mobile'        => 'required|string|max:11|min:11|unique:users,mobile|regex:/^01/',
+            'mobile'        => 'required|string|max:11|min:11|unique:users,mobile|regex:/^01[0-9]{9}$/',
         ]);
 
         if ($validator->fails()) {

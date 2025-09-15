@@ -117,6 +117,7 @@ class AuthorizationController extends Controller
 
         $data = [
             'status_info'  => '0: Unverified, 1: Verified, 2: Pending, 3: Rejected',
+            'reject_reason'       => $user->kyc_verified == GlobalConst::REJECTED ? ($user->kyc?->reject_reason ?? null) : null,
             'kyc_status'   => $user->kyc_verified,
             'input_fields' => $kyc_fields
         ];
