@@ -462,7 +462,7 @@ function files_path($slug)
             'height'            => 800,
         ],
         'profile-default'       => [
-            'path'              => 'backend/images/default/profile-default.webp',
+            'path'              => 'backend/images/default/user-default.jpeg',
             'width'             => 800,
             'height'            => 800,
         ],

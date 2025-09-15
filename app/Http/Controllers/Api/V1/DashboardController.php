@@ -30,7 +30,7 @@ class DashboardController extends Controller
         // User Data
         $user = Auth::guard('api')->user();
         $user_data =[
-            'default_image' => "public/backend/images/default/profile-default.webp",
+            'default_image' => "public/backend/images/default/user-default.jpeg",
             "image_path"    => "public/frontend/user",
             'user'          => $user,
         ];

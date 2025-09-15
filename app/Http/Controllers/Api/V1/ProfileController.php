@@ -34,7 +34,7 @@ class ProfileController extends Controller
         $userWallet = UserWallet::where('user_id', $user->id)->first();
 
         $data = [
-            'default_image' => "public/backend/images/default/profile-default.webp",
+            'default_image' => "public/backend/images/default/user-default.jpeg",
             "image_path"    => "public/frontend/user",
             "base_ur"       => url('/'),
             'user'          => $user,
