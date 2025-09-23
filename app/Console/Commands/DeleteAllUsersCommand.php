@@ -56,8 +56,6 @@ class DeleteAllUsersCommand extends Command
         $this->info('Starting deletion of all users and related data...');
 
         try {
-            DB::beginTransaction();
-
             // Disable foreign key checks to avoid constraint issues
             DB::statement('SET FOREIGN_KEY_CHECKS=0;');
 
@@ -66,7 +64,7 @@ class DeleteAllUsersCommand extends Command
 
             if ($userCount === 0) {
                 $this->info('No users found to delete.');
-                DB::rollBack();
+                DB::statement('SET FOREIGN_KEY_CHECKS=1;');
                 return Command::SUCCESS;
             }
 
@@ -79,12 +77,9 @@ class DeleteAllUsersCommand extends Command
             // Re-enable foreign key checks
             DB::statement('SET FOREIGN_KEY_CHECKS=1;');
 
-            DB::commit();
-
             $this->info("Successfully deleted {$userCount} users and all related data.");
 
         } catch (\Exception $e) {
-            DB::rollBack();
             DB::statement('SET FOREIGN_KEY_CHECKS=1;');
 
             $this->error('Failed to delete users: ' . $e->getMessage());
