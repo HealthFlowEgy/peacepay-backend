@@ -119,7 +119,8 @@ class AuthorizationController extends Controller
             'status_info'  => '0: Unverified, 1: Verified, 2: Pending, 3: Rejected',
             'reject_reason'       => $user->kyc_verified == GlobalConst::REJECTED ? ($user->kyc?->reject_reason ?? null) : null,
             'kyc_status'   => $user->kyc_verified,
-            'input_fields' => $kyc_fields
+            'input_fields' => $kyc_fields,
+            'kyc_string_status' => $user->kyc_string_status,
         ];
 
         if(!$user_kyc) return ApiResponse::success(['success' => ['User KYC section is under maintenance']], $data);
