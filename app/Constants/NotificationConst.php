@@ -17,4 +17,6 @@ class NotificationConst {
     const CARD_FUND    = "CARD-FUND";
 
     const ESCROW_CREATE = "ESCROW_CREATE";
+
+    const KYC = "KYC";
 }

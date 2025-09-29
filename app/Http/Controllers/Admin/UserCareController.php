@@ -405,6 +405,18 @@ class UserCareController extends Controller
             $user->update([
                 'kyc_verified'  => GlobalConst::APPROVED,
             ]);
+            $notification_content = [
+                'title'         => "KYC Update",
+                'message'       => "Your KYC information has been approved.",
+                'time'          => Carbon::now()->diffForHumans(),
+                'image'         => files_asset_path('profile-default'),
+            ];
+
+            UserNotification::create([
+                'type'      => NotificationConst::KYC,
+                'user_id'  => $user->id,
+                'message'   => $notification_content,
+            ]);
         }catch(Exception $e) {
             $user->update([
                 'kyc_verified'  => GlobalConst::PENDING,
@@ -429,6 +441,18 @@ class UserCareController extends Controller
             ]);
             $user->kyc->update([
                 'reject_reason' => $request->reason,
+            ]);
+            $notification_content = [
+                'title'         => "KYC Update",
+                'message'       => "Your KYC information has been rejected.",
+                'time'          => Carbon::now()->diffForHumans(),
+                'image'         => files_asset_path('profile-default'),
+            ];
+
+            UserNotification::create([
+                'type'      => NotificationConst::KYC,
+                'user_id'  => $user->id,
+                'message'   => $notification_content,
             ]);
         }catch(Exception $e) {
             $user->update([
