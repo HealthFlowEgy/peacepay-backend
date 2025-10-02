@@ -36,12 +36,12 @@ trait ControlDynamicInputFields {
             }elseif($item->type == "file") {
                 $form_file = $form_data[$item->name] ?? "";
                 if(is_file($form_file)) {
-                    // $get_file_link = upload_file($form_file,"junk-files");
-                    // $upload_file = upload_files_from_path_dynamic([$get_file_link['dev_path']],$this->file_store_location);
-                    // delete_file($get_file_link['dev_path']);
-                    // $value = $upload_file;
-                    $path = $form_file->store($this->file_store_location, 'spaces');
-                    $value = !empty($path) ? Storage::disk('spaces')->url($path) : "";
+                    $get_file_link = upload_file($form_file,"junk-files");
+                    $upload_file = upload_files_from_path_dynamic([$get_file_link['dev_path']],$this->file_store_location);
+                    delete_file($get_file_link['dev_path']);
+                    $value = $upload_file;
+                    // $path = $form_file->store($this->file_store_location, 'spaces');
+                    // $value = !empty($path) ? Storage::disk('spaces')->url($path) : "";
                 }
             }elseif($item->type == "select") {
                 $value = $form_data[$item->name] ?? "";

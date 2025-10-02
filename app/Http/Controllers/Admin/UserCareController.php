@@ -411,11 +411,11 @@ class UserCareController extends Controller
                 'time'          => Carbon::now()->diffForHumans(),
                 'image'         => files_asset_path('profile-default'),
             ];
-
             UserNotification::create([
                 'type'      => NotificationConst::KYC,
                 'user_id'  => $user->id,
                 'message'   => $notification_content,
+                'seen'      => 0,
             ]);
         }catch(Exception $e) {
             $user->update([
@@ -453,6 +453,7 @@ class UserCareController extends Controller
                 'type'      => NotificationConst::KYC,
                 'user_id'  => $user->id,
                 'message'   => $notification_content,
+                'seen'      => 0,
             ]);
         }catch(Exception $e) {
             $user->update([

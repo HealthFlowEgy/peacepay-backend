@@ -64,8 +64,12 @@ class ProfileController extends Controller
         ];
 
         if ($request->hasFile("image")) {
-            $path = $request->file('image')->store('profile', 'spaces');
-            $validated['image']     = Storage::disk('spaces')->url($path);
+            $image = upload_file($validated['image'], 'user-profile', auth()->user()->image);
+            $upload_image = upload_files_from_path_dynamic([$image['dev_path']], 'user-profile');
+            delete_file($image['dev_path']);
+            $validated['image']     = $upload_image;
+            // $path = $request->file('image')->store('profile', 'spaces');
+            // $validated['image']     = Storage::disk('spaces')->url($path);
         }
 
         try {

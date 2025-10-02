@@ -121,6 +121,7 @@ class AuthorizationController extends Controller
             'kyc_status'   => $user->kyc_verified,
             'input_fields' => $kyc_fields,
             'kyc_string_status' => $user->kyc_string_status,
+            'data' => $user->kyc
         ];
 
         if(!$user_kyc) return ApiResponse::success(['success' => ['User KYC section is under maintenance']], $data);
