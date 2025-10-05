@@ -444,7 +444,7 @@ class UserCareController extends Controller
             ]);
             $notification_content = [
                 'title'         => "KYC Update",
-                'message'       => "Your KYC information has been rejected.",
+                'message'       => "Your KYC information has been rejected. " . $request->reason,
                 'time'          => Carbon::now()->diffForHumans(),
                 'image'         => files_asset_path('profile-default'),
             ];
