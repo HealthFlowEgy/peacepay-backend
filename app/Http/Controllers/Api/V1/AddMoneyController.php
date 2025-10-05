@@ -20,10 +20,14 @@ use App\Traits\PaymentGateway\SslcommerzTrait;
 use App\Http\Helpers\Api\Helpers as ApiResponse;
 use KingFlamez\Rave\Facades\Rave as Flutterwave;
 use App\Http\Helpers\PaymentGateway as PaymentGatewayHelper;
+use Softonic\GraphQL\ClientBuilder;
+
 
 class AddMoneyController extends Controller
 {
     use Manual, SslcommerzTrait;
+    use \App\Traits\PaymentGateway\HealthPay;
+
     public function index(){
         $user = auth()->user();
         // user wallet
@@ -102,6 +106,22 @@ class AddMoneyController extends Controller
                 $error = ['error'=>["Invalid Request"]];
                 return ApiResponse::onlyError($error);
             }
+
+            // $tempData = TemporaryData::where('identifier', $request->trx)->first();
+
+            $output['gateway'] = PaymentGateway::where('alias', 'healthpay')->first();
+            $credentials = $this->getCredentialsHealthPay($output);
+
+            $clientUser = ClientBuilder::build($credentials['baseURL'], [
+                'headers' => [
+                    'api-header' => $credentials['apiHeader'],
+                    'Authorization' => 'Bearer ' . $temData['data']->merchantToken,
+                ],
+            ]);
+
+
+
+            
             $payment_gateway_currency = PaymentGatewayCurrency::where('id', $temData->data->currency)->first();
             $payment_gateway          = PaymentGateway::where('id', $temData->data->gateway)->first();
             $payment_informations = [
@@ -116,8 +136,12 @@ class AddMoneyController extends Controller
 
             if($payment_gateway->type == "AUTOMATIC") {
                 if($temData->type == PaymentGatewayConst::HEALTHPAY) {
+                    $deductAmount = (float) $request->amount;
+                    $amount = $deductAmount;
+                    $topupWalletUser = $this->topupWalletUser($clientUser, $amount, 1);
                     return response()->json([
                         'trx'       => $temData->identifier,
+                        'iframeUrl' => $topupWalletUser['iframeUrl'],
                         'message'   => 'Please complete your payment to go to confirm your number.',
                     ]);
                 }else if($temData->type == PaymentGatewayConst::STRIPE) {
@@ -269,9 +293,10 @@ class AddMoneyController extends Controller
                         'payment_informations'  => $payment_informations,
                         'url'                   => route('api.v1.user.add-money.manual.payment.confirmed'),
                         'method'                => "post",
-                        ];
-                        $message = ['success'=>[__('Add Money Inserted Successfully')]];
-                        return ApiResponse::success($message, $data);
+                    ];
+
+                    $message = ['success'=>[__('Add Money Inserted Successfully')]];
+                    return ApiResponse::success($message, $data);
             }else{
                 $error = ['error'=>[__("Something is wrong")]];
                 return ApiResponse::onlyError($error);

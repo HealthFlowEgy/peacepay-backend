@@ -35,30 +35,6 @@ class HealthPayController extends Controller
 
         $tempData = TemporaryData::where('identifier', $request->trx)->first();
 
-
-        $query = '
-           mutation authUser(
-               $mobile: String!
-               $otp: String!
-               $isProvider: Boolean!
-           ) {
-               authUser(
-                   mobile: $mobile
-                   otp: $otp
-                   isProvider: $isProvider
-               ) {
-                   userToken
-                   user {
-                       uid
-                   }
-               }
-           }
-       ';
-
-        $user = auth()->user();
-        $mobile = $user->mobile;
-
-        $mobileHealthPay = formatMobileNumber($mobile);
         $output['gateway'] = PaymentGateway::where('alias', 'healthpay')->first();
         $credentials = $this->getCredentialsHealthPay($output);
 
@@ -69,52 +45,16 @@ class HealthPayController extends Controller
             ],
         ]);
 
-        $response = $clientUser->query($query, [
-            'mobile'     => $mobileHealthPay,
-            'otp'        => $request['otp'],
-            'isProvider' => false,
-        ]);
 
-        if ($response->hasErrors()) {
-            throw new \Exception('Error authenticating user: ' . json_encode($response->getErrors()));
-        }
-
-        $userToken = $response->getData()['authUser']['userToken'];
-        session()->put('userTokenHealthPay', $userToken);
-
-
-        $userHealthpayWallet = getUserHealthpayWallet($userToken, $output['gateway']);
 
         $deductAmount = (float) $request->amount;
-        if ($deductAmount > (float) $userHealthpayWallet['total']) {
-            $amount = $deductAmount - (float) $userHealthpayWallet['total'];
-            $topupWalletUser = $this->topupWalletUser($clientUser, $amount, 1);
-            return response()->json([
-                'iframeUrl' => $topupWalletUser['iframeUrl'],
-                'message' => 'Please top up your wallet to proceed with the escrow payment.',
-            ]);
-        } else {
-            // $id = session()->get('escrowId');
-            // $escrow    = Escrow::findOrFail($id);
-
-            // $this->escrowWalletPayment($escrow);
-            // $escrow->payment_type = EscrowConstants::GATEWAY;
-            // $escrow->status       = EscrowConstants::ONGOING;
-
-            deductFromUser($userToken, $deductAmount, 'deduct ' . $deductAmount, $output['gateway']);
-
-            return response()->json([
-                'message' => 'Money Deducted Successfully From your Wallet',
-            ]);
-
-            // $escrow->save();
-
-            // return redirect()->route('user.my-escrow.index', [
-            //     'id' => $escrow->id,
-            // ])->with([
-            //     'success' => ['Payment successful'],
-            // ]);
-        }
+        $amount = $deductAmount;
+        $topupWalletUser = $this->topupWalletUser($clientUser, $amount, 1);
+        return response()->json([
+            'iframeUrl' => $topupWalletUser['iframeUrl'],
+            'message' => 'Please top up your wallet to proceed with the escrow payment.',
+        ]);
+        
     }
 
 

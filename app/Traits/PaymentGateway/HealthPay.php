@@ -141,23 +141,6 @@ trait HealthPay
 
     public function loginUser($output, $clientUser, $api = false,$merchantToken = null)
     {
-        $query = '
-            mutation loginUser(
-                $mobile: String!
-                $lastName: String!
-                $firstName: String!
-                $email: String
-            ) {
-                loginUser(
-                    mobile: $mobile
-                    lastName: $lastName
-                    firstName: $firstName
-                    email: $email
-                ) {
-                    uid
-                }
-            }
-        ';
         $output = (array) $output;
         if(!isset($output['wallet'])){
             $userWallet = UserWallet::where([
@@ -169,20 +152,6 @@ trait HealthPay
         $user = $output['wallet']->user;
         $mobile = formatMobileNumber($user['full_mobile']);
         
-
-        $response = $clientUser->query($query, [
-            'mobile'    => $mobile,
-            'firstName' => $user['firstname'] ?? '',
-            'lastName'  => $user['lastname'] ?? '',
-            'email'     => $user['email'] ?? '',
-        ]);
-
-        session()->put('mobileHealthPay', $mobile);
-
-        if ($response->hasErrors()) {
-            throw new \Exception('Error logging in user: ' . json_encode($response->getErrors()));
-        }
-
         if($api){
             $data = [
                 'currency' => $output['wallet']->currency->id,
@@ -194,7 +163,7 @@ trait HealthPay
                 'amount' => $output['amount'],
                 'merchantToken' => $merchantToken,
             ];
-            $ident = $response->getData()['loginUser']['uid'] . '-' . strtotime(now());
+            $ident = getTrxNum(10);
             TemporaryData::create([
                 'type'       => PaymentGatewayConst::HEALTHPAY,
                 'identifier' => $ident,
@@ -203,10 +172,10 @@ trait HealthPay
             return [
                 'data' => $data,
                 'temp_identifier' => $ident,
+                'gateway_alias' => 'healthpay',
                 'message' => 'User logged in successfully.',
             ];
         }
-        Log::info('HealthPay Login User Id: ' . $response->getData()['loginUser']['uid']);
 
         return redirect()->route('user.healthpay.showConfirmMobile');
     }
