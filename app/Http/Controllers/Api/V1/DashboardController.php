@@ -113,9 +113,9 @@ class DashboardController extends Controller
                 'trx_id'                => $item->trx_id,
                 'gateway_currency'      => $item->gateway_currency->name ?? null,
                 'transaction_type'      => $item->type,
-                'sender_request_amount' => $item->sender_request_amount,
+                'sender_request_amount' => '(' . $item->charge_status . ') ' . $item->sender_request_amount,
                 'sender_currency_code'  => $item->sender_currency_code,
-                'total_payable'         => $item->total_payable,
+                'total_payable'         => '(' . $item->charge_status . ') ' .  $item->total_payable,
                 'gateway_currency_code' => $item->gateway_currency->currency_code ?? null,
                 'exchange_rate'         => $item->exchange_rate,
                 'fee'                   => optional($item->transaction_details)->total_charge ?? 0,
@@ -123,7 +123,8 @@ class DashboardController extends Controller
                 'exchange_currency'     => $item->details->charges->exchange_currency ?? null,
                 'status'                => $item->status,
                 'string_status'         => $item->stringStatus->value,
-                'created_at'            => $item->created_at,
+                'balance_after_transaction' => $item->available_balance,
+                'created_at'            => $item->created_at?->format('Y-m-d H:i A'),
             ];
         });
         $data = [

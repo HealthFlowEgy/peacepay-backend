@@ -191,6 +191,7 @@ class UserCareController extends Controller
                 'remark'            => $validated['remark'],
                 'status'            => GlobalConst::SUCCESS,
                 'created_at'                    => now(),
+                'charge_status' => $validated['type'] == "add" ? '+' : '-'
             ]);
 
 
