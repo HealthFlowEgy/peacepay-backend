@@ -176,8 +176,13 @@ class HealthPayController extends Controller
                     $userWallet = UserWallet::where('user_id', $userId)->first();
 
                     if (!$userWallet) {
-                        throw new \Exception('User wallet not found');
+                        throw new Exception('User wallet not found');
                     }
+
+                    // Get amounts from temporary data
+                    $requestedAmount = $temporaryData->data->amount->requested_amount ?? $amount;
+                    $totalPayable = $temporaryData->data->amount->total_payable_amount ?? $amount;
+                    $totalCharge = $temporaryData->data->amount->gateway_total_charge ?? 0;
 
                     // Get previous balance before update
                     $previousBalance = $userWallet->balance;
@@ -186,10 +191,14 @@ class HealthPayController extends Controller
                     $trx_id = 'HP' . getTrxNum();
 
                     // Update wallet balance if payment was successful
+                    // Add only the requested amount (500), not the total payable (506)
                     if ($status) {
-                        $userWallet->balance += $amount;
+                        $userWallet->balance += $requestedAmount;
                         $userWallet->save();
                     }
+
+                    Log::info('$temporaryData->data');
+                    Log::info($temporaryData->data);
 
                     // Create transaction record
                     Transaction::create([
@@ -197,10 +206,10 @@ class HealthPayController extends Controller
                         'user_wallet_id' => $userWallet->id,
                         'payment_gateway_currency_id' => $temporaryData->data->payment_gateway_currency_id ?? null,
                         'trx_id' => $trx_id,
-                        'sender_request_amount' => $amount,
-                        'total_payable' => $amount,
+                        'sender_request_amount' => $requestedAmount,
+                        'total_payable' => $totalPayable,
                         'available_balance' => $userWallet->balance,
-                        'exchange_rate' => 1,
+                        'exchange_rate' => $temporaryData->data->amount->exchange_rate ?? 1,
                         'remark' => 'Add Money via HealthPay',
                         'details' => json_encode([
                             'order_id' => $orderId,
@@ -209,6 +218,9 @@ class HealthPayController extends Controller
                             'payment_method' => 'HealthPay',
                             'previous_balance' => $previousBalance,
                             'new_balance' => $userWallet->balance,
+                            'requested_amount' => $requestedAmount,
+                            'total_payable' => $totalPayable,
+                            'total_charge' => $totalCharge,
                         ]),
                         'type' => PaymentGatewayConst::TYPEADDMONEY,
                         'status' => $status ? PaymentGatewayConst::STATUSSUCCESS : PaymentGatewayConst::STATUSREJECTED,
@@ -221,13 +233,15 @@ class HealthPayController extends Controller
                     Log::info('Transaction created successfully', [
                         'trx_id' => $trx_id,
                         'user_id' => $userId,
-                        'amount' => $amount,
+                        'requested_amount' => $requestedAmount,
+                        'total_payable' => $totalPayable,
+                        'total_charge' => $totalCharge,
                         'status' => $status
                     ]);
                 }
 
                 DB::commit();
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 DB::rollback();
                 throw $e;
             }
