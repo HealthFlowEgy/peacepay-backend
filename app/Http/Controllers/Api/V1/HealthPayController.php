@@ -197,9 +197,6 @@ class HealthPayController extends Controller
                         $userWallet->save();
                     }
 
-                    Log::info('$temporaryData->data');
-                    Log::info($temporaryData);
-
                     // Create transaction record
                     Transaction::create([
                         'user_id' => $userId,
