@@ -96,12 +96,18 @@ class AddMoneyController extends Controller
         $message = ['success'=>[__('Add Money Information')]];
         return ApiResponse::success($message, $data);
     }
-    //add money submit 
-    public function submit(Request $request){ 
-        try{  
+    //add money submit
+    public function submit(Request $request){
+        // Round up amount to nearest integer (100.2 becomes 101)
+        if ($request->has('amount') && is_numeric($request->amount)) {
+            $request->merge(['amount' => (int) ceil($request->amount)]);
+        }
+        try{
+
             $instance = PaymentGatewayHelper::init($request->all())->gateway()->api()->get();   
             $trx = $instance['response']['id']??$instance['response']['trx']??$instance['response']['reference_id']??$instance['response']['tokenValue']?? $instance['response']['url'] ?? $instance['response']['temp_identifier']??$instance['order_id']??$instance['response']??"";
             $temData = TemporaryData::where('identifier',$trx)->first(); 
+
             if(!$temData){
                 $error = ['error'=>["Invalid Request"]];
                 return ApiResponse::onlyError($error);
@@ -137,7 +143,8 @@ class AddMoneyController extends Controller
             if($payment_gateway->type == "AUTOMATIC") {
                 if($temData->type == PaymentGatewayConst::HEALTHPAY) {
                     $deductAmount = (float) $payment_informations['payable_amount'];
-                    $amount = $deductAmount;
+                    // Round up to nearest integer (100.2 becomes 101)
+                    $amount = (int) ceil($deductAmount);
 
                     // Pass amount data and gateway details to topupWalletUser
                     $gatewayDetails = [
