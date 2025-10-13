@@ -78,7 +78,7 @@ class AddMoneyController extends Controller
                 'total_payable'         => $item->total_payable,
                 'gateway_currency_code' => $item->gateway_currency->currency_code ?? null,
                 'exchange_rate'         => $item->exchange_rate,
-                'fee'                   => $item->transaction_details->total_charge,
+                'fee'                   => $item->transaction_details->total_charge ?? null,
                 'rejection_reason'      => $item->reject_reason ?? null,
                 'created_at'            => $item->created_at,
             ];
