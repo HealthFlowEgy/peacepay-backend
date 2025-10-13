@@ -140,9 +140,9 @@ class AddMoneyController extends Controller
                 'payable_amount'        => get_amount(ceil($temData->data->amount->total_payable_amount),$temData->data->amount->gateway_cur_code),
            ];
 
-            if($payment_gateway->type == "AUTOMATIC") {
+           if($payment_gateway->type == "AUTOMATIC") {
                 if($temData->type == PaymentGatewayConst::HEALTHPAY) {
-                    $deductAmount = (float) $payment_informations['payable_amount'];
+                    $deductAmount = (float) $temData->data->amount->total_payable_amount;
                     // Round up to nearest integer (100.2 becomes 101)
                     $amount = (int) ceil($deductAmount);
 
