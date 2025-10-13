@@ -19,7 +19,7 @@
                 <td>{{ $item->trx_id }}</td>
                 <td>{{ $item->user->email }}</td>
                 <td>{{ $item->user->username }}</td> 
-                <td>{{ $item->currency->symbol.$item->sender_request_amount }}</td>
+                <td>{{ ($item->charge_status ?? '+') . $item->currency->symbol . $item->sender_request_amount }}</td>
                 <td><span class="text--info">{{ @$item['gateway_currency']->name }}</span></td>
                 <td><span class="{{ $item->stringStatus->class }}">{{ $item->stringStatus->value }}</span></td>
                 <td>{{ $item->created_at->format('d-m-y h:i:s A') }}</td>

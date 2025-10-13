@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use App\Http\Helpers\Response;
 use App\Models\UserNotification;
 use App\Constants\NotificationConst;
+use App\Constants\PaymentGatewayConst;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Validator;
 use App\Notifications\User\AddMoney\ApprovedByAdminMail;
@@ -30,7 +31,10 @@ class AddMoneyController extends Controller
         $transactions = Transaction::with(
             'user:id,firstname,email,username,mobile',
             'payment_gateway:id,name',
-        )->where('type', 'add-money')->latest()->paginate(20);
+        )
+        ->where('type', 'add-money')
+        ->orWhere('type', PaymentGatewayConst::TYPEADDSUBTRACTBALANCE)
+        ->latest()->paginate(20);
         return view('admin.sections.add-money.index', compact(
             'page_title',
             'transactions'

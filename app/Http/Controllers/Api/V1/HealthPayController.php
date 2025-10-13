@@ -4,12 +4,14 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Constants\EscrowConstants;
 use App\Constants\NotificationConst;
+use App\Constants\PaymentGatewayConst;
 use App\Http\Controllers\Controller;
 use App\Models\Admin\BasicSettings;
 use App\Models\Admin\Currency;
 use App\Models\Admin\PaymentGateway;
 use App\Models\Escrow;
 use App\Models\TemporaryData;
+use App\Models\Transaction;
 use App\Models\UserNotification;
 use App\Models\UserWallet;
 use App\Notifications\Escrow\EscrowApprovel;
@@ -168,16 +170,62 @@ class HealthPayController extends Controller
             DB::beginTransaction();
             try {
                 $temporaryData = TemporaryData::where('identifier', $transactionId)->first();
-                
+
                 if ($temporaryData) {
                     $userId = $temporaryData->data->user_id;
-                    $temporaryData->delete();
-                    
-                    if ($status) {
-                        UserWallet::where('user_id', $userId)->increment('balance', $amount);
+                    $userWallet = UserWallet::where('user_id', $userId)->first();
+
+                    if (!$userWallet) {
+                        throw new \Exception('User wallet not found');
                     }
+
+                    // Get previous balance before update
+                    $previousBalance = $userWallet->balance;
+
+                    // Generate unique transaction ID
+                    $trx_id = 'HP' . getTrxNum();
+
+                    // Update wallet balance if payment was successful
+                    if ($status) {
+                        $userWallet->balance += $amount;
+                        $userWallet->save();
+                    }
+
+                    // Create transaction record
+                    Transaction::create([
+                        'user_id' => $userId,
+                        'user_wallet_id' => $userWallet->id,
+                        'payment_gateway_currency_id' => $temporaryData->data->payment_gateway_currency_id ?? null,
+                        'trx_id' => $trx_id,
+                        'sender_request_amount' => $amount,
+                        'total_payable' => $amount,
+                        'available_balance' => $userWallet->balance,
+                        'exchange_rate' => 1,
+                        'remark' => 'Add Money via HealthPay',
+                        'details' => json_encode([
+                            'order_id' => $orderId,
+                            'transaction_id' => $transactionId,
+                            'uuid' => $uuid,
+                            'payment_method' => 'HealthPay',
+                            'previous_balance' => $previousBalance,
+                            'new_balance' => $userWallet->balance,
+                        ]),
+                        'type' => PaymentGatewayConst::TYPEADDMONEY,
+                        'status' => $status ? PaymentGatewayConst::STATUSSUCCESS : PaymentGatewayConst::STATUSREJECTED,
+                        'sender_currency_code' => $userWallet->currency->code ?? null,
+                    ]);
+
+                    // Delete temporary data
+                    $temporaryData->delete();
+
+                    Log::info('Transaction created successfully', [
+                        'trx_id' => $trx_id,
+                        'user_id' => $userId,
+                        'amount' => $amount,
+                        'status' => $status
+                    ]);
                 }
-                
+
                 DB::commit();
             } catch (\Exception $e) {
                 DB::rollback();

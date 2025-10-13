@@ -230,6 +230,7 @@ class UserCareController extends Controller
             ]);
             DB::commit();
         }catch(Exception $e) {
+            dd($e);
             DB::rollBack();
             return back()->with(['error' => ['Transaction Failed! '. $e->getMessage()]]);
         }
