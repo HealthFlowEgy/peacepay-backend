@@ -173,6 +173,12 @@ class HealthPayController extends Controller
                 $temporaryData = TemporaryData::where('identifier', $transactionId)->first();
 
                 if ($temporaryData) {
+                    // Log temporary data structure
+                    Log::info('Temporary Data Object:', [
+                        'data' => $temporaryData->data,
+                        'data_as_array' => json_decode(json_encode($temporaryData->data), true)
+                    ]);
+
                     $userId = $temporaryData->data->user_id;
                     $userWallet = UserWallet::where('user_id', $userId)->first();
 
