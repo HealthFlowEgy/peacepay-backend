@@ -139,7 +139,13 @@ class AddMoneyController extends Controller
                     $deductAmount = (float) $payment_informations['payable_amount'];
                     $amount = $deductAmount;
 
-                    $topupWalletUser = $this->topupWalletUser($clientUser, $amount, 1);
+                    // Pass amount data and gateway details to topupWalletUser
+                    $gatewayDetails = [
+                        'payment_gateway_currency_id' => $payment_gateway_currency->id,
+                        'payment_gateway_id' => $payment_gateway->id,
+                    ];
+
+                    $topupWalletUser = $this->topupWalletUser($clientUser, $amount, 1, $temData->data->amount, $gatewayDetails);
                     return response()->json([
                         'trx'       => $temData->identifier,
                         'iframeUrl' => $topupWalletUser['iframeUrl'],

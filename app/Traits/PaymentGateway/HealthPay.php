@@ -182,7 +182,7 @@ trait HealthPay
 
 
 
-    public function topupWalletUser($clientUser, $amount = 0, $fromMerchant = 0)
+    public function topupWalletUser($clientUser, $amount = 0, $fromMerchant = 0, $amountData = null, $gatewayDetails = [])
     {
         $query = '
                 mutation topupWalletUser($userToken: String!, $amount: Float!) {
@@ -205,14 +205,27 @@ trait HealthPay
             throw new \Exception('Error topupWalletUser: ' . json_encode($response->getErrors()));
         }
 
+        // Prepare data to save in temporary data
+        $tempData = array_merge($response->getData()['topupWalletUser'], [
+            'user_id' => auth()->user()->id
+        ]);
+
+        // Add amount details if provided
+        if ($amountData) {
+            $tempData['amount'] = $amountData;
+        }
+
+        // Add gateway details (payment_gateway_currency_id, etc.)
+        if (!empty($gatewayDetails)) {
+            $tempData = array_merge($tempData, $gatewayDetails);
+        }
+
         TemporaryData::create([
             'type'       => PaymentGatewayConst::HEALTHPAY,
             'identifier' => $response->getData()['topupWalletUser']['uid'],
-            'data'       => array_merge($response->getData()['topupWalletUser'],
-            [
-                'user_id'=> auth()->user()->id
-            ]),
+            'data'       => $tempData,
         ]);
+
         return $response->getData()['topupWalletUser'];
     }
 
