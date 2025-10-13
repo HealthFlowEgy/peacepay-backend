@@ -136,13 +136,14 @@ class AddMoneyController extends Controller
 
             if($payment_gateway->type == "AUTOMATIC") {
                 if($temData->type == PaymentGatewayConst::HEALTHPAY) {
-                    $deductAmount = (float) $request->amount;
+                    $deductAmount = (float) $payment_informations['payable_amount'];
                     $amount = $deductAmount;
                     $topupWalletUser = $this->topupWalletUser($clientUser, $amount, 1);
                     return response()->json([
                         'trx'       => $temData->identifier,
                         'iframeUrl' => $topupWalletUser['iframeUrl'],
-                        'message'   => 'Please complete your payment to go to confirm your number.',
+                        'payment_informations'  => $payment_informations,
+                        'message'   => 'Please complete your payment.',
                     ]);
                 }else if($temData->type == PaymentGatewayConst::STRIPE) {
                  $data =[
