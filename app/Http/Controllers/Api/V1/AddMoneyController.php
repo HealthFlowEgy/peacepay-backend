@@ -135,9 +135,9 @@ class AddMoneyController extends Controller
                 'gateway_currency_name' => $payment_gateway_currency->name,
                 'request_amount'        => get_amount($temData->data->amount->requested_amount,$temData->data->amount->sender_currency),
                 'exchange_rate'         => "1".' '.$temData->data->amount->sender_currency.' = '.get_amount($temData->data->amount->exchange_rate,$temData->data->amount->gateway_cur_code),
-                'total_charge'          => get_amount($temData->data->amount->gateway_total_charge,$temData->data->amount->gateway_cur_code),
+                'total_charge'          => get_amount(ceil($temData->data->amount->gateway_total_charge),$temData->data->amount->gateway_cur_code),
                 'will_get'              => get_amount($temData->data->amount->requested_amount,$temData->data->amount->sender_currency),
-                'payable_amount'        => get_amount($temData->data->amount->total_payable_amount,$temData->data->amount->gateway_cur_code),
+                'payable_amount'        => get_amount(ceil($temData->data->amount->total_payable_amount),$temData->data->amount->gateway_cur_code),
            ];
 
             if($payment_gateway->type == "AUTOMATIC") {
