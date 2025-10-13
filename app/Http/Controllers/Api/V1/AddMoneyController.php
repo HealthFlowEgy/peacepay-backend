@@ -138,6 +138,7 @@ class AddMoneyController extends Controller
                 if($temData->type == PaymentGatewayConst::HEALTHPAY) {
                     $deductAmount = (float) $payment_informations['payable_amount'];
                     $amount = $deductAmount;
+
                     $topupWalletUser = $this->topupWalletUser($clientUser, $amount, 1);
                     return response()->json([
                         'trx'       => $temData->identifier,
