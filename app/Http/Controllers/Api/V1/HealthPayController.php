@@ -198,7 +198,7 @@ class HealthPayController extends Controller
                     }
 
                     Log::info('$temporaryData->data');
-                    Log::info($temporaryData->data);
+                    Log::info($temporaryData);
 
                     // Create transaction record
                     Transaction::create([
