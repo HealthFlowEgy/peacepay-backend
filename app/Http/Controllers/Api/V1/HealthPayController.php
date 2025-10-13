@@ -130,6 +130,7 @@ class HealthPayController extends Controller
             Log::info($request->all());
 
             $body = $request->all();
+            $temporaryData = TemporaryData::where('identifier', $body['transaction_id'])->first();
 
             $secretSignature = env('PAYMENT_SECRET_SIGNATURE', 'merchant_Peacepay_key_peacepay');
 
@@ -201,7 +202,7 @@ class HealthPayController extends Controller
                     Transaction::create([
                         'user_id' => $userId,
                         'user_wallet_id' => $userWallet->id,
-                        'payment_gateway_currency_id' => $temporaryData->data->payment_gateway_currency_id ?? null,
+                        'payment_gateway_currency_id' => $temporaryData->data->currency ?? null,
                         'trx_id' => $trx_id,
                         'sender_request_amount' => $requestedAmount,
                         'total_payable' => $totalPayable,
