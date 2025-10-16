@@ -8,6 +8,7 @@ use App\Http\Controllers\PagaditoCallbackController;
 use App\Http\Controllers\User\EscrowActionsController;
 use App\Http\Controllers\Api\V1\EscrowController as ApiEscrowController;
 use App\Http\Controllers\Api\V1\EscrowActionController as ApiEscrowActionsController;
+use App\Http\Controllers\PageHealthPayController;
 
 /*
 |--------------------------------------------------------------------------
@@ -19,6 +20,9 @@ use App\Http\Controllers\Api\V1\EscrowActionController as ApiEscrowActionsContro
 | contains the "web" middleware group. Now create something great!
 |
 */ 
+
+Route::get('payment/process',[PageHealthPayController::class,'index'])->name('success'); 
+
 Route::controller(PagaditoCallbackController::class)->prefix("payment")->group(function(){ 
     Route::get('pagadito/success','pagaditoSuccess')->name('success'); 
 });
