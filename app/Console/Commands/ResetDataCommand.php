@@ -42,6 +42,7 @@ class ResetDataCommand extends Command
             $wallet->save();
         }
 
+        
         EscrowDetails::truncate();
         Escrow::truncate();
         TransactionDetails::truncate();
