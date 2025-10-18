@@ -4,6 +4,8 @@ namespace App\Console\Commands;
 
 use App\Models\Escrow;
 use App\Models\EscrowDetails;
+use App\Models\Transaction;
+use App\Models\TransactionDetails;
 use App\Models\UserWallet;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
@@ -42,6 +44,8 @@ class ResetDataCommand extends Command
 
         EscrowDetails::truncate();
         Escrow::truncate();
+        TransactionDetails::truncate();
+        Transaction::truncate();
 
         DB::statement('SET FOREIGN_KEY_CHECKS=1;'); // Don't forget to enable them again
 
