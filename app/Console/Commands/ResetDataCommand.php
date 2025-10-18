@@ -34,23 +34,35 @@ class ResetDataCommand extends Command
      */
     public function handle()
     {
+        $this->info('Starting data reset...');
+
         DB::statement('SET FOREIGN_KEY_CHECKS=0;');
 
+        // Reset user wallet balances
+        $this->info('Resetting user wallet balances...');
         $UserWallet = UserWallet::get();
         foreach ($UserWallet as $wallet) {
             $wallet->balance = 0;
             $wallet->save();
         }
+        $this->info('User wallets reset: ' . $UserWallet->count());
 
-        
+        // Truncate tables
+        $this->info('Truncating escrow details...');
         EscrowDetails::truncate();
+
+        $this->info('Truncating escrows...');
         Escrow::truncate();
+
+        $this->info('Truncating transaction details...');
         TransactionDetails::truncate();
+
+        $this->info('Truncating transactions...');
         Transaction::truncate();
 
-        DB::statement('SET FOREIGN_KEY_CHECKS=1;'); // Don't forget to enable them again
+        DB::statement('SET FOREIGN_KEY_CHECKS=1;');
 
-
+        $this->info('Data reset completed successfully!');
 
         return Command::SUCCESS;
     }
