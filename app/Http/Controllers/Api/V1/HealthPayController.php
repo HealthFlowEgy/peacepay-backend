@@ -12,6 +12,7 @@ use App\Models\Admin\PaymentGateway;
 use App\Models\Escrow;
 use App\Models\TemporaryData;
 use App\Models\Transaction;
+use App\Models\TransactionDetails;
 use App\Models\UserNotification;
 use App\Models\UserWallet;
 use App\Notifications\Escrow\EscrowApprovel;
@@ -205,7 +206,7 @@ class HealthPayController extends Controller
                     }
 
                     // Create transaction record
-                    Transaction::create([
+                    $transaction = Transaction::create([
                         'user_id' => $userId,
                         'user_wallet_id' => $userWallet->id,
                         'payment_gateway_currency_id' => $temporaryData->data->currency ?? null,
@@ -229,6 +230,14 @@ class HealthPayController extends Controller
                         'type' => PaymentGatewayConst::TYPEADDMONEY,
                         'status' => $status ? PaymentGatewayConst::STATUSSUCCESS : PaymentGatewayConst::STATUSREJECTED,
                         'sender_currency_code' => $userWallet->currency->code ?? null,
+                    ]);
+
+                    // Create transaction details record
+                    TransactionDetails::create([
+                        'transaction_id' => $transaction->id,
+                        'percent_charge' => $temporaryData->data->amount->percent_charge ?? 0,
+                        'fixed_charge' => $temporaryData->data->amount->fixed_charge ?? 0,
+                        'total_charge' => $totalCharge,
                     ]);
 
                     // Delete temporary data
