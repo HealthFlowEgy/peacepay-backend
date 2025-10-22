@@ -645,8 +645,7 @@
     "enter Title": "Enter Title",
     "category": "Category",
     "log Out Content": "Are you sure you want to log out?",
-    "delete Account Content": "Are you sure you want to delete your account?
-This action cannot be undone. Your account and all related data will be permanently deleted. If you change your mind later, you will need to contact PeacePay Support to request reactivation.",
+    "delete Account Content": "Are you sure you want to delete your account? This action cannot be undone. Your account and all related data will be permanently deleted. If you change your mind later, you will need to contact PeacePay Support to request reactivation.",
     "select Category": "Select Category",
     "select My Role": "Select My Role",
     "who Will Pay The Fees": "Who will pay the fees",
