@@ -142,28 +142,31 @@ class MoneyOutController extends Controller
             $error = ['error'=>[__('Currency Not Setup Yet!')]];
             return ApiResponse::error($error);
         }
-        $amount = $request->amount; 
+        $amount = $request->amount;
         $exchange_rate =  (1/$sender_currency->rate)*$gate->rate;
 
         $min_limit =  $gate->min_limit / $exchange_rate;
         $max_limit =  $gate->max_limit / $exchange_rate;
-  
+
         if($amount < $min_limit || $amount > $max_limit) {
             $error = ['error'=>[__('Please follow the transaction limit')]];
             return ApiResponse::error($error);
         }
+
+        // New calculation: User gets exact amount, fees added to what they pay
+        $conversion_amount = $amount * $exchange_rate;
+        $will_get = $conversion_amount; // User receives exactly what they requested
+
         //gateway charge
         $fixedCharge = $gate->fixed_charge;
         $percent_charge =  ($amount*$exchange_rate)*($gate->percent_charge/100);
         $charge = $fixedCharge + $percent_charge;
 
-        $conversion_amount = $amount * $exchange_rate; 
-        $will_get = $conversion_amount -  $charge;
         //base_cur_charge
         $baseFixedCharge = $gate->fixed_charge *  $sender_currency->rate;
         $basePercent_charge = ($amount / 100) * $gate->percent_charge;
         $base_total_charge = $baseFixedCharge + $basePercent_charge;
-        $reduceAbleTotal = $amount;
+        $reduceAbleTotal = $amount + $base_total_charge; // User pays amount + fees
 
         if( $reduceAbleTotal > $userWallet->balance){
             $error = ['error'=>[__('Insufficient Balance!')]];
@@ -213,13 +216,61 @@ class MoneyOutController extends Controller
 
             ];
             $url = route('api.v1.user.money-out.manual.confirmed');
+
+            // Modify input_fields if bank_name exists
+            $input_fields = $payment_gateway->input_fields ?? null;
+            if ($input_fields) {
+                foreach ($input_fields as &$field) {
+                    if (isset($field->name) && $field->name === 'bank_name') {
+                        $field->type = 'select';
+                        $field->options = [
+                            1 => 'Arab African International Bank',
+                            2 => 'Arab Bank',
+                            3 => 'Banque Du Caire',
+                            4 => 'Banque Misr',
+                            5 => 'Bank of Alexandria',
+                            6 => 'Commercial International Bank',
+                            7 => 'Egyptian Gulf Bank',
+                            8 => 'National Bank of Egypt',
+                            9 => 'QNB Alahli',
+                            10 => 'Societe Arabe Internationale De Banque',
+                            11 => 'Export Development Bank Of Egypt',
+                            12 => 'Arab International Bank',
+                            13 => 'Faisal Islamic Bank Of Egypt',
+                            14 => 'Al Baraka Bank - Egypt',
+                            15 => 'Attijariwafa Bank Egypt',
+                            16 => 'Abu Dhabi Islamic Bank - Egypt',
+                            17 => 'Al Ahli Bank of Kuwait Egypt',
+                            18 => 'Housing And Development Bank',
+                            19 => 'National Bank of Kuwait Egypt',
+                            20 => 'Egyptian Arab Land Bank',
+                            21 => 'Suez Canal Bank',
+                            22 => 'Ahli United Bank',
+                            23 => 'The United Bank',
+                            24 => 'HSBC Bank Egypt S.A.E',
+                            25 => 'Abu Dhabi commercial Bank - Egypt',
+                            26 => 'First Abu Dhabi Bank Misr',
+                            27 => 'Citibank Egypt',
+                            28 => 'Credit Agricole Egypt',
+                            29 => 'Mashreq Egypt',
+                            30 => 'Emirates NBD Egypt',
+                            31 => 'Bank NXT',
+                            32 => 'Arab Banking Corporation',
+                            33 => 'MIDBANK',
+                            34 => 'Industrial Development Bank',
+                            35 => 'The Agriculture Bank of Egypt',
+                        ];
+                    }
+                }
+            }
+
                 $data =[
                         'payment_informations' => $payment_informations,
                         'gateway_type' => $payment_gateway->type,
                         'gateway_currency_name' => $gate->name,
                         'alias' => $gate->alias,
                         'details' => strip_tags($payment_gateway->desc) ?? null,
-                        'input_fields' => $payment_gateway->input_fields??null,
+                        'input_fields' => $input_fields,
                         'url' => $url??'',
                         'method' => "post",
                     ];

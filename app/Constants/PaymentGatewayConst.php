@@ -10,7 +10,7 @@ class PaymentGatewayConst
 
     const APP       = "APP";
     const TYPEADDMONEY      = "Wallet Top-up";
-    const TYPEMONEYOUT      = "MONEY-OUT";
+    const TYPEMONEYOUT      = "Cash-OUT";
     const TYPEMONEYEXCHANGE = "MONEY-EXCHANGE";
     const TYPEADDSUBTRACTBALANCE = "System Adjustment";
     const TRANSFER = "TRANSFER";
