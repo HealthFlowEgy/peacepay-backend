@@ -15,6 +15,7 @@ use App\Http\Controllers\Api\V1\MoneyExchangeController;
 use App\Http\Controllers\Api\V1\Auth\AuthorizationController;
 use App\Http\Controllers\Api\V1\Auth\ForgotPasswordController;
 use App\Http\Controllers\Api\V1\PolicyController;
+use App\Http\Controllers\Api\V1\SupportTicketController;
 
 /*
 |--------------------------------------------------------------------------
@@ -238,6 +239,13 @@ Route::prefix("v1")->name('api.v1.')->group(function () {
             Route::post('submit', 'moneyExchangeSubmit')->name('submit');
             Route::get('preview', 'preview')->name('preview');
             Route::post('confirm', 'confirmMoneyOut')->name('confirm');
+        });
+        //support ticket
+        Route::controller(SupportTicketController::class)->prefix("support-ticket")->name("support.ticket.")->group(function () {
+            Route::get('/', 'index')->name('index');
+            Route::post('store', 'store')->name('store');
+            Route::get('conversation/{id}', 'conversation')->name('conversation');
+            Route::post('message/send', 'messageSend')->name('message.send');
         });
     });
 });
