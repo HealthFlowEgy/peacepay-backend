@@ -50,8 +50,8 @@
                         <li class="one">{{ __("Fees & Charge")}}: <span>{{ number_format(@$data->transaction_details->total_charge,2) }} {{ @$data->gateway_currency->currency_code }}</span></li>
                         <li class="two">{{ __("Conversion Amount")}}: <span>{{ number_format(@$data->sender_request_amount*$data->exchange_rate,2) }} {{ @$data->gateway_currency->currency_code }}</span></li>
                         <li class="three">{{ __("Rate")}}: <span>1 {{ $data->sender_currency_code }} = {{ number_format(@$data->exchange_rate,2) }} {{ @$data->gateway_currency->currency_code }}</span></li>
-                        <li class="four">{{ __("Will Get")}}: <span>{{ get_amount(@$data->total_payable,$data->gateway_currency->currency_code) }}</span></li>
-                        <li class="four">{{ __("Total Payable")}}: <span>{{ get_amount(@$data->sender_request_amount,$data->sender_currency_code) }}</span></li>
+                        <li class="four">{{ __("Will Get")}}: <span>{{ get_amount(@$data->sender_request_amount,$data->gateway_currency->currency_code) }}</span></li>
+                        <li class="four">{{ __("Total Payable")}}: <span>{{ get_amount(@$data->total_payable,$data->sender_currency_code) }}</span></li>
                         <li class="five">{{ __("Status")}}:  <span class="{{ @$data->stringStatus->class }}">{{ @$data->stringStatus->value }}</span></li>
                     </ul>
                 </div>

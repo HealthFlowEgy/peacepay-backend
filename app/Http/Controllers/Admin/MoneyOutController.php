@@ -31,7 +31,7 @@ class MoneyOutController extends Controller
         $transactions = Transaction::with(
             'user:id,firstname,email,username,mobile',
             'payment_gateway:id,name',
-        )->where('type', 'money-out')->latest()->paginate(20);
+        )->where('type', 'Cash-OUT')->latest()->paginate(20);
         return view('admin.sections.money-out.index',compact(
             'page_title',
             'transactions'
@@ -46,7 +46,7 @@ class MoneyOutController extends Controller
         $transactions = Transaction::with(
             'user:id,firstname,email,username,mobile',
             'payment_gateway:id,name',
-        )->where('type', 'money-out')->where('status', 2)->latest()->paginate(20);
+        )->where('type', 'Cash-OUT')->where('status', 2)->latest()->paginate(20);
         return view('admin.sections.money-out.index',compact(
             'page_title',
             'transactions'
@@ -61,7 +61,7 @@ class MoneyOutController extends Controller
         $transactions = Transaction::with(
             'user:id,firstname,email,username,mobile',
             'payment_gateway:id,name',
-        )->where('type', 'money-out')->where('status', 1)->latest()->paginate(20);
+        )->where('type', 'Cash-OUT')->where('status', 1)->latest()->paginate(20);
         return view('admin.sections.money-out.index',compact(
             'page_title',
             'transactions'
@@ -76,7 +76,7 @@ class MoneyOutController extends Controller
         $transactions = Transaction::with(
             'user:id,firstname,email,username,mobile',
             'payment_gateway:id,name',
-        )->where('type', 'money-out')->where('status', 4)->latest()->paginate(20);
+        )->where('type', 'Cash-OUT')->where('status', 4)->latest()->paginate(20);
         return view('admin.sections.money-out.index',compact(
             'page_title',
             'transactions'
@@ -87,8 +87,8 @@ class MoneyOutController extends Controller
         $data = Transaction::where('id',$id)->with(
           'user:id,firstname,lastname,email,username,full_mobile',
             'gateway_currency:id,name,alias,payment_gateway_id,currency_code,rate',
-        )->where('type', 'money-out')->first();
-        $page_title = "Money Out details for".'  '.$data->trx_id;
+        )->where('type', 'Cash-OUT')->first();
+        $page_title = "Money Out details for".'  '.($data->trx_id??'');
         return view('admin.sections.money-out.details', compact(
             'page_title',
             'data'
@@ -202,7 +202,7 @@ class MoneyOutController extends Controller
         $transactions = Transaction::with(
             'user:id,firstname,email,username,mobile',
             'payment_gateway:id,name',
-        )->where('type', 'money-out')->where("trx_id","like","%".$validated['text']."%")->latest()->paginate(20);
+        )->where('type', 'Cash-OUT')->where("trx_id","like","%".$validated['text']."%")->latest()->paginate(20);
         return view('admin.components.data-table.money-out-transaction-log', compact( 
             'transactions'
         ));

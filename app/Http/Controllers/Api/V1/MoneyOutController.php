@@ -223,6 +223,7 @@ class MoneyOutController extends Controller
                 foreach ($input_fields as &$field) {
                     if (isset($field->name) && $field->name === 'bank_name') {
                         $field->type = 'select';
+                        $field->required = true;
                         $field->options = [
                             1 => 'Arab African International Bank',
                             2 => 'Arab Bank',
@@ -335,7 +336,10 @@ class MoneyOutController extends Controller
         }
         $trx_id = $moneyOutData->trx_id ??'MO'.getTrxNum();
         $authWallet = UserWallet::where('id',$moneyOutData->wallet_id)->where('user_id',$moneyOutData->user_id)->first();
-        $availableBalance = $authWallet->balance - $moneyOutData->amount;
+
+        // Correct calculation: deduct amount + fees (payable) from wallet
+        $availableBalance = $authWallet->balance - $moneyOutData->payable;
+
         DB::beginTransaction();
         try{
             $id = DB::table("transactions")->insertGetId([
@@ -345,15 +349,15 @@ class MoneyOutController extends Controller
                 'type'                          => PaymentGatewayConst::TYPEMONEYOUT,
                 'trx_id'                        => $trx_id,
                 'sender_request_amount'                => $moneyOutData->amount,
-                'sender_currency_code'             => $moneyOutData->sender_currency, 
+                'sender_currency_code'             => $moneyOutData->sender_currency,
                 'exchange_rate'                       => $moneyOutData->exchange_rate,
-                'total_payable'                       => $moneyOutData->will_get,
+                'total_payable'                       => $moneyOutData->payable,
                 'available_balance'             => $availableBalance,
                 'remark'                        => ucwords(remove_speacial_char(PaymentGatewayConst::TYPEMONEYOUT," ")) . " by " .$gateway->name,
                 'details'                       => json_encode($get_values),
                 'status'                        => $status,
                 'created_at'                    => now(),
-        
+
             ]);
             $this->updateWalletBalanceManual($authWallet,$availableBalance);
 
