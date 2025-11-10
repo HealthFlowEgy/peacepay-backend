@@ -8,6 +8,7 @@ use App\Models\Transaction;
 use Illuminate\Http\Request;
 use App\Models\UserNotification;
 use App\Constants\EscrowConstants;
+use App\Constants\PaymentGatewayConst;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth; 
 use App\Http\Helpers\Api\Helpers as ApiResponse;
@@ -108,14 +109,24 @@ class DashboardController extends Controller
         //transactions log
         $transactions = Transaction::where('user_id',auth()->user()->id)->latest()->paginate(15);
         $transactions->getCollection()->transform(function ($item) {
+            // Map charge_status based on transaction type
+            $charge_status = $item->charge_status;
+            if (in_array($item->type, [PaymentGatewayConst::TYPEMONEYOUT,
+             PaymentGatewayConst::TYPEMONEYEXCHANGE,
+              PaymentGatewayConst::TRANSFER,
+              PaymentGatewayConst::MONEYOUT
+            ])) {
+                $charge_status = '-';
+            }
+
             return [
                 'id'                    => $item->id,
                 'trx_id'                => $item->trx_id,
                 'gateway_currency'      => $item->gateway_currency->name ?? null,
                 'transaction_type'      => $item->type,
-                'sender_request_amount' => $item->charge_status . $item->sender_request_amount,
+                'sender_request_amount' => $charge_status . $item->sender_request_amount,
                 'sender_currency_code'  => $item->sender_currency_code,
-                'total_payable'         => $item->charge_status  .  $item->total_payable,
+                'total_payable'         => $charge_status . $item->total_payable,
                 'gateway_currency_code' => $item->gateway_currency->currency_code ?? null,
                 'exchange_rate'         => $item->exchange_rate,
                 'fee'                   => optional($item->transaction_details)->total_charge ?? 0,
