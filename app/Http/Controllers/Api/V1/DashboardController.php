@@ -110,7 +110,7 @@ class DashboardController extends Controller
         $transactions = Transaction::where('user_id',auth()->user()->id)->latest()->paginate(15);
         $transactions->getCollection()->transform(function ($item) {
             // Map charge_status based on transaction type
-            $charge_status = $item->charge_status;
+            $charge_status = $item->charge_status ?? '+';
             if (in_array($item->type, [PaymentGatewayConst::TYPEMONEYOUT,
              PaymentGatewayConst::TYPEMONEYEXCHANGE,
               PaymentGatewayConst::TRANSFER,
