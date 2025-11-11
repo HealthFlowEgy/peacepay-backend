@@ -84,7 +84,10 @@ class DashboardController extends Controller
         return ApiResponse::success($message, $data);
     }
     public function userNotification() {
-        $notifications = UserNotification::where('user_id', auth()->user()->id)->latest()->take(5)->get()->map(function($item){
+        $notifications = UserNotification::where('user_id', auth()->user()->id)
+        ->latest()
+        ->take(10)
+        ->get()->map(function($item){
             return[ 
                 'id'      => $item->id,
                 'user_id' => $item->user_id,

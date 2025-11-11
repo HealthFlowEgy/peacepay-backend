@@ -240,6 +240,31 @@ class HealthPayController extends Controller
                         'total_charge' => $totalCharge,
                     ]);
 
+                    // Create notification if payment was successful
+                    if ($status) {
+                        $notification_content = [
+                            'title'         => "Add Money",
+                            'message'       => "Your Wallet has been credited with " . get_amount($requestedAmount, $userWallet->currency->code) . " successful.",
+                            'image'         => files_asset_path('profile-default'),
+                        ];
+
+                        $user = $transaction->user;
+
+                        UserNotification::create([
+                            'type'      => NotificationConst::BALANCE_ADDED,
+                            'user_id'   => $userId,
+                            'message'   => $notification_content,
+                        ]);
+
+                        // Push Notifications
+                        event(new UserNotificationEvent($notification_content, $user));
+                        send_push_notification(["user-" . $user->id], [
+                            'title'     => $notification_content['title'],
+                            'body'      => $notification_content['message'],
+                            'icon'      => $notification_content['image'],
+                        ]);
+                    }
+
                     // Delete temporary data
                     $temporaryData->delete();
 
