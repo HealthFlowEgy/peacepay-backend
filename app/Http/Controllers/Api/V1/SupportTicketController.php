@@ -75,33 +75,45 @@ class SupportTicketController extends Controller
 
         // Handle file attachments
         if ($request->hasFile('attachment')) {
-            $validated_files = $request->file("attachment");
             $attachment = [];
             $files_link = [];
 
-            foreach ($validated_files as $item) {
-                $upload_file = upload_file($item, 'support-attachment');
-                if ($upload_file != false) {
-                    $attachment[] = [
-                        'user_support_ticket_id'    => $support_ticket_id,
-                        'attachment'                => $upload_file['name'],
-                        'attachment_info'           => json_encode($upload_file),
-                        'created_at'                => now(),
-                    ];
+            // Get files - handle both single file and array of files
+            $files = $request->file("attachment");
 
-                    $files_link[] = get_files_path('support-attachment') . "/" . $upload_file['name'];
+            // Convert single file to array for consistent processing
+            if (!is_array($files)) {
+                $files = [$files];
+            }
+
+            foreach ($files as $item) {
+                if ($item && $item->isValid()) {
+                    $upload_file = upload_file($item, 'support-attachment');
+                    if ($upload_file != false) {
+                        $attachment[] = [
+                            'user_support_ticket_id'    => $support_ticket_id,
+                            'attachment'                => $upload_file['name'],
+                            'attachment_info'           => json_encode($upload_file),
+                            'created_at'                => now(),
+                        ];
+
+                        $files_link[] = get_files_path('support-attachment') . "/" . $upload_file['name'];
+                    }
                 }
             }
 
-            try {
-                UserSupportTicketAttachment::insert($attachment);
-            } catch (Exception $e) {
-                // Rollback: Delete the ticket and uploaded files
-                UserSupportTicket::find($support_ticket_id)->delete();
-                delete_files($files_link);
+            // Only insert if there are valid attachments
+            if (!empty($attachment)) {
+                try {
+                    UserSupportTicketAttachment::insert($attachment);
+                } catch (Exception $e) {
+                    // Rollback: Delete the ticket and uploaded files
+                    UserSupportTicket::find($support_ticket_id)->delete();
+                    delete_files($files_link);
 
-                $error = ['error' => [__('Failed to upload attachment. Please try again')]];
-                return ApiResponse::error($error);
+                    $error = ['error' => [__('Failed to upload attachment. Please try again')]];
+                    return ApiResponse::error($error);
+                }
             }
         }
 

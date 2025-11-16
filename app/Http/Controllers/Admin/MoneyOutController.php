@@ -32,9 +32,11 @@ class MoneyOutController extends Controller
             'user:id,firstname,email,username,mobile',
             'payment_gateway:id,name',
         )->where('type', 'Cash-OUT')->latest()->paginate(20);
+        $status = ''; // All statuses
         return view('admin.sections.money-out.index',compact(
             'page_title',
-            'transactions'
+            'transactions',
+            'status'
         ));
     } 
     /**
@@ -47,9 +49,11 @@ class MoneyOutController extends Controller
             'user:id,firstname,email,username,mobile',
             'payment_gateway:id,name',
         )->where('type', 'Cash-OUT')->where('status', 2)->latest()->paginate(20);
+        $status = '2'; // Pending status
         return view('admin.sections.money-out.index',compact(
             'page_title',
-            'transactions'
+            'transactions',
+            'status'
         ));
     } 
     /**
@@ -62,9 +66,11 @@ class MoneyOutController extends Controller
             'user:id,firstname,email,username,mobile',
             'payment_gateway:id,name',
         )->where('type', 'Cash-OUT')->where('status', 1)->latest()->paginate(20);
+        $status = '1'; // Completed status
         return view('admin.sections.money-out.index',compact(
             'page_title',
-            'transactions'
+            'transactions',
+            'status'
         ));
     } 
     /**
@@ -77,9 +83,11 @@ class MoneyOutController extends Controller
             'user:id,firstname,email,username,mobile',
             'payment_gateway:id,name',
         )->where('type', 'Cash-OUT')->where('status', 4)->latest()->paginate(20);
+        $status = '4'; // Canceled status
         return view('admin.sections.money-out.index',compact(
             'page_title',
-            'transactions'
+            'transactions',
+            'status'
         ));
     } 
     public function moneyOutDetails($id){
@@ -203,8 +211,76 @@ class MoneyOutController extends Controller
             'user:id,firstname,email,username,mobile',
             'payment_gateway:id,name',
         )->where('type', 'Cash-OUT')->where("trx_id","like","%".$validated['text']."%")->latest()->paginate(20);
-        return view('admin.components.data-table.money-out-transaction-log', compact( 
+        return view('admin.components.data-table.money-out-transaction-log', compact(
             'transactions'
         ));
+    }
+
+    public function exportCsv(Request $request)
+    {
+        $query = Transaction::with(
+            'user:id,firstname,lastname,email,username,mobile',
+            'gateway_currency:id,name,currency_code',
+            'currency:code,symbol'
+        )->where('type', 'Cash-OUT');
+
+        // Apply status filter if provided
+        if ($request->has('status') && $request->status !== '') {
+            $query->where('status', $request->status);
+        }
+
+        $transactions = $query->latest()->get();
+
+        // Generate filename based on status
+        $statusName = '';
+        if ($request->has('status')) {
+            $statusMap = [
+                '1' => 'completed',
+                '2' => 'pending',
+                '4' => 'canceled',
+            ];
+            $statusName = '-' . ($statusMap[$request->status] ?? 'all');
+        }
+
+        $filename = 'money-out-transactions' . $statusName . '-' . date('Y-m-d-H-i-s') . '.csv';
+
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+        ];
+
+        $callback = function() use ($transactions) {
+            $file = fopen('php://output', 'w');
+
+            // Add CSV headers
+            fputcsv($file, [
+                'SL',
+                'Transaction ID',
+                'Email',
+                'Username',
+                'Amount',
+                'Method',
+                'Status',
+                'Time'
+            ]);
+
+            // Add data rows
+            foreach ($transactions as $key => $item) {
+                fputcsv($file, [
+                    $key + 1,
+                    $item->trx_id,
+                    $item->user->email ?? 'N/A',
+                    $item->user->username ?? 'N/A',
+                    ($item->currency->symbol ?? '') . $item->sender_request_amount,
+                    $item->gateway_currency->name ?? 'N/A',
+                    $item->stringStatus->value ?? 'N/A',
+                    $item->created_at->format('d-m-y h:i:s A'),
+                ]);
+            }
+
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
     }
 }

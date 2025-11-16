@@ -142,6 +142,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::put('approved', 'approved')->name('approved');
         Route::put('rejected', 'rejected')->name('rejected');
         Route::post('search','search')->name("search");
+        Route::get('export-csv', 'exportCsv')->name('export.csv');
     });
 
     // User Care Section

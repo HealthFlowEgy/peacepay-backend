@@ -24,10 +24,13 @@
         <div class="table-wrapper">
             <div class="table-header">
                 <h5 class="title">{{ __($page_title) }}</h5>
-                <div class="table-btn-area"> 
+                <div class="table-btn-area">
+                    <a href="{{ setRoute('admin.money.out.export.csv', ['status' => $status ?? '']) }}" class="btn--base me-2">
+                        <i class="las la-download"></i> {{ __('Export CSV') }}
+                    </a>
                     @include('admin.components.search-input',[
                         'name'  => 'transaction_search',
-                    ]) 
+                    ])
                 </div>
             </div>
             <div class="table-responsive">
