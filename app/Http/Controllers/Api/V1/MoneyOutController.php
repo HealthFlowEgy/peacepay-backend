@@ -389,7 +389,7 @@ class MoneyOutController extends Controller
 
             //notification
             $notification_content = [
-                'title'         => "Money Out",
+                'title'         => PaymentGatewayConst::TYPEMONEYOUT,
                 'message'       => "Your Money Out request send to admin " .$moneyOutData->amount.' '.get_default_currency_code()." successful",
                 'image'         => files_asset_path('profile-default'),
             ];

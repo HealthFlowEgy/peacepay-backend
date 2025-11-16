@@ -373,7 +373,7 @@ trait QrpayTrait
 
               // notification
             $notification_content = [
-                'title'   => "Add Money",
+                'title'   => PaymentGatewayConst::TYPEADDMONEY,
                 'message' => "Your Wallet (".$output['wallet']->currency->code.") balance  has been added ".$output['amount']->requested_amount.' '. $output['wallet']->currency->code,
                 'time'    => Carbon::now()->diffForHumans(),
                 'image'   => files_asset_path('profile-default'),

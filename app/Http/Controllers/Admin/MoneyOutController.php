@@ -107,16 +107,16 @@ class MoneyOutController extends Controller
            $approved = $data->save();
            if( $approved){
             $notification_content = [
-                'title'         => "Money Out",
-                'message'       => "Your Money Out request approved by admin " .get_amount(@$data->total_payable,@$data->gateway_currency->currency_code)." successful.",
+                'title'         => PaymentGatewayConst::TYPEMONEYOUT,
+                'message'       => "Your Cash Out request approved by admin " .get_amount(@$data->total_payable,@$data->gateway_currency->currency_code)." successful.",
                 'image'         => files_asset_path('profile-default'),
             ];
             $user =$data->user;
             try{
-            $user->notify(new ApprovedByAdminMail($user,$data));
+                $user->notify(new ApprovedByAdminMail($user,$data));
             }catch(\Exception $e){
-\Log::info('error mail : ,'. $e->getMessage());
-}
+                \Log::info('error mail : ,'. $e->getMessage());
+            }
             UserNotification::create([
                 'type'      => NotificationConst::MONEY_OUT,
                 'user_id'  =>  $data->user_id,
@@ -159,7 +159,7 @@ class MoneyOutController extends Controller
 
             // notification
             $notification_content = [
-                'title'         => "Money Out",
+                'title'         => PaymentGatewayConst::TYPEMONEYOUT,
                 'message'       => "Your Money Out request rejected by admin " .get_amount(@$data->total_payable,@$data->gateway_currency->currency_code),
                 'image'         => files_asset_path('profile-default'),
             ];

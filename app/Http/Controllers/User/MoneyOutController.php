@@ -344,7 +344,7 @@ class MoneyOutController extends Controller
             DB::commit();
             //notification
             $notification_content = [
-                'title'         => "Money Out",
+                'title'         => PaymentGatewayConst::TYPEMONEYOUT,
                 'message'       => "Your money out request send to admin " . $moneyOutData->amount . ' ' . $moneyOutData->sender_currency . " Successfully",
                 'image'         => files_asset_path('profile-default'),
             ];
@@ -397,7 +397,7 @@ class MoneyOutController extends Controller
 
             //notification
             $notification_content = [
-                'title'         => __("Withdraw Money"),
+                'title'         => PaymentGatewayConst::TYPEMONEYOUT,
                 'message'       => __("Your Withdraw Request") . " " . $moneyOutData->amount . ' ' . get_default_currency_code() . " " . __("Successful"),
                 'image'         => get_image($user->image, 'user-profile'),
             ];
@@ -411,8 +411,8 @@ class MoneyOutController extends Controller
 
             //Push Notifications
             $notification_content = [
-                'title'         => "Money Out",
-                'message'       => "Your money out request send to admin " . $moneyOutData->amount . ' ' . $moneyOutData->sender_currency . " Successfully",
+                'title'         => PaymentGatewayConst::TYPEMONEYOUT,
+                'message'       => "Your CASH out request send to admin " . $moneyOutData->amount . ' ' . $moneyOutData->sender_currency . " Successfully",
                 'image'         => files_asset_path('profile-default'),
             ];
             UserNotification::create([

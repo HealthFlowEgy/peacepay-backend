@@ -207,7 +207,7 @@ class UserCareController extends Controller
             $user_wallet->save();
 
             $notification_content = [
-                'title'         => "Update Balance",
+                'title'         => PaymentGatewayConst::TYPEADDSUBTRACTBALANCE,
                 'message'       => "Your Wallet (".$user_wallet->currency->code.") Balance Has Been ". $type??"",
                 'time'          => Carbon::now()->diffForHumans(),
                 'image'         => files_asset_path('profile-default'),

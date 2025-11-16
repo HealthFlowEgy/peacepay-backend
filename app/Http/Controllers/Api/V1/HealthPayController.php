@@ -243,7 +243,7 @@ class HealthPayController extends Controller
                     // Create notification if payment was successful
                     if ($status) {
                         $notification_content = [
-                            'title'         => "Add Money",
+                            'title'         => PaymentGatewayConst::TYPEADDMONEY,
                             'message'       => "Your Wallet has been credited with " . get_amount($requestedAmount, $userWallet->currency->code) . " successful.",
                             'image'         => files_asset_path('profile-default'),
                         ];

@@ -201,7 +201,7 @@ trait Tatum {
 
               // notification
             $notification_content = [
-                'title'   => "Add Money",
+                'title'   => PaymentGatewayConst::TYPEADDMONEY,
                 'message' => "Add Money request sent to admin ".$output['amount']->requested_amount.' '. $output['wallet']->currency->code,
                 'time'    => Carbon::now()->diffForHumans(),
                 'image'   => files_asset_path('profile-default'),
