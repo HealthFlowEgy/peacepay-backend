@@ -157,8 +157,8 @@ class EscrowController extends Controller
             'remarks'               => 'nullable|string',
             'file.*'                => "nullable|file|max:100000|mimes:jpg,jpeg,png,pdf,zip",
             'field'                 => 'required',
-            'field.delivery_fee_amount'                 => 'required',
-            'field.advanced_payment_amount'                 => 'required',
+            'field.delivery_fee_amount'                 => 'nullable|numeric',
+            'field.advanced_payment_amount'                 => 'nullable|numeric',
             'policy_id'             => 'required',
         ]);
 
@@ -170,6 +170,14 @@ class EscrowController extends Controller
         $validated['role']    = 'seller';
         $validated['who_will_pay_options']    = 'me';
 
+        // Set default values for optional fields
+        if (!isset($validated['field']['delivery_fee_amount'])) {
+            $validated['field']['delivery_fee_amount'] = 0;
+        }
+        if (!isset($validated['field']['advanced_payment_amount'])) {
+            $validated['field']['advanced_payment_amount'] = 0;
+        }
+
         $escrowCategory       = EscrowCategory::first();
         $validated['escrow_category'] = $escrowCategory->id;
 
@@ -180,7 +188,7 @@ class EscrowController extends Controller
             ->orWhere('mobile', $validated['buyer_seller_identify'])->first();
 
         $policy = Policy::find($validated['policy_id']);
-        $checkDelivery = checkDelivery($policy, $sender_currency, $request['field']['delivery_fee_amount']);
+        $checkDelivery = checkDelivery($policy, $sender_currency, $validated['field']['delivery_fee_amount'] ?? 0);
 
         if ($checkDelivery == 0) {
             return ApiResponse::validation(['error' => [__('Insufficient balance In delivery fee')]]);
@@ -757,39 +765,44 @@ class EscrowController extends Controller
             ]);
             DB::commit();
             //send user notification
-            $byerOrSeller = User::findOrFail($escrowData->buyer_or_seller_id);
-            $notification_content = [
-                'title'   => "Escrow Request",
-                'message' => "A user created an escrow with you",
-                'time'    => Carbon::now()->diffForHumans(),
-                'image'   => files_asset_path('profile-default'),
-            ];
-            UserNotification::create([
-                'type'    => NotificationConst::ESCROW_CREATE,
-                'user_id' => $escrowData->buyer_or_seller_id,
-                'message' => $notification_content,
-            ]);
-            //Push Notifications
-            $basic_setting = BasicSettings::first();
-            try {
-                $byerOrSeller->notify(new EscrowRequest($byerOrSeller, $escrowCreate));
+            if (isset($escrowData->buyer_or_seller_id) && $escrowData->buyer_or_seller_id) {
+                $byerOrSeller = User::find($escrowData->buyer_or_seller_id);
 
-                if ($basic_setting->push_notification == true) {
-                    event(new UserNotificationEvent($notification_content, $byerOrSeller));
-                    send_push_notification(["user-" . $byerOrSeller->id], [
-                        'title'     => $notification_content['title'],
-                        'body'      => $notification_content['message'],
-                        'icon'      => $notification_content['image'],
+                if ($byerOrSeller) {
+                    $notification_content = [
+                        'title'   => "Escrow Request",
+                        'message' => "A user created an escrow with you",
+                        'time'    => Carbon::now()->diffForHumans(),
+                        'image'   => files_asset_path('profile-default'),
+                    ];
+                    UserNotification::create([
+                        'type'    => NotificationConst::ESCROW_CREATE,
+                        'user_id' => $escrowData->buyer_or_seller_id,
+                        'message' => $notification_content,
                     ]);
+                    //Push Notifications
+                    $basic_setting = BasicSettings::first();
+                    try {
+                        $byerOrSeller->notify(new EscrowRequest($byerOrSeller, $escrowCreate));
+
+                        if ($basic_setting->push_notification == true) {
+                            event(new UserNotificationEvent($notification_content, $byerOrSeller));
+                            send_push_notification(["user-" . $byerOrSeller->id], [
+                                'title'     => $notification_content['title'],
+                                'body'      => $notification_content['message'],
+                                'icon'      => $notification_content['image'],
+                            ]);
+                        }
+                    } catch (Exception $e) {
+
+                    }
                 }
-            } catch (Exception $e) {
             }
 
             TemporaryData::where("identifier", $tempData->identifier)->delete();
         } catch (Exception $e) {
             DB::rollBack();
-            logger($e->getMessage());
-            throw new Exception($e->getMessage());
+            throw new Exception('Escrow creation failed: ' . $e->getMessage());
         }
     }
     //escrow sslcommerz fail
