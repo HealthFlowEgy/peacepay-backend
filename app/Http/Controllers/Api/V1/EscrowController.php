@@ -31,6 +31,9 @@ use App\Models\Admin\BasicSettings;
 use App\Models\Admin\PaymentGateway as PaymentGatewayModel;
 use App\Models\Policy;
 use App\Events\User\NotificationEvent as UserNotificationEvent;
+use Illuminate\Auth\Events\Registered;
+use App\Providers\Admin\BasicSettingsProvider;
+use Illuminate\Support\Facades\Hash;
 
 class EscrowController extends Controller
 {
