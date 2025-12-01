@@ -33,11 +33,13 @@ use App\Models\Policy;
 use App\Events\User\NotificationEvent as UserNotificationEvent;
 use Illuminate\Auth\Events\Registered;
 use App\Providers\Admin\BasicSettingsProvider;
+use App\Traits\User\RegisteredUsers;
 use Illuminate\Support\Facades\Hash;
 
 class EscrowController extends Controller
 {
     use ControlDynamicInputFields;
+    use RegisteredUsers;
     
     public function index()
     {
@@ -217,6 +219,7 @@ class EscrowController extends Controller
             $data['type']              = 'buyer';
 
             $opposite_user = User::create($data);
+            $this->createUserWallets($opposite_user);
             event(new Registered($opposite_user));
         }
 
