@@ -9,9 +9,9 @@
                 </div>
                 <div class="dashboard-list-user-content">
                     @if ($item->type == payment_gateway_const()::TYPEADDMONEY)
-                        <h4 class="title">{{ __("Add Balance via") }} <span class="text--warning">{{ $item->gateway_currency->name }}</span></h4>
+                        <h4 class="title">{{ __("Add Balance via") }} <span class="text--warning">{{ $item->gateway_currency?->name }}</span></h4>
                     @elseif ($item->type == payment_gateway_const()::TYPEMONEYOUT)
-                        <h4 class="title">{{ __("Money Out via") }} <span class="text--warning">{{ $item->gateway_currency->name }}</span></h4>
+                        <h4 class="title">{{ __("Money Out via") }} <span class="text--warning">{{ $item->gateway_currency?->name }}</span></h4>
                     @elseif ($item->type == payment_gateway_const()::TYPEMONEYEXCHANGE)
                         <h4 class="title">{{ __("Exchange Money") }} <span class="text--warning">{{ $item->sender_currency_code }} To {{ $item->details->charges->exchange_currency }}</span></h4>
                     @elseif ($item->type == payment_gateway_const()::TYPEADDSUBTRACTBALANCE)
