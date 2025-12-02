@@ -115,7 +115,7 @@ class MoneyOutController extends Controller
         $basic_setting = BasicSettings::first();
         $user = auth()->user();
         if($basic_setting->kyc_verification){
-            if( $user->kyc_verified == 0){
+            if($user->kyc_verified == 0){
                 $error = ['error'=>['Please submit kyc information!']];
                 return ApiResponse::error($error);
             }elseif($user->kyc_verified == 2){

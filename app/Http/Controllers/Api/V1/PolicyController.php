@@ -25,17 +25,6 @@ class PolicyController extends Controller
      */
     public function store(Request $request)
     {
-        $basic_setting = BasicSettings::first();
-        $user          = auth()->user();
-        if ($basic_setting->kyc_verification) {
-            if ($user->kyc_verified == 0) {
-                return $this->errorResponse(null,['error' => [__('Please submit kyc information')]]);
-            } elseif ($user->kyc_verified == 2) {
-                return $this->errorResponse(null,['error' => [__('Please wait before admin approved your kyc information')]]);
-            } elseif ($user->kyc_verified == 3) {
-                return $this->errorResponse(null,['error' => [__('Admin rejected your kyc information, Please re-submit again')]]);
-            }
-        }
         $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'required|string',

@@ -46,17 +46,7 @@ class AddMoneyController extends Controller
         return view('user.sections.add-money.index', compact("page_title","transactions","payment_gateways_currencies","sender_currency"));
     }
     public function submit(Request $request) { 
-        $basic_setting = BasicSettings::first();
-        $user          = auth()->user();
-        // if($basic_setting->kyc_verification){
-        //     if( $user->kyc_verified == 0){
-        //         return redirect()->route('user.authorize.kyc')->with(['error' => [__('Please submit kyc information')]]);
-        //     }elseif($user->kyc_verified == 2){
-        //         return redirect()->route('user.authorize.kyc')->with(['error' => [__('Please wait before admin approved your kyc information')]]);
-        //     }elseif($user->kyc_verified == 3){
-        //         return redirect()->route('user.authorize.kyc')->with(['error' => [__('Admin rejected your kyc information')]]);
-        //     }
-        // }
+
         try{
             $instance = PaymentGatewayHelper::init($request->all())->gateway()->render();
             session()->put('topupAmountHealthPay', $request->amount);
