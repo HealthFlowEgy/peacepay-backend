@@ -108,6 +108,11 @@ class ProfileController extends Controller
             }
         }
 
+        // Prevent reusing the same PIN
+        if ($user->pin_code && $request->pin_code == $user->pin_code) {
+            return ApiResponse::validation(['pin_code' => 'The new PIN must be different from the current PIN.']);
+        }
+
         // Update PIN code
         $user->update([
             'pin_code' => $request->pin_code,
@@ -211,7 +216,13 @@ class ProfileController extends Controller
         }
 
         try {
-            $password_reset->user->update([
+            // Prevent reusing the last PIN when resetting
+            $user = $password_reset->user;
+            if ($user->pin_code && $user->pin_code == $request->pin_code) {
+                return ApiResponse::validation(['pin_code' => 'The new PIN must be different from the previous PIN.']);
+            }
+
+            $user->update([
                 'pin_code' => $request->pin_code,
             ]);
             

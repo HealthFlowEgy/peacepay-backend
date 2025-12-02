@@ -157,6 +157,11 @@ class ProfileController extends Controller
             }
         }
 
+        // Prevent reusing the same PIN
+        if ($user->pin_code && $request->pin_code == $user->pin_code) {
+            return back()->withErrors(['pin_code' => 'The new PIN must be different from the current PIN.'])->withInput();
+        }
+
         // Update PIN code
         $user->update([
             'pin_code' => $request->pin_code,
