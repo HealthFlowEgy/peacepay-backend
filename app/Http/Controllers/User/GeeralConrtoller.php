@@ -8,7 +8,7 @@ use App\Http\Controllers\Controller;
 class GeeralConrtoller extends Controller
 {
    public function pinCodeConfirm() {
-      $page_title = _('Confirm Pin Code');
+      $page_title = __('Confirm Pin Code');
       return view('user.auth.confirm-pin',compact('page_title'));
    }
 

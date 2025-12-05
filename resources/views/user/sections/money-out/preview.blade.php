@@ -92,7 +92,7 @@
         <div class="col-xl-5 col-lg-5 mb-20">
             <div class="custom-card mt-10">
                 <div class="dashboard-header-wrapper">
-                    <h4 class="title">{{_("Withdraw Information")}}</h4>
+                    <h4 class="title">{{__("Withdraw Information")}}</h4>
                 </div>
                 <div class="card-body">
                     <div class="preview-list-wrapper">

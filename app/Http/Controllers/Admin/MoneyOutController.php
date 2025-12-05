@@ -252,8 +252,20 @@ class MoneyOutController extends Controller
         $callback = function() use ($transactions) {
             $file = fopen('php://output', 'w');
 
-            // Add CSV headers
-            fputcsv($file, [
+            // First pass: Collect all unique detail field labels
+            $detailFieldLabels = [];
+            foreach ($transactions as $item) {
+                if (isset($item->details) && is_array($item->details)) {
+                    foreach ($item->details as $detail) {
+                        if (isset($detail->label) && !in_array($detail->label, $detailFieldLabels)) {
+                            $detailFieldLabels[] = $detail->label;
+                        }
+                    }
+                }
+            }
+
+            // Build CSV headers with dynamic detail fields
+            $csvHeaders = [
                 'SL',
                 'Transaction ID',
                 'Email',
@@ -262,11 +274,18 @@ class MoneyOutController extends Controller
                 'Method',
                 'Status',
                 'Time'
-            ]);
+            ];
+
+            // Add dynamic detail field headers
+            foreach ($detailFieldLabels as $label) {
+                $csvHeaders[] = $label;
+            }
+
+            fputcsv($file, $csvHeaders);
 
             // Add data rows
             foreach ($transactions as $key => $item) {
-                fputcsv($file, [
+                $row = [
                     $key + 1,
                     $item->trx_id,
                     $item->user->email ?? 'N/A',
@@ -275,7 +294,31 @@ class MoneyOutController extends Controller
                     $item->gateway_currency->name ?? 'N/A',
                     $item->stringStatus->value ?? 'N/A',
                     $item->created_at->format('d-m-y h:i:s A'),
-                ]);
+                ];
+
+                // Add dynamic detail field values
+                foreach ($detailFieldLabels as $label) {
+                    $value = '';
+                    if (isset($item->details) && is_array($item->details)) {
+                        foreach ($item->details as $detail) {
+                            if (isset($detail->label) && $detail->label === $label) {
+                                if (isset($detail->type) && $detail->type === 'file') {
+                                    // For file types, create full URL
+                                    $fileValue = $detail->value ?? '';
+                                    if ($fileValue) {
+                                        $value = url('') . '/public/' . get_files_path('kyc-files') . '/' . $fileValue;
+                                    }
+                                } else {
+                                    $value = $detail->value ?? '';
+                                }
+                                break;
+                            }
+                        }
+                    }
+                    $row[] = $value;
+                }
+
+                fputcsv($file, $row);
             }
 
             fclose($file);
