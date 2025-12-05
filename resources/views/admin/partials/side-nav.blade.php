@@ -39,10 +39,21 @@
                             'route'     => "admin.currency.index",
                             'icon'      => "menu-icon las la-coins",
                         ],
-                        [
-                            'title'     => "Fees & Charges",
-                            'route'     => "admin.trx.settings.index",
-                            'icon'      => "menu-icon las la-wallet",
+                        'dropdown'      => [
+                            [
+                                'title'     => "Transaction Settings",
+                                'icon'      => "menu-icon las la-wallet",
+                                'links'     => [
+                                    [
+                                        'title'     => "Fees & Charges",
+                                        'route'     => "admin.trx.settings.index",
+                                    ],
+                                    [
+                                        'title'     => "Incentive Balance",
+                                        'route'     => "admin.trx.settings.incentive.balance",
+                                    ],
+                                ],
+                            ],
                         ],
                         [
                             'title'     => "Escrow Category",

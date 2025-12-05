@@ -3,18 +3,39 @@
 namespace App\Traits\User;
 
 use App\Models\Admin\Currency;
+use App\Models\Admin\BasicSettings;
 use App\Models\UserWallet;
 use Exception;
 
 trait RegisteredUsers {
     protected function createUserWallets($user) {
         $currencies = Currency::active()->roleHasOne()->pluck("id")->toArray();
+        $basic_settings = BasicSettings::first();
+
+        // Get incentive balance based on user type
+        $incentiveBalance = 0;
+        if ($basic_settings) {
+            switch ($user->type) {
+                case 'seller':
+                    $incentiveBalance = $basic_settings->incentive_balance_seller ?? 0;
+                    break;
+                case 'buyer':
+                    $incentiveBalance = $basic_settings->incentive_balance_buyer ?? 0;
+                    break;
+                case 'delivery':
+                    $incentiveBalance = $basic_settings->incentive_balance_delivery ?? 0;
+                    break;
+                default:
+                    $incentiveBalance = 0;
+            }
+        }
+
         $wallets = [];
         foreach($currencies as $currency_id) {
             $wallets[] = [
                 'user_id'       => $user->id,
                 'currency_id'   => $currency_id,
-                'balance'       => 0,
+                'balance'       => $incentiveBalance,
                 'status'        => true,
                 'created_at'    => now(),
             ];

@@ -118,6 +118,8 @@ Route::prefix('admin')->name('admin.')->group(function () {
     Route::controller(TrxSettingsController::class)->prefix('trx-settings')->name('trx.settings.')->group(function () {
         Route::get('index', 'index')->name('index');
         Route::put('charges/update', 'trxChargeUpdate')->name('charges.update');
+        Route::get('incentive-balance', 'incentiveBalance')->name('incentive.balance');
+        Route::put('incentive-balance/update', 'incentiveBalanceUpdate')->name('incentive.balance.update');
     });
 
     // Add Money Logs

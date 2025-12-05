@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Admin\TransactionSetting;
+use App\Models\Admin\BasicSettings;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
@@ -61,5 +62,47 @@ class TrxSettingsController extends Controller
         }
 
         return back()->with(['success' => ['Charge Updated Successfully!']]);
+    }
+
+    /**
+     * Display incentive balance settings
+     * @return \Illuminate\Http\Response
+     */
+    public function incentiveBalance()
+    {
+        $page_title = "Incentive Balance Settings";
+        $basic_settings = BasicSettings::first();
+        return view('admin.sections.trx-settings.incentive-balance', compact(
+            'page_title',
+            'basic_settings'
+        ));
+    }
+
+    /**
+     * Update incentive balance settings
+     * @param Request $request
+     * @return back view
+     */
+    public function incentiveBalanceUpdate(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'incentive_balance_seller' => 'required|numeric|min:0',
+            'incentive_balance_buyer' => 'required|numeric|min:0',
+            'incentive_balance_delivery' => 'required|numeric|min:0',
+        ]);
+
+        $validated = $validator->validate();
+
+        $basic_settings = BasicSettings::first();
+
+        if (!$basic_settings) return back()->with(['error' => ['Settings not found!']]);
+
+        try {
+            $basic_settings->update($validated);
+        } catch (Exception $e) {
+            return back()->with(['error' => ["Something went wrong! Please try again."]]);
+        }
+
+        return back()->with(['success' => ['Incentive Balance Settings Updated Successfully!']]);
     }
 }

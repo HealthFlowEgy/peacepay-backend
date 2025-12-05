@@ -16,6 +16,9 @@ class BasicSettings extends Model
         'push_notification_config'  => 'object',
         'broadcast_config'          => 'object',
         'kyc_verification'          => 'integer',
+        'incentive_balance_seller'  => 'decimal:8',
+        'incentive_balance_buyer'   => 'decimal:8',
+        'incentive_balance_delivery'=> 'decimal:8',
     ];
 
 
