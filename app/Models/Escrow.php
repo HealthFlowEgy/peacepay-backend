@@ -130,7 +130,7 @@ class Escrow extends Model
 
         return (object) $data;
     }
-    public function getStringWhoWillPayAttribute() { 
+    public function getStringWhoWillPayAttribute() {
         $role = $this->role;
         $who_will_pay = $this->who_will_pay;
         if ($role == EscrowConstants::SELLER_TYPE) {
@@ -173,5 +173,25 @@ class Escrow extends Model
         }
 
         return (object) $data;
+    }
+
+    /**
+     * Accessor to mask pin_code for non-buyer users
+     * Only buyers can see the actual pin code, others see ****
+     */
+    public function getPinCodeAttribute($value)
+    {
+        // Check if user is authenticated
+        if (!auth()->check()) {
+            return '****';
+        }
+
+        // Only show pin code to buyers
+        if (auth()->user()->type === 'buyer') {
+            return $value;
+        }
+
+        // Mask pin code for all other user types
+        return '****';
     }
 }

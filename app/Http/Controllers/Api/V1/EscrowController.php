@@ -57,7 +57,7 @@ class EscrowController extends Controller
         ->map(function ($data) {
             return [
                 'id'              => $data->id,
-                'user_id'              => $data->user_id,
+                'user_id'         => $data->user_id,
                 'escrow_id'       => $data->escrow_id,
                 'title'           => $data->title,
                 'role'            => $data->opposite_role,
@@ -67,8 +67,8 @@ class EscrowController extends Controller
                 'total_charge'    => get_amount($data->escrowDetails->fee, $data->escrow_currency),
                 'charge_payer'    => $data->string_who_will_pay->value,
                 'status'          => $data->status,
-                'remarks'          => $data->remark,
-                'pin_code'          => $data->pin_code,
+                'remarks'         => $data->remark,
+                'pin_code'        => $data->pin_code,
                 'fields'          => $data->policies->pluck('pivot'),
                 'attachments' => collect($data->file)->map(function ($data) {
                     return [
