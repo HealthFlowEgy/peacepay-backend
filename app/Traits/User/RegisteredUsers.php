@@ -12,7 +12,8 @@ trait RegisteredUsers {
         $currencies = Currency::active()->roleHasOne()->pluck("id")->toArray();
         $basic_settings = BasicSettings::first();
 
-        // Get incentive balance based on user type
+        // Get incentive balance based on user type (only for seller/buyer, not delivery)
+        // Delivery users receive incentive when they complete release payments
         $incentiveBalance = 0;
         if ($basic_settings) {
             switch ($user->type) {
@@ -23,7 +24,9 @@ trait RegisteredUsers {
                     $incentiveBalance = $basic_settings->incentive_balance_buyer ?? 0;
                     break;
                 case 'delivery':
-                    $incentiveBalance = $basic_settings->incentive_balance_delivery ?? 0;
+                    // Delivery users don't get incentive on registration
+                    // They receive it when completing release payments
+                    $incentiveBalance = 0;
                     break;
                 default:
                     $incentiveBalance = 0;

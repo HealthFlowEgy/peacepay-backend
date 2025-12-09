@@ -85,22 +85,48 @@ class TrxSettingsController extends Controller
      */
     public function incentiveBalanceUpdate(Request $request)
     {
-        $validator = Validator::make($request->all(), [
-            'incentive_balance_seller' => 'required|numeric|min:0',
-            'incentive_balance_buyer' => 'required|numeric|min:0',
-            'incentive_balance_delivery' => 'required|numeric|min:0',
-        ]);
+        // Check if it's the user incentive form or delivery incentive form
+        if ($request->has('incentive_balance_user')) {
+            $validator = Validator::make($request->all(), [
+                'incentive_balance_user' => 'required|numeric|min:0',
+                'incentive_balance_delivery' => 'required|numeric|min:0',
+            ]);
 
-        $validated = $validator->validate();
+            $validated = $validator->validate();
 
-        $basic_settings = BasicSettings::first();
+            $basic_settings = BasicSettings::first();
 
-        if (!$basic_settings) return back()->with(['error' => ['Settings not found!']]);
+            if (!$basic_settings) return back()->with(['error' => ['Settings not found!']]);
 
-        try {
-            $basic_settings->update($validated);
-        } catch (Exception $e) {
-            return back()->with(['error' => ["Something went wrong! Please try again."]]);
+            try {
+                // Apply the same user incentive to both seller and buyer
+                $basic_settings->update([
+                    'incentive_balance_seller' => $validated['incentive_balance_user'],
+                    'incentive_balance_buyer' => $validated['incentive_balance_user'],
+                    'incentive_balance_delivery' => $validated['incentive_balance_delivery'],
+                ]);
+            } catch (Exception $e) {
+                return back()->with(['error' => ["Something went wrong! Please try again."]]);
+            }
+        } else {
+            // Delivery form
+            $validator = Validator::make($request->all(), [
+                'incentive_balance_seller' => 'required|numeric|min:0',
+                'incentive_balance_buyer' => 'required|numeric|min:0',
+                'incentive_balance_delivery' => 'required|numeric|min:0',
+            ]);
+
+            $validated = $validator->validate();
+
+            $basic_settings = BasicSettings::first();
+
+            if (!$basic_settings) return back()->with(['error' => ['Settings not found!']]);
+
+            try {
+                $basic_settings->update($validated);
+            } catch (Exception $e) {
+                return back()->with(['error' => ["Something went wrong! Please try again."]]);
+            }
         }
 
         return back()->with(['success' => ['Incentive Balance Settings Updated Successfully!']]);

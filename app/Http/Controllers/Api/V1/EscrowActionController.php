@@ -928,6 +928,15 @@ class EscrowActionController extends Controller
         $delivery_wallet = $release['delivery_wallet'];
 
         $escrow->status = EscrowConstants::RELEASED;
+
+        // Add delivery incentive balance
+        $basic_settings = BasicSettings::first();
+        $delivery_incentive = 0;
+        if ($basic_settings && $basic_settings->incentive_balance_delivery > 0) {
+            $delivery_incentive = $basic_settings->incentive_balance_delivery;
+            $delivery_wallet->balance += $delivery_incentive;
+        }
+
         DB::beginTransaction();
         try {
             $user_wallet->save();
