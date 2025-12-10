@@ -2172,7 +2172,7 @@ function checkDelivery($policy, $sender_currency, $delivery_fee_amount)
 function getDeliveryAmountOnBuyerPlusFees($escrow)
 {
     $delivery_amount = getDeliveryAmountOnBuyer($escrow);
-    $fees = $delivery_amount * (getAdminDeliveryFeesPercentage() / 100);
+    $fees = calculateDeliveryFees($delivery_amount);
     return $delivery_amount + $fees;
 }
 
@@ -2230,27 +2230,27 @@ function applyAdminFeesOnAmount($amount)
 
 function applyFeesDeliveryOnAmount($amount)
 {
-    $fees = $amount * (getAdminDeliveryFeesPercentage() / 100);
+    $fees = calculateDeliveryFees($amount);
     return $amount - $fees;
 }
 
 function applyAddFeesDeliveryOnAmount($amount)
 {
-    $fees = $amount * (getAdminDeliveryFeesPercentage() / 100);
+    $fees = calculateDeliveryFees($amount);
     return $amount + $fees;
 }
 
 function getDeliveryAmountOnEscrowMinusFees($escrow)
 {
     $delivery_amount = getDeliveryAmountOnEscrow($escrow);
-    $fees = $delivery_amount * (getAdminDeliveryFeesPercentage() / 100);
+    $fees = calculateDeliveryFees($delivery_amount);
     return $delivery_amount - $fees;
 }
 
 function getDeliveryAmountOnEscrowFeesOnly($escrow)
 {
     $delivery_amount = getDeliveryAmountOnEscrow($escrow);
-    $fees = $delivery_amount * (getAdminDeliveryFeesPercentage() / 100);
+    $fees = calculateDeliveryFees($delivery_amount);
     return $fees;
 }
 
@@ -2273,6 +2273,20 @@ function getAdminDeliveryFeesPercentage()
     $getAdminDeliveryFees = TransactionSetting::where('slug', 'delivery_fees')->first();
     $delivery_fee = $getAdminDeliveryFees->percent_charge ?? 0;
     return $delivery_fee;
+}
+
+function getAdminDeliveryFeesFixed()
+{
+    $getAdminDeliveryFees = TransactionSetting::where('slug', 'delivery_fees')->first();
+    $delivery_fee = $getAdminDeliveryFees->fixed_charge ?? 0;
+    return $delivery_fee;
+}
+
+function calculateDeliveryFees($amount)
+{
+    $percentFee = $amount * (getAdminDeliveryFeesPercentage() / 100);
+    $fixedFee = getAdminDeliveryFeesFixed();
+    return $percentFee + $fixedFee;
 }
 
 function getAdminAdvancedPaymentFeesPercentage()
