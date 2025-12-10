@@ -94,7 +94,7 @@ class ForgotPasswordController extends Controller
                 'ver_code'          => $ver_code,
                 'ver_code_send_at'  => now(),
             ];
-            mshastra('OTP : ' . $ver_code, $user->mobile);
+            cequens('OTP : ' . $ver_code, $user->mobile);
             $user->update($update_data);
         } catch (Exception $e) {
             return response()->json(['error' => ['Something went wrong! Please try again']], 400);

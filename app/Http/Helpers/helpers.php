@@ -59,6 +59,44 @@ function mshastra($message, $to){
     \Log::info('mshastra response: '.$test);
 }
 
+function cequens($message, $to){
+    if(env('APP_ENV') != 'production') {
+        \Log::info('Cequens SMS (Dev Mode): ' . $message . ' to ' . $to);
+        return;
+    }
+
+    try {
+        $mobile = formatMobileNumber($to);
+
+        $client = new \GuzzleHttp\Client();
+
+        $payload = [
+            'senderName' => env('CEQUENS_SENDER_NAME', 'PeacePay'),
+            'messageText' => $message,
+            'messageType' => 'text',
+            'recipients' => $mobile,
+            'shortURL' => false
+        ];
+
+        $response = $client->request('POST', 'https://apis.cequens.com/sms/v1/messages', [
+            'body' => json_encode($payload),
+            'headers' => [
+                'accept' => 'application/json',
+                'content-type' => 'application/json',
+                'Authorization' => 'Bearer ' . env('CEQUENS_API_TOKEN'),
+            ],
+        ]);
+
+        $responseBody = $response->getBody()->getContents();
+        \Log::info('Cequens SMS response: ' . $responseBody);
+
+        return json_decode($responseBody, true);
+    } catch (\Exception $e) {
+        \Log::error('Cequens SMS Error: ' . $e->getMessage());
+        return false;
+    }
+}
+
 function setRoute($route_name, $param = null)
 {
     if (Route::has($route_name)) {

@@ -105,7 +105,7 @@ class AuthController extends Controller
                     'ver_code'       => $resend_code,
                     'ver_code_send_at' => now(),
                 ]);
-                mshastra('OTP : ' . $resend_code, $user->mobile);
+                cequens('OTP : ' . $resend_code, $user->mobile);
                 $message = ['success' => [__('Please check sms mobile and verify your account')]];
                 return ApiResponse::success($message, $user_data);
             }
