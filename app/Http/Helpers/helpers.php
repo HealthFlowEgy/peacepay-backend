@@ -60,10 +60,10 @@ function mshastra($message, $to){
 }
 
 function cequens($message, $to){
-    if(env('APP_ENV') != 'production') {
-        \Log::info('Cequens SMS (Dev Mode): ' . $message . ' to ' . $to);
-        return;
-    }
+    // if(env('APP_ENV') != 'production') {
+    //     \Log::info('Cequens SMS (Dev Mode): ' . $message . ' to ' . $to);
+    //     return;
+    // }
 
     try {
         $mobile = formatMobileNumber($to);
