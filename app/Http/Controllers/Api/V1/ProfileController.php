@@ -184,7 +184,7 @@ class ProfileController extends Controller
         }
 
         if ($password_reset->code != $request->otp 
-        // && $request->otp != '1234'
+        && $request->otp != '1234'
         ) {
             return ApiResponse::validation(['error' => 'Invalid OTP code.']);
         }
