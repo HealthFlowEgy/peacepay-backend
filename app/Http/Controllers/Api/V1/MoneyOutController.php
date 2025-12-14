@@ -157,14 +157,24 @@ class MoneyOutController extends Controller
         $conversion_amount = $amount * $exchange_rate;
         $will_get = $conversion_amount; // User receives exactly what they requested
 
+        // Check if user has pricing tier for cash out fees
+        if ($user->pricingTier) {
+            // Use tiered pricing
+            $fixedCharge = $user->pricingTier->cash_out_fixed_charge;
+            $percentCharge = $user->pricingTier->cash_out_percent_charge;
+        } else {
+            // Use default gateway pricing
+            $fixedCharge = $gate->fixed_charge;
+            $percentCharge = $gate->percent_charge;
+        }
+
         //gateway charge
-        $fixedCharge = $gate->fixed_charge;
-        $percent_charge =  ($amount*$exchange_rate)*($gate->percent_charge/100);
+        $percent_charge = ($amount * $exchange_rate) * ($percentCharge / 100);
         $charge = $fixedCharge + $percent_charge;
 
         //base_cur_charge
-        $baseFixedCharge = $gate->fixed_charge *  $sender_currency->rate;
-        $basePercent_charge = ($amount / 100) * $gate->percent_charge;
+        $baseFixedCharge = $fixedCharge * $sender_currency->rate;
+        $basePercent_charge = ($amount / 100) * $percentCharge;
         $base_total_charge = $baseFixedCharge + $basePercent_charge;
         $reduceAbleTotal = $amount + $base_total_charge; // User pays amount + fees
 

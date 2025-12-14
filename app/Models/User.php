@@ -106,6 +106,11 @@ class User extends Authenticatable
         return $this->hasMany(UserWallet::class);
     }
 
+    public function pricingTier()
+    {
+        return $this->belongsTo(PricingTier::class);
+    }
+
     public function getUserImageAttribute()
     {
         $image = $this->image;

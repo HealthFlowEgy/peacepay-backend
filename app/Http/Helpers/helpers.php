@@ -2207,10 +2207,10 @@ function checkDelivery($policy, $sender_currency, $delivery_fee_amount)
     return 1;
 }
 
-function getDeliveryAmountOnBuyerPlusFees($escrow)
+function getDeliveryAmountOnBuyerPlusFees($escrow, $user = null)
 {
     $delivery_amount = getDeliveryAmountOnBuyer($escrow);
-    $fees = calculateDeliveryFees($delivery_amount);
+    $fees = calculateDeliveryFees($delivery_amount, $user);
     return $delivery_amount + $fees;
 }
 
@@ -2256,39 +2256,46 @@ function getAdminFeesOnAmount($amount)
     return $amount - ($amount - $fees);
 }
 
-function applyAdminFeesOnAmount($amount)
+function applyAdminFeesOnAmount($amount, $user = null)
 {
-    $transactionSetting = TransactionSetting::where('slug', 'escrow')->first();
-    $fixed = $transactionSetting->fixed_charge ?? 0;
-    $percent = $transactionSetting->percent_charge ?? 0;
+    // Check if user has a pricing tier for merchant fees
+    if ($user && $user->pricingTier) {
+        $fixed = $user->pricingTier->merchant_fixed_charge;
+        $percent = $user->pricingTier->merchant_percent_charge;
+    } else {
+        // Use default admin fees
+        $transactionSetting = TransactionSetting::where('slug', 'escrow')->first();
+        $fixed = $transactionSetting->fixed_charge ?? 0;
+        $percent = $transactionSetting->percent_charge ?? 0;
+    }
     $fees = $amount * ($percent / 100);
     $fees = $fees + $fixed;
     return $amount - $fees;
 }
 
-function applyFeesDeliveryOnAmount($amount)
+function applyFeesDeliveryOnAmount($amount, $user = null)
 {
-    $fees = calculateDeliveryFees($amount);
+    $fees = calculateDeliveryFees($amount, $user);
     return $amount - $fees;
 }
 
-function applyAddFeesDeliveryOnAmount($amount)
+function applyAddFeesDeliveryOnAmount($amount, $user = null)
 {
-    $fees = calculateDeliveryFees($amount);
+    $fees = calculateDeliveryFees($amount, $user);
     return $amount + $fees;
 }
 
-function getDeliveryAmountOnEscrowMinusFees($escrow)
+function getDeliveryAmountOnEscrowMinusFees($escrow, $user = null)
 {
     $delivery_amount = getDeliveryAmountOnEscrow($escrow);
-    $fees = calculateDeliveryFees($delivery_amount);
+    $fees = calculateDeliveryFees($delivery_amount, $user);
     return $delivery_amount - $fees;
 }
 
-function getDeliveryAmountOnEscrowFeesOnly($escrow)
+function getDeliveryAmountOnEscrowFeesOnly($escrow, $user = null)
 {
     $delivery_amount = getDeliveryAmountOnEscrow($escrow);
-    $fees = calculateDeliveryFees($delivery_amount);
+    $fees = calculateDeliveryFees($delivery_amount, $user);
     return $fees;
 }
 
@@ -2320,10 +2327,17 @@ function getAdminDeliveryFeesFixed()
     return $delivery_fee;
 }
 
-function calculateDeliveryFees($amount)
+function calculateDeliveryFees($amount, $user = null)
 {
-    $percentFee = $amount * (getAdminDeliveryFeesPercentage() / 100);
-    $fixedFee = getAdminDeliveryFeesFixed();
+    // Check if user has a pricing tier
+    if ($user && $user->pricingTier) {
+        $percentFee = $amount * ($user->pricingTier->delivery_percent_charge / 100);
+        $fixedFee = $user->pricingTier->delivery_fixed_charge;
+    } else {
+        // Use default admin fees
+        $percentFee = $amount * (getAdminDeliveryFeesPercentage() / 100);
+        $fixedFee = getAdminDeliveryFeesFixed();
+    }
     return $percentFee + $fixedFee;
 }
 
@@ -2360,6 +2374,46 @@ function getAdvancedPaymentAmountOfEscrowFeesOnly($escrow)
     return $fee;
 }
 
+/**
+ * Calculate cash out fees based on user's pricing tier or default settings
+ */
+function calculateCashOutFees($amount, $user = null)
+{
+    // Check if user has a pricing tier
+    if ($user && $user->pricingTier) {
+        $percentFee = $amount * ($user->pricingTier->cash_out_percent_charge / 100);
+        $fixedFee = $user->pricingTier->cash_out_fixed_charge;
+    } else {
+        // Use default admin fees from transaction settings
+        $transactionSetting = TransactionSetting::where('slug', 'withdraw')->first();
+        $fixed = $transactionSetting->fixed_charge ?? 0;
+        $percent = $transactionSetting->percent_charge ?? 0;
+        $percentFee = $amount * ($percent / 100);
+        $fixedFee = $fixed;
+    }
+    return $percentFee + $fixedFee;
+}
+
+/**
+ * Calculate merchant/escrow fees based on user's pricing tier or default settings
+ */
+function calculateMerchantFees($amount, $user = null)
+{
+    // Check if user has a pricing tier
+    if ($user && $user->pricingTier) {
+        $percentFee = $amount * ($user->pricingTier->merchant_percent_charge / 100);
+        $fixedFee = $user->pricingTier->merchant_fixed_charge;
+    } else {
+        // Use default admin fees
+        $transactionSetting = TransactionSetting::where('slug', 'escrow')->first();
+        $fixed = $transactionSetting->fixed_charge ?? 0;
+        $percent = $transactionSetting->percent_charge ?? 0;
+        $percentFee = $amount * ($percent / 100);
+        $fixedFee = $fixed;
+    }
+    return $percentFee + $fixedFee;
+}
+
 function releasePaymentToBuyer($escrow, $user_wallet)
 {
     $user_wallet->balance = ($user_wallet->balance - getDeliveryAmountOnBuyer($escrow)) + $escrow->escrowDetails->buyer_pay;
@@ -2384,7 +2438,11 @@ function releasePaymentToMerchant($escrow, $user_wallet)
     $policyDSP  = $escrow->policies()->where('field', 'dsp_amount')->first();
     $policyDSPAmount = $policyDSP ? $policyDSP->pivot->fee : 0;
 
-    $getDeliveryAmountOnEscrowMinusFees = getDeliveryAmountOnEscrowMinusFees($escrow);
+    // Get seller user for tiered pricing
+    $seller = \App\Models\User::find($escrow->user_id);
+    $delivery_user = $escrow->delivery_id ? \App\Models\User::find($escrow->delivery_id) : null;
+
+    $getDeliveryAmountOnEscrowMinusFees = getDeliveryAmountOnEscrowMinusFees($escrow, $delivery_user);
 
     $advancedPaymentAmountOfEscrow = getAdvancedPaymentAmountOfEscrow($escrow);
     $deliveryAmountOnBuyer = getDeliveryAmountOnBuyer($escrow);
@@ -2392,7 +2450,7 @@ function releasePaymentToMerchant($escrow, $user_wallet)
     if ($deliveryAmountOnBuyer <= 0) {
         $user_wallet->balance = ($user_wallet->balance + $escrow->escrowDetails->seller_get - ($advancedPaymentAmountOfEscrow));
     } else {
-        $amount = applyAdminFeesOnAmount($escrow->amount - $deliveryAmountOnBuyer - $advancedPaymentAmountOfEscrow);
+        $amount = applyAdminFeesOnAmount($escrow->amount - $deliveryAmountOnBuyer - $advancedPaymentAmountOfEscrow, $seller);
         $user_wallet->balance = $user_wallet->balance + $amount;
     }
 

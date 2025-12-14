@@ -54,6 +54,20 @@
                                     ],
                                 ],
                             ],
+                            [
+                                'title'     => "Pricing Tiers",
+                                'icon'      => "menu-icon las la-layer-group",
+                                'links'     => [
+                                    [
+                                        'title'     => "Manage Tiers",
+                                        'route'     => "admin.pricing.tiers.index",
+                                    ],
+                                    [
+                                        'title'     => "Assign Users",
+                                        'route'     => "admin.pricing.tiers.assign.users",
+                                    ],
+                                ],
+                            ],
                         ],
                         [
                             'title'     => "Escrow Category",

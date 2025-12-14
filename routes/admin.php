@@ -28,6 +28,7 @@ use App\Http\Controllers\Admin\CryptoAssetController;
 use App\Http\Controllers\Admin\TrxSettingsController;
 use App\Http\Controllers\Admin\WebSettingsController;
 use App\Http\Controllers\Admin\BroadcastingController;
+use App\Http\Controllers\Admin\PricingTierController;
 use App\Http\Controllers\Admin\SetupSectionsController;
 use App\Http\Controllers\Admin\SupportTicketController;
 use App\Http\Controllers\Admin\ContactMessageController;
@@ -120,6 +121,18 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::put('charges/update', 'trxChargeUpdate')->name('charges.update');
         Route::get('incentive-balance', 'incentiveBalance')->name('incentive.balance');
         Route::put('incentive-balance/update', 'incentiveBalanceUpdate')->name('incentive.balance.update');
+    });
+
+    // Pricing Tiers
+    Route::controller(PricingTierController::class)->prefix('pricing-tiers')->name('pricing.tiers.')->group(function () {
+        Route::get('index', 'index')->name('index');
+        Route::post('store', 'store')->name('store');
+        Route::put('update', 'update')->name('update');
+        Route::delete('delete', 'delete')->name('delete');
+        Route::put('status/update', 'statusUpdate')->name('status.update');
+        Route::get('assign-users', 'assignUsers')->name('assign.users');
+        Route::post('assign-user', 'updateUserTier')->name('assign.user');
+        Route::post('bulk-assign', 'bulkAssignUsers')->name('bulk.assign');
     });
 
     // Add Money Logs

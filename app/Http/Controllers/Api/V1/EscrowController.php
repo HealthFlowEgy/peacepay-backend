@@ -265,10 +265,19 @@ class EscrowController extends Controller
         }
         //convert escrow currency amount into default currency
         $usd_exchange_amount = (1 / $sender_currency->rate) * $request_amount;
-        //charge calculate in USD currency 
-        $usd_fixed_charge   = $getEscrowChargeLimit->fixed_charge;
-        $usd_percent_charge = ($getEscrowChargeLimit->percent_charge / 100) * $usd_exchange_amount;
-        $usd_total_charge   = $usd_fixed_charge + $usd_percent_charge;
+
+        //charge calculate in USD currency - check for tiered pricing
+        $user = auth()->user();
+        if ($user->pricingTier) {
+            // Use tiered merchant/escrow fees
+            $usd_fixed_charge = $user->pricingTier->merchant_fixed_charge;
+            $usd_percent_charge = ($user->pricingTier->merchant_percent_charge / 100) * $usd_exchange_amount;
+        } else {
+            // Use default escrow fees
+            $usd_fixed_charge = $getEscrowChargeLimit->fixed_charge;
+            $usd_percent_charge = ($getEscrowChargeLimit->percent_charge / 100) * $usd_exchange_amount;
+        }
+        $usd_total_charge = $usd_fixed_charge + $usd_percent_charge;
         //final charge in escrow currency
         $escrow_total_charge = $usd_total_charge * $sender_currency->rate;
         //limit check 
