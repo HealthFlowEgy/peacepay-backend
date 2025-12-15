@@ -158,10 +158,11 @@ class MoneyOutController extends Controller
         $will_get = $conversion_amount; // User receives exactly what they requested
 
         // Check if user has pricing tier for cash out fees
-        if ($user->pricingTier) {
+        $cashOutTier = $user->getPricingTierByType(\App\Models\PricingTier::TYPE_CASH_OUT);
+        if ($cashOutTier) {
             // Use tiered pricing
-            $fixedCharge = $user->pricingTier->cash_out_fixed_charge;
-            $percentCharge = $user->pricingTier->cash_out_percent_charge;
+            $fixedCharge = $cashOutTier->fixed_charge;
+            $percentCharge = $cashOutTier->percent_charge;
         } else {
             // Use default gateway pricing
             $fixedCharge = $gate->fixed_charge;

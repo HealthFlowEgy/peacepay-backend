@@ -34,9 +34,9 @@
                     <thead>
                         <tr>
                             <th>{{ __("Name") }}</th>
-                            <th>{{ __("Delivery Fees") }}</th>
-                            <th>{{ __("Merchant Fees") }}</th>
-                            <th>{{ __("Cash Out Fees") }}</th>
+                            <th>{{ __("Type") }}</th>
+                            <th>{{ __("Fixed Charge") }}</th>
+                            <th>{{ __("Percent Charge") }}</th>
                             <th>{{ __("Users") }}</th>
                             <th>{{ __("Status") }}</th>
                             <th></th>
@@ -46,9 +46,13 @@
                         @forelse ($pricing_tiers as $item)
                             <tr data-item="{{ json_encode($item) }}">
                                 <td>{{ $item->name }}</td>
-                                <td>{{ get_amount($item->delivery_percent_charge) }}% + {{ get_amount($item->delivery_fixed_charge) }}</td>
-                                <td>{{ get_amount($item->merchant_percent_charge) }}% + {{ get_amount($item->merchant_fixed_charge) }}</td>
-                                <td>{{ get_amount($item->cash_out_percent_charge) }}% + {{ get_amount($item->cash_out_fixed_charge) }}</td>
+                                <td>
+                                    <span class="badge badge--{{ $item->type == 'delivery' ? 'primary' : ($item->type == 'merchant' ? 'success' : 'warning') }}">
+                                        {{ $item->type_label }}
+                                    </span>
+                                </td>
+                                <td>{{ get_amount($item->fixed_charge) }}</td>
+                                <td>{{ get_amount($item->percent_charge) }}%</td>
                                 <td>{{ $item->users()->count() }}</td>
                                 <td>
                                     @include('admin.components.form.switcher',[
@@ -99,6 +103,17 @@
                                 'value'         => old('name')
                             ])
                         </div>
+
+                        <div class="col-xl-12 col-lg-12 form-group">
+                            <label>{{ __("Tier Type") }}*</label>
+                            <select name="type" class="form--control select2-basic" required>
+                                <option value="" disabled selected>{{ __("Select Type") }}</option>
+                                <option value="delivery">{{ __("Delivery Fees") }}</option>
+                                <option value="merchant">{{ __("Merchant Fees") }}</option>
+                                <option value="cash_out">{{ __("Cash Out Fees") }}</option>
+                            </select>
+                        </div>
+
                         <div class="col-xl-12 col-lg-12 form-group">
                             @include('admin.components.form.textarea',[
                                 'label'         => __("Description"),
@@ -107,56 +122,19 @@
                             ])
                         </div>
 
-                        <div class="col-xl-12"><h6 class="mb-3">{{ __("Delivery Fees") }}</h6></div>
                         <div class="col-xl-6 col-lg-6 form-group">
                             @include('admin.components.form.input',[
                                 'label'         => __("Fixed Charge").'*',
-                                'name'          => 'delivery_fixed_charge',
-                                'value'         => old('delivery_fixed_charge', 0),
+                                'name'          => 'fixed_charge',
+                                'value'         => old('fixed_charge', 0),
                                 'attribute'     => 'step="0.01"',
                             ])
                         </div>
                         <div class="col-xl-6 col-lg-6 form-group">
                             @include('admin.components.form.input',[
                                 'label'         => __("Percent Charge (%)") .'*',
-                                'name'          => 'delivery_percent_charge',
-                                'value'         => old('delivery_percent_charge', 0),
-                                'attribute'     => 'step="0.01"',
-                            ])
-                        </div>
-
-                        <div class="col-xl-12"><h6 class="mb-3">{{ __("Merchant Fees") }}</h6></div>
-                        <div class="col-xl-6 col-lg-6 form-group">
-                            @include('admin.components.form.input',[
-                                'label'         => __("Fixed Charge").'*',
-                                'name'          => 'merchant_fixed_charge',
-                                'value'         => old('merchant_fixed_charge', 0),
-                                'attribute'     => 'step="0.01"',
-                            ])
-                        </div>
-                        <div class="col-xl-6 col-lg-6 form-group">
-                            @include('admin.components.form.input',[
-                                'label'         => __("Percent Charge (%)") .'*',
-                                'name'          => 'merchant_percent_charge',
-                                'value'         => old('merchant_percent_charge', 0),
-                                'attribute'     => 'step="0.01"',
-                            ])
-                        </div>
-
-                        <div class="col-xl-12"><h6 class="mb-3">{{ __("Cash Out Fees") }}</h6></div>
-                        <div class="col-xl-6 col-lg-6 form-group">
-                            @include('admin.components.form.input',[
-                                'label'         => __("Fixed Charge").'*',
-                                'name'          => 'cash_out_fixed_charge',
-                                'value'         => old('cash_out_fixed_charge', 0),
-                                'attribute'     => 'step="0.01"',
-                            ])
-                        </div>
-                        <div class="col-xl-6 col-lg-6 form-group">
-                            @include('admin.components.form.input',[
-                                'label'         => __("Percent Charge (%)") .'*',
-                                'name'          => 'cash_out_percent_charge',
-                                'value'         => old('cash_out_percent_charge', 0),
+                                'name'          => 'percent_charge',
+                                'value'         => old('percent_charge', 0),
                                 'attribute'     => 'step="0.01"',
                             ])
                         </div>
@@ -199,6 +177,16 @@
                                 'value'         => old('name')
                             ])
                         </div>
+
+                        <div class="col-xl-12 col-lg-12 form-group">
+                            <label>{{ __("Tier Type") }}*</label>
+                            <select name="type" class="form--control select2-basic edit-type-select" required>
+                                <option value="delivery">{{ __("Delivery Fees") }}</option>
+                                <option value="merchant">{{ __("Merchant Fees") }}</option>
+                                <option value="cash_out">{{ __("Cash Out Fees") }}</option>
+                            </select>
+                        </div>
+
                         <div class="col-xl-12 col-lg-12 form-group">
                             @include('admin.components.form.textarea',[
                                 'label'         => __("Description"),
@@ -207,56 +195,19 @@
                             ])
                         </div>
 
-                        <div class="col-xl-12"><h6 class="mb-3">{{ __("Delivery Fees") }}</h6></div>
                         <div class="col-xl-6 col-lg-6 form-group">
                             @include('admin.components.form.input',[
                                 'label'         => __("Fixed Charge").'*',
-                                'name'          => 'delivery_fixed_charge',
-                                'value'         => old('delivery_fixed_charge'),
+                                'name'          => 'fixed_charge',
+                                'value'         => old('fixed_charge'),
                                 'attribute'     => 'step="0.01"',
                             ])
                         </div>
                         <div class="col-xl-6 col-lg-6 form-group">
                             @include('admin.components.form.input',[
                                 'label'         => __("Percent Charge (%)") .'*',
-                                'name'          => 'delivery_percent_charge',
-                                'value'         => old('delivery_percent_charge'),
-                                'attribute'     => 'step="0.01"',
-                            ])
-                        </div>
-
-                        <div class="col-xl-12"><h6 class="mb-3">{{ __("Merchant Fees") }}</h6></div>
-                        <div class="col-xl-6 col-lg-6 form-group">
-                            @include('admin.components.form.input',[
-                                'label'         => __("Fixed Charge").'*',
-                                'name'          => 'merchant_fixed_charge',
-                                'value'         => old('merchant_fixed_charge'),
-                                'attribute'     => 'step="0.01"',
-                            ])
-                        </div>
-                        <div class="col-xl-6 col-lg-6 form-group">
-                            @include('admin.components.form.input',[
-                                'label'         => __("Percent Charge (%)") .'*',
-                                'name'          => 'merchant_percent_charge',
-                                'value'         => old('merchant_percent_charge'),
-                                'attribute'     => 'step="0.01"',
-                            ])
-                        </div>
-
-                        <div class="col-xl-12"><h6 class="mb-3">{{ __("Cash Out Fees") }}</h6></div>
-                        <div class="col-xl-6 col-lg-6 form-group">
-                            @include('admin.components.form.input',[
-                                'label'         => __("Fixed Charge").'*',
-                                'name'          => 'cash_out_fixed_charge',
-                                'value'         => old('cash_out_fixed_charge'),
-                                'attribute'     => 'step="0.01"',
-                            ])
-                        </div>
-                        <div class="col-xl-6 col-lg-6 form-group">
-                            @include('admin.components.form.input',[
-                                'label'         => __("Percent Charge (%)") .'*',
-                                'name'          => 'cash_out_percent_charge',
-                                'value'         => old('cash_out_percent_charge'),
+                                'name'          => 'percent_charge',
+                                'value'         => old('percent_charge'),
                                 'attribute'     => 'step="0.01"',
                             ])
                         </div>
@@ -294,17 +245,15 @@
             editModal.find("form").first().find("input[name=target]").val(oldData.id);
             editModal.find("input[name=name]").val(oldData.name);
             editModal.find("textarea[name=description]").val(oldData.description);
-            editModal.find("input[name=delivery_fixed_charge]").val(oldData.delivery_fixed_charge);
-            editModal.find("input[name=delivery_percent_charge]").val(oldData.delivery_percent_charge);
-            editModal.find("input[name=merchant_fixed_charge]").val(oldData.merchant_fixed_charge);
-            editModal.find("input[name=merchant_percent_charge]").val(oldData.merchant_percent_charge);
-            editModal.find("input[name=cash_out_fixed_charge]").val(oldData.cash_out_fixed_charge);
-            editModal.find("input[name=cash_out_percent_charge]").val(oldData.cash_out_percent_charge);
-            editModal.find("input[name=status]").val(oldData.status);
+            editModal.find("select[name=type]").val(oldData.type);
+            editModal.find("input[name=fixed_charge]").val(oldData.fixed_charge);
+            editModal.find("input[name=percent_charge]").val(oldData.percent_charge);
+            // Convert boolean to integer for switcher
+            var statusValue = oldData.status ? 1 : 0;
+            editModal.find("input[name=status]").val(statusValue);
 
             refreshSwitchers("#pricing-tier-edit");
             openModalBySelector("#pricing-tier-edit");
-
         });
 
         $(".delete-modal-button").click(function(){

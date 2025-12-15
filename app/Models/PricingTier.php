@@ -9,25 +9,23 @@ class PricingTier extends Model
 {
     use HasFactory;
 
+    // Tier type constants
+    const TYPE_DELIVERY = 'delivery';
+    const TYPE_MERCHANT = 'merchant';
+    const TYPE_CASH_OUT = 'cash_out';
+
     protected $fillable = [
         'name',
         'description',
-        'delivery_fixed_charge',
-        'delivery_percent_charge',
-        'merchant_fixed_charge',
-        'merchant_percent_charge',
-        'cash_out_fixed_charge',
-        'cash_out_percent_charge',
+        'type',
+        'fixed_charge',
+        'percent_charge',
         'status',
     ];
 
     protected $casts = [
-        'delivery_fixed_charge' => 'decimal:8',
-        'delivery_percent_charge' => 'decimal:8',
-        'merchant_fixed_charge' => 'decimal:8',
-        'merchant_percent_charge' => 'decimal:8',
-        'cash_out_fixed_charge' => 'decimal:8',
-        'cash_out_percent_charge' => 'decimal:8',
+        'fixed_charge' => 'decimal:8',
+        'percent_charge' => 'decimal:8',
         'status' => 'boolean',
     ];
 
@@ -36,36 +34,46 @@ class PricingTier extends Model
      */
     public function users()
     {
-        return $this->hasMany(User::class, 'pricing_tier_id');
+        return $this->belongsToMany(User::class, 'pricing_tier_user')
+                    ->withTimestamps();
     }
 
     /**
-     * Calculate delivery fees for a given amount
+     * Calculate fees for a given amount based on this tier
      */
-    public function calculateDeliveryFees($amount)
+    public function calculateFees($amount)
     {
-        $percentFee = $amount * ($this->delivery_percent_charge / 100);
-        $fixedFee = $this->delivery_fixed_charge;
+        $percentFee = $amount * ($this->percent_charge / 100);
+        $fixedFee = $this->fixed_charge;
         return $percentFee + $fixedFee;
     }
 
     /**
-     * Calculate merchant fees for a given amount
+     * Scope to filter by tier type
      */
-    public function calculateMerchantFees($amount)
+    public function scopeOfType($query, $type)
     {
-        $percentFee = $amount * ($this->merchant_percent_charge / 100);
-        $fixedFee = $this->merchant_fixed_charge;
-        return $percentFee + $fixedFee;
+        return $query->where('type', $type);
     }
 
     /**
-     * Calculate cash out fees for a given amount
+     * Scope to get active tiers
      */
-    public function calculateCashOutFees($amount)
+    public function scopeActive($query)
     {
-        $percentFee = $amount * ($this->cash_out_percent_charge / 100);
-        $fixedFee = $this->cash_out_fixed_charge;
-        return $percentFee + $fixedFee;
+        return $query->where('status', true);
+    }
+
+    /**
+     * Get tier type label
+     */
+    public function getTypeLabelAttribute()
+    {
+        return match($this->type) {
+            self::TYPE_DELIVERY => 'Delivery Fees',
+            self::TYPE_MERCHANT => 'Merchant Fees',
+            self::TYPE_CASH_OUT => 'Cash Out Fees',
+            default => ucfirst($this->type),
+        };
     }
 }

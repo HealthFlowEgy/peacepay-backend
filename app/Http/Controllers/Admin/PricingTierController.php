@@ -27,14 +27,11 @@ class PricingTierController extends Controller
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'name' => 'required|string|max:255|unique:pricing_tiers,name',
+            'name' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'delivery_fixed_charge' => 'required|numeric|min:0',
-            'delivery_percent_charge' => 'required|numeric|min:0|max:100',
-            'merchant_fixed_charge' => 'required|numeric|min:0',
-            'merchant_percent_charge' => 'required|numeric|min:0|max:100',
-            'cash_out_fixed_charge' => 'required|numeric|min:0',
-            'cash_out_percent_charge' => 'required|numeric|min:0|max:100',
+            'type' => 'required|in:delivery,merchant,cash_out',
+            'fixed_charge' => 'required|numeric|min:0',
+            'percent_charge' => 'required|numeric|min:0|max:100',
             'status' => 'required|boolean',
         ]);
 
@@ -57,14 +54,11 @@ class PricingTierController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'target' => 'required|exists:pricing_tiers,id',
-            'name' => 'required|string|max:255|unique:pricing_tiers,name,' . $request->target,
+            'name' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'delivery_fixed_charge' => 'required|numeric|min:0',
-            'delivery_percent_charge' => 'required|numeric|min:0|max:100',
-            'merchant_fixed_charge' => 'required|numeric|min:0',
-            'merchant_percent_charge' => 'required|numeric|min:0|max:100',
-            'cash_out_fixed_charge' => 'required|numeric|min:0',
-            'cash_out_percent_charge' => 'required|numeric|min:0|max:100',
+            'type' => 'required|in:delivery,merchant,cash_out',
+            'fixed_charge' => 'required|numeric|min:0',
+            'percent_charge' => 'required|numeric|min:0|max:100',
             'status' => 'required|boolean',
         ]);
 
@@ -96,10 +90,7 @@ class PricingTierController extends Controller
 
         try {
             $pricing_tier = PricingTier::findOrFail($request->target);
-
-            // Remove tier assignment from users before deleting
-            User::where('pricing_tier_id', $pricing_tier->id)->update(['pricing_tier_id' => null]);
-
+            // The pivot table will cascade delete automatically
             $pricing_tier->delete();
             return back()->with(['success' => ['Pricing tier deleted successfully!']]);
         } catch (Exception $e) {
@@ -113,32 +104,88 @@ class PricingTierController extends Controller
     public function statusUpdate(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'target' => 'required|exists:pricing_tiers,id',
+            'data_target' => 'required|exists:pricing_tiers,id',
             'status' => 'required|boolean',
         ]);
 
         if ($validator->fails()) {
-            return back()->withErrors($validator)->withInput();
+            $error = $validator->errors()->all();
+            return response()->json([
+                'type' => 'error',
+                'message' => [
+                    'error' => $error,
+                ],
+            ], 400);
         }
 
         try {
-            $pricing_tier = PricingTier::findOrFail($request->target);
+            $pricing_tier = PricingTier::findOrFail($request->data_target);
             $pricing_tier->update(['status' => $request->status]);
-            return back()->with(['success' => ['Status updated successfully!']]);
+
+            return response()->json([
+                'type' => 'success',
+                'message' => [
+                    'success' => ['Status updated successfully!'],
+                ],
+            ]);
         } catch (Exception $e) {
-            return back()->withErrors(['error' => ['Something went wrong! Please try again.']]);
+            return response()->json([
+                'type' => 'error',
+                'message' => [
+                    'error' => ['Something went wrong! Please try again.'],
+                ],
+            ], 500);
         }
     }
 
     /**
-     * Assign users to pricing tier
+     * Assign users to pricing tiers
      */
     public function assignUsers()
     {
         $page_title = "Assign Users to Pricing Tiers";
-        $pricing_tiers = PricingTier::where('status', true)->get();
-        $users = User::with('pricingTier')->latest()->paginate(20);
+        $pricing_tiers = PricingTier::where('status', true)->get()->groupBy('type');
+        $users = User::with('pricingTiers')->latest()->paginate(20);
         return view('admin.sections.pricing-tiers.assign-users', compact('page_title', 'pricing_tiers', 'users'));
+    }
+
+    /**
+     * Get user's current tier assignments
+     */
+    public function getUserTiers(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'user_id' => 'required|exists:users,id',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid user ID',
+            ], 400);
+        }
+
+        try {
+            $user = User::with('pricingTiers')->findOrFail($request->user_id);
+
+            $deliveryTier = $user->pricingTiers()->where('type', PricingTier::TYPE_DELIVERY)->first();
+            $merchantTier = $user->pricingTiers()->where('type', PricingTier::TYPE_MERCHANT)->first();
+            $cashOutTier = $user->pricingTiers()->where('type', PricingTier::TYPE_CASH_OUT)->first();
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'delivery_tier_id' => $deliveryTier ? $deliveryTier->id : null,
+                    'merchant_tier_id' => $merchantTier ? $merchantTier->id : null,
+                    'cash_out_tier_id' => $cashOutTier ? $cashOutTier->id : null,
+                ],
+            ]);
+        } catch (Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Something went wrong!',
+            ], 500);
+        }
     }
 
     /**
@@ -148,6 +195,7 @@ class PricingTierController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'user_id' => 'required|exists:users,id',
+            'tier_type' => 'required|in:delivery,merchant,cash_out',
             'pricing_tier_id' => 'nullable|exists:pricing_tiers,id',
         ]);
 
@@ -157,7 +205,24 @@ class PricingTierController extends Controller
 
         try {
             $user = User::findOrFail($request->user_id);
-            $user->update(['pricing_tier_id' => $request->pricing_tier_id]);
+
+            // If pricing_tier_id is provided, verify it matches the tier_type
+            if ($request->pricing_tier_id) {
+                $tier = PricingTier::findOrFail($request->pricing_tier_id);
+                if ($tier->type !== $request->tier_type) {
+                    return back()->withErrors(['error' => ['Tier type mismatch!']]);
+                }
+
+                // Remove existing tier of this type
+                $user->pricingTiers()->where('type', $request->tier_type)->detach();
+
+                // Attach new tier
+                $user->pricingTiers()->attach($request->pricing_tier_id);
+            } else {
+                // Remove tier of this type
+                $user->pricingTiers()->where('type', $request->tier_type)->detach();
+            }
+
             return back()->with(['success' => ['User pricing tier updated successfully!']]);
         } catch (Exception $e) {
             return back()->withErrors(['error' => ['Something went wrong! Please try again.']]);
@@ -172,6 +237,7 @@ class PricingTierController extends Controller
         $validator = Validator::make($request->all(), [
             'user_ids' => 'required|array',
             'user_ids.*' => 'exists:users,id',
+            'tier_type' => 'required|in:delivery,merchant,cash_out',
             'pricing_tier_id' => 'nullable|exists:pricing_tiers,id',
         ]);
 
@@ -180,7 +246,26 @@ class PricingTierController extends Controller
         }
 
         try {
-            User::whereIn('id', $request->user_ids)->update(['pricing_tier_id' => $request->pricing_tier_id]);
+            if ($request->pricing_tier_id) {
+                $tier = PricingTier::findOrFail($request->pricing_tier_id);
+                if ($tier->type !== $request->tier_type) {
+                    return back()->withErrors(['error' => ['Tier type mismatch!']]);
+                }
+            }
+
+            foreach ($request->user_ids as $userId) {
+                $user = User::find($userId);
+                if ($user) {
+                    // Remove existing tier of this type
+                    $user->pricingTiers()->where('type', $request->tier_type)->detach();
+
+                    // Attach new tier if provided
+                    if ($request->pricing_tier_id) {
+                        $user->pricingTiers()->attach($request->pricing_tier_id);
+                    }
+                }
+            }
+
             return back()->with(['success' => ['Users assigned to pricing tier successfully!']]);
         } catch (Exception $e) {
             return back()->withErrors(['error' => ['Something went wrong! Please try again.']]);

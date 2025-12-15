@@ -268,10 +268,12 @@ class EscrowController extends Controller
 
         //charge calculate in USD currency - check for tiered pricing
         $user = auth()->user();
-        if ($user->pricingTier) {
+        $merchantTier = $user ? $user->getPricingTierByType(\App\Models\PricingTier::TYPE_MERCHANT) : null;
+
+        if ($merchantTier) {
             // Use tiered merchant/escrow fees
-            $usd_fixed_charge = $user->pricingTier->merchant_fixed_charge;
-            $usd_percent_charge = ($user->pricingTier->merchant_percent_charge / 100) * $usd_exchange_amount;
+            $usd_fixed_charge = $merchantTier->fixed_charge;
+            $usd_percent_charge = ($merchantTier->percent_charge / 100) * $usd_exchange_amount;
         } else {
             // Use default escrow fees
             $usd_fixed_charge = $getEscrowChargeLimit->fixed_charge;

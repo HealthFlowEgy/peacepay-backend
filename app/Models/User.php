@@ -106,9 +106,26 @@ class User extends Authenticatable
         return $this->hasMany(UserWallet::class);
     }
 
-    public function pricingTier()
+    public function pricingTiers()
     {
-        return $this->belongsTo(PricingTier::class);
+        return $this->belongsToMany(PricingTier::class, 'pricing_tier_user')
+                    ->withTimestamps();
+    }
+
+    /**
+     * Get the pricing tier for a specific type
+     */
+    public function getPricingTierByType($type)
+    {
+        return $this->pricingTiers()->where('pricing_tiers.type', $type)->first();
+    }
+
+    /**
+     * Check if user has a pricing tier for a specific type
+     */
+    public function hasPricingTierForType($type)
+    {
+        return $this->pricingTiers()->where('pricing_tiers.type', $type)->exists();
     }
 
     public function getUserImageAttribute()

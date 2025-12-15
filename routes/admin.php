@@ -131,6 +131,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::delete('delete', 'delete')->name('delete');
         Route::put('status/update', 'statusUpdate')->name('status.update');
         Route::get('assign-users', 'assignUsers')->name('assign.users');
+        Route::get('get-user-tiers', 'getUserTiers')->name('get.user.tiers');
         Route::post('assign-user', 'updateUserTier')->name('assign.user');
         Route::post('bulk-assign', 'bulkAssignUsers')->name('bulk.assign');
     });

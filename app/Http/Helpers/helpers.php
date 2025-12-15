@@ -2259,15 +2259,21 @@ function getAdminFeesOnAmount($amount)
 function applyAdminFeesOnAmount($amount, $user = null)
 {
     // Check if user has a pricing tier for merchant fees
-    if ($user && $user->pricingTier) {
-        $fixed = $user->pricingTier->merchant_fixed_charge;
-        $percent = $user->pricingTier->merchant_percent_charge;
-    } else {
-        // Use default admin fees
-        $transactionSetting = TransactionSetting::where('slug', 'escrow')->first();
-        $fixed = $transactionSetting->fixed_charge ?? 0;
-        $percent = $transactionSetting->percent_charge ?? 0;
+    if ($user) {
+        $merchantTier = $user->getPricingTierByType(\App\Models\PricingTier::TYPE_MERCHANT);
+        if ($merchantTier) {
+            $fixed = $merchantTier->fixed_charge;
+            $percent = $merchantTier->percent_charge;
+            $fees = $amount * ($percent / 100);
+            $fees = $fees + $fixed;
+            return $amount - $fees;
+        }
     }
+
+    // Use default admin fees
+    $transactionSetting = TransactionSetting::where('slug', 'escrow')->first();
+    $fixed = $transactionSetting->fixed_charge ?? 0;
+    $percent = $transactionSetting->percent_charge ?? 0;
     $fees = $amount * ($percent / 100);
     $fees = $fees + $fixed;
     return $amount - $fees;
@@ -2329,15 +2335,19 @@ function getAdminDeliveryFeesFixed()
 
 function calculateDeliveryFees($amount, $user = null)
 {
-    // Check if user has a pricing tier
-    if ($user && $user->pricingTier) {
-        $percentFee = $amount * ($user->pricingTier->delivery_percent_charge / 100);
-        $fixedFee = $user->pricingTier->delivery_fixed_charge;
-    } else {
-        // Use default admin fees
-        $percentFee = $amount * (getAdminDeliveryFeesPercentage() / 100);
-        $fixedFee = getAdminDeliveryFeesFixed();
+    // Check if user has a pricing tier for delivery
+    if ($user) {
+        $deliveryTier = $user->getPricingTierByType(\App\Models\PricingTier::TYPE_DELIVERY);
+        if ($deliveryTier) {
+            $percentFee = $amount * ($deliveryTier->percent_charge / 100);
+            $fixedFee = $deliveryTier->fixed_charge;
+            return $percentFee + $fixedFee;
+        }
     }
+
+    // Use default admin fees
+    $percentFee = $amount * (getAdminDeliveryFeesPercentage() / 100);
+    $fixedFee = getAdminDeliveryFeesFixed();
     return $percentFee + $fixedFee;
 }
 
@@ -2379,18 +2389,22 @@ function getAdvancedPaymentAmountOfEscrowFeesOnly($escrow)
  */
 function calculateCashOutFees($amount, $user = null)
 {
-    // Check if user has a pricing tier
-    if ($user && $user->pricingTier) {
-        $percentFee = $amount * ($user->pricingTier->cash_out_percent_charge / 100);
-        $fixedFee = $user->pricingTier->cash_out_fixed_charge;
-    } else {
-        // Use default admin fees from transaction settings
-        $transactionSetting = TransactionSetting::where('slug', 'withdraw')->first();
-        $fixed = $transactionSetting->fixed_charge ?? 0;
-        $percent = $transactionSetting->percent_charge ?? 0;
-        $percentFee = $amount * ($percent / 100);
-        $fixedFee = $fixed;
+    // Check if user has a pricing tier for cash out
+    if ($user) {
+        $cashOutTier = $user->getPricingTierByType(\App\Models\PricingTier::TYPE_CASH_OUT);
+        if ($cashOutTier) {
+            $percentFee = $amount * ($cashOutTier->percent_charge / 100);
+            $fixedFee = $cashOutTier->fixed_charge;
+            return $percentFee + $fixedFee;
+        }
     }
+
+    // Use default admin fees from transaction settings
+    $transactionSetting = TransactionSetting::where('slug', 'withdraw')->first();
+    $fixed = $transactionSetting->fixed_charge ?? 0;
+    $percent = $transactionSetting->percent_charge ?? 0;
+    $percentFee = $amount * ($percent / 100);
+    $fixedFee = $fixed;
     return $percentFee + $fixedFee;
 }
 
@@ -2399,18 +2413,22 @@ function calculateCashOutFees($amount, $user = null)
  */
 function calculateMerchantFees($amount, $user = null)
 {
-    // Check if user has a pricing tier
-    if ($user && $user->pricingTier) {
-        $percentFee = $amount * ($user->pricingTier->merchant_percent_charge / 100);
-        $fixedFee = $user->pricingTier->merchant_fixed_charge;
-    } else {
-        // Use default admin fees
-        $transactionSetting = TransactionSetting::where('slug', 'escrow')->first();
-        $fixed = $transactionSetting->fixed_charge ?? 0;
-        $percent = $transactionSetting->percent_charge ?? 0;
-        $percentFee = $amount * ($percent / 100);
-        $fixedFee = $fixed;
+    // Check if user has a pricing tier for merchant fees
+    if ($user) {
+        $merchantTier = $user->getPricingTierByType(\App\Models\PricingTier::TYPE_MERCHANT);
+        if ($merchantTier) {
+            $percentFee = $amount * ($merchantTier->percent_charge / 100);
+            $fixedFee = $merchantTier->fixed_charge;
+            return $percentFee + $fixedFee;
+        }
     }
+
+    // Use default admin fees
+    $transactionSetting = TransactionSetting::where('slug', 'escrow')->first();
+    $fixed = $transactionSetting->fixed_charge ?? 0;
+    $percent = $transactionSetting->percent_charge ?? 0;
+    $percentFee = $amount * ($percent / 100);
+    $fixedFee = $fixed;
     return $percentFee + $fixedFee;
 }
 
