@@ -23,6 +23,8 @@
                                             <span class="input-group-text">{{ get_default_currency_code($default_currency) }}</span>
                                         </div>
                                     </div>
+                                @else
+                                    <input type="hidden" value="{{ old($data->slug.'_fixed_charge',$data->fixed_charge) }}" name="{{$data->slug}}_fixed_charge">
                                 @endif
                                 <div class="col-xxl-12 col-xl-6 col-lg-6 form-group">
                                     <label>{{ __("Percent Charge*") }}</label>
