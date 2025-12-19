@@ -21,14 +21,17 @@
                 <td><span>{{ $item->username }}</span></td>
                 <td>{{ $item->email }}</td>
                 <td>
-                    @if (Route::currentRouteName() == "admin.users.kyc.unverified")
+                    @php
+                        $currentRoute = $source_route ?? Route::currentRouteName();
+                    @endphp
+                    @if ($currentRoute == "admin.users.kyc.unverified")
                         <span class="{{ $item->kycStringStatus->class }}">{{ $item->kycStringStatus->value }}</span>
                     @else
                         <span class="{{ $item->stringStatus->class }}">{{ $item->stringStatus->value }}</span>
                     @endif
                 </td>
                 <td>
-                    @if (Route::currentRouteName() == "admin.users.kyc.unverified")
+                    @if ($currentRoute == "admin.users.kyc.unverified")
                         @include('admin.components.link.info-default',[
                             'href'          => setRoute('admin.users.kyc.details', $item->username),
                             'permission'    => "admin.users.kyc.details",

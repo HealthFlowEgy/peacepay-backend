@@ -475,6 +475,7 @@ class UserCareController extends Controller
     public function search(Request $request) {
         $validator = Validator::make($request->all(),[
             'text'  => 'required|string',
+            'source_route' => 'nullable|string',
         ]);
 
         if($validator->fails()) {
@@ -484,8 +485,11 @@ class UserCareController extends Controller
 
         $validated = $validator->validate();
         $users = User::search($validated['text'])->limit(10)->get();
+        $source_route = $request->source_route ?? null;
+
         return view('admin.components.search.user-search',compact(
             'users',
+            'source_route'
         ));
     }
 }
