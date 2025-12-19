@@ -44,7 +44,7 @@ class ProfileController extends Controller
             'lastname'  => 'required|string',
             'email'     => ['required','email',Rule::unique('admins')->ignore(auth()->user()->id)],
             'phone'     => 'nullable|string',
-            'image'     => 'nullable|image|mimes:jpg,png,jpeg,webp,svg|max:10000',
+            'image'     => 'nullable|image|mimes:jpg,png,jpeg,webp,svg|max:10240',
             'country'   => 'nullable|string',
             'state'     => 'nullable|string',
             'city'      => 'nullable|string',

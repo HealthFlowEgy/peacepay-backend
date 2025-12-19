@@ -69,6 +69,7 @@ class EscrowController extends Controller
                 'status'          => $data->status,
                 'remarks'         => $data->remark,
                 'pin_code'        => $data->pin_code,
+                'delivery_number' => $data->delivery->full_mobile ?? null,
                 'fields'          => $data->policies->pluck('pivot'),
                 'attachments' => collect($data->file)->map(function ($data) {
                     return [
