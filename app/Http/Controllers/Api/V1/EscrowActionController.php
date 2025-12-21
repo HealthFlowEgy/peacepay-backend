@@ -756,15 +756,15 @@ class EscrowActionController extends Controller
         $escrow    = Escrow::findOrFail($validated['target']);
 
         if ($escrow->status != escrow_const()::ONGOING) {
-            return redirect()->back()->with(['error' => [__('You can not return payment while escrow is ongoing')]]);
+            return ApiResponse::error(['error' => [__('You can not return payment while escrow is ongoing')]]);
         }
 
         $resp = $this->moneyReturn($escrow, EscrowConstants::REFUNDED);
 
         if ($resp == 0) {
-            return redirect()->back()->with(['error' => [__('Something went wrong')]]);
+            return ApiResponse::error(['error' => [__('Something went wrong')]]);
         }
-        return redirect()->route('user.my-escrow.index')->with(['success' => [__('Returned Done')]]);
+        return ApiResponse::success(['success' => [__('Returned Done')]]);
     }
 
     public function cancelPaymentFromMerchant(Request $request)
@@ -776,16 +776,16 @@ class EscrowActionController extends Controller
         $escrow    = Escrow::findOrFail($validated['target']);
 
         if ($escrow->status != escrow_const()::ONGOING) {
-            return redirect()->back()->with(['error' => [__('You can not cancel payment')]]);
+            return ApiResponse::error(['error' => [__('You can not cancel payment')]]);
         }
 
         $resp = $this->moneyReturn($escrow, EscrowConstants::CANCELED);
 
         if ($resp == 0) {
-            return redirect()->back()->with(['error' => [__('Something went wrong')]]);
+            return ApiResponse::error(['error' => [__('Something went wrong')]]);
         }
 
-        return redirect()->route('user.my-escrow.index')->with(['success' => [__('Cancel Payment Done')]]);
+        return ApiResponse::success(['success' => [__('Cancel Payment Done')]]);
     }
 
     public function moneyReturn($escrow, $type)

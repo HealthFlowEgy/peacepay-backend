@@ -130,7 +130,7 @@ class MoneyExchangeController extends Controller
             DB::commit();
         }catch(Exception $e) {
             DB::rollBack();
-            return back()->with(['error' => [__('Something went wrong! Please try again')]]);
+            return ApiResponse::error(['error' => [__('Something went wrong! Please try again')]]);
         }
         $message = ['success' => [__("Money exchange successful, Please Go Back Your App")]];
         return ApiResponse::onlysuccess($message);

@@ -154,6 +154,8 @@ class EscrowController extends Controller
     //escrow submit
     public function submit(Request $request)
     {
+        $user = auth()->guard(get_auth_guard())->user();
+
         $validator = Validator::make($request->all(), [
             'title'                 => 'required|string',
             'buyer_seller_identify' => 'required',
@@ -165,7 +167,10 @@ class EscrowController extends Controller
             'field'                 => 'required',
             'field.delivery_fee_amount'                 => 'nullable|numeric',
             'field.advanced_payment_amount'                 => 'nullable|numeric',
-            'policy_id'             => 'required',
+            'policy_id'             => [
+                'required',
+                'exists:policies,id,user_id,' . $user->id
+            ],
         ]);
 
         if ($validator->fails()) {
@@ -987,7 +992,7 @@ class EscrowController extends Controller
             $tempData   = TemporaryData::where("identifier", $identifier)->first();
             $this->createEscrow($tempData);
         } catch (Exception $e) {
-            return back()->with(['error' => [$e->getMessage()]]);
+            return ApiResponse::error(['error' => [$e->getMessage()]]);
         }
         $message = ['success' => [__("Escrow created Successful, Please Go Back Your App")]];
         return ApiResponse::onlysuccess($message);
