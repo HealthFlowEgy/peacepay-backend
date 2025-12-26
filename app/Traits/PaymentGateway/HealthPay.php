@@ -195,7 +195,7 @@ trait HealthPay
                     }
                 }
         ';
-
+dd(env('MERCHANT_USER_TOKEN'));
         $response = $clientUser->query($query, [
             'userToken'     => env('MERCHANT_USER_TOKEN'),
             'amount'        => $amount ?? (float) session()->get('topupAmountHealthPay')
