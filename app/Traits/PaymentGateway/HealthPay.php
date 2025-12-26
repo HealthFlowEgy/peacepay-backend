@@ -201,7 +201,6 @@ trait HealthPay
             'amount'        => $amount ?? (float) session()->get('topupAmountHealthPay')
         ];
 
-        dd( $data );
         $response = $clientUser->query($query,$data);
 
         if ($response->hasErrors()) {
