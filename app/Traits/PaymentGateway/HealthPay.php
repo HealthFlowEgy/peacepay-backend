@@ -196,10 +196,13 @@ trait HealthPay
                 }
         ';
 
-        $response = $clientUser->query($query, [
+        $data = [
             'userToken'     => env('MERCHANT_USER_TOKEN'),
             'amount'        => $amount ?? (float) session()->get('topupAmountHealthPay')
-        ]);
+        ];
+
+        dd( $data );
+        $response = $clientUser->query($query,$data);
 
         if ($response->hasErrors()) {
             throw new \Exception('Error topupWalletUser: ' . json_encode($response->getErrors()));
