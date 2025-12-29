@@ -906,13 +906,22 @@ class EscrowActionController extends Controller
             return ApiResponse::onlyError(['error' => [__('You are not authorized to access this page')]]);
         }
 
-        if ($escrow->pin_code != $validated['pin_code']) {
+        // Get raw pin_code from database without accessor
+        $rawPinCode = $escrow->getRawOriginal('pin_code');
+        if ($rawPinCode != $validated['pin_code']) {
             return ApiResponse::onlyError(['error' => [__('Pin code is not matched')]]);
         }
 
         $escrow->delivery_id = auth()->user()->id;
+
+        // Capture delivery user's pricing tier at the moment they accept
+        $deliveryUser = auth()->user();
+        $deliveryTier = $deliveryUser->getPricingTierByType(\App\Models\PricingTier::TYPE_DELIVERY);
+        $escrow->delivery_tier_fixed_charge = $deliveryTier ? $deliveryTier->fixed_charge : 0;
+        $escrow->delivery_tier_percent_charge = $deliveryTier ? $deliveryTier->percent_charge : 0;
+
         $escrow->save();
-        
+
         $user      = User::findOrFail($escrow->user_id == auth()->user()->id ? $escrow->buyer_or_seller_id : $escrow->user_id);
         //status check 
         if ($escrow->status != EscrowConstants::ONGOING) {

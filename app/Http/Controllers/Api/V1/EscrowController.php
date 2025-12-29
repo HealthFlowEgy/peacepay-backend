@@ -727,6 +727,15 @@ class EscrowController extends Controller
             $status = $setStatus;
         }
 
+        // Get the seller/merchant user to capture their pricing tier
+        $seller_id = ($escrowData->role == 'seller') ? $escrowData->user_id : $escrowData->buyer_or_seller_id;
+        $sellerUser = User::find($seller_id);
+        $merchantTier = $sellerUser ? $sellerUser->getPricingTierByType(\App\Models\PricingTier::TYPE_MERCHANT) : null;
+
+        // Capture merchant tier values
+        $merchantFixedCharge = $merchantTier ? $merchantTier->fixed_charge : 0;
+        $merchantPercentCharge = $merchantTier ? $merchantTier->percent_charge : 0;
+
         DB::beginTransaction();
         try {
             $escrowCreate = Escrow::create([
@@ -750,6 +759,9 @@ class EscrowController extends Controller
                 'return_price'                => $escrowData->return_price ?? 0,
                 'delivery_timeframe'          => $escrowData->delivery_timeframe ?? 0,
                 'pin_code'                    => rand(100000, 999999),
+                // Save merchant tier pricing at the moment of creation
+                'merchant_tier_fixed_charge'   => $merchantFixedCharge,
+                'merchant_tier_percent_charge' => $merchantPercentCharge,
             ]);
 
 

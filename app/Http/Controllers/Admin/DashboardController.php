@@ -197,37 +197,49 @@ class DashboardController extends Controller
         $fees = 0;
         try {
             $totalAmount = 0;
-            foreach ($escrow->where('status', EscrowConstants::RELEASED)->where('total_amount_get_for_all_users' ,0) as $escrow) {
-                $deliveryFeesAdmin = getDeliveryAmountOnEscrowFeesOnly($escrow);
-
-                $amount = $escrow->amount;
-                $amount -= getDeliveryAmountOnEscrow($escrow);
-                $amount -= getAdvancedPaymentAmountOfEscrow($escrow);
-
-                if ($escrow->from_admin_to_user_id != $escrow->buyer_or_seller_id) {
-                    $fees = getAdminFeesOnAmount($amount);
+            foreach ($escrow->where('status', EscrowConstants::RELEASED)->where('total_amount_get_for_all_users' ,0) as $escrowItem) {
+                // Calculate delivery fees from saved tier values
+                if ($escrowItem->delivery_id) {
+                    $deliveryFeeAmount = getDeliveryAmountOnEscrow($escrowItem);
+                    $deliveryFeesAdmin = ($deliveryFeeAmount * ($escrowItem->delivery_tier_percent_charge / 100)) + $escrowItem->delivery_tier_fixed_charge;
+                } else {
+                    $deliveryFeesAdmin = 0;
                 }
 
+                $amount = $escrowItem->amount;
+                $amount -= getDeliveryAmountOnEscrow($escrowItem);
+                $amount -= getAdvancedPaymentAmountOfEscrow($escrowItem);
+
+                // Calculate merchant fees from saved tier values
+                if ($escrowItem->from_admin_to_user_id != $escrowItem->buyer_or_seller_id) {
+                    $fees = ($amount * ($escrowItem->merchant_tier_percent_charge / 100)) + $escrowItem->merchant_tier_fixed_charge;
+                } else {
+                    $fees = 0;
+                }
 
                 $totalAmount += ($fees + $deliveryFeesAdmin);
             }
 
-            foreach ($escrow->where('status', EscrowConstants::RELEASED)->where('total_amount_get_for_all_users', '!=' ,0) as $escrow) {
-                $totalAmount += ($escrow->amount - $escrow->total_amount_get_for_all_users);
+            foreach ($escrow->where('status', EscrowConstants::RELEASED)->where('total_amount_get_for_all_users', '!=' ,0) as $escrowItem) {
+                $totalAmount += ($escrowItem->amount - $escrowItem->total_amount_get_for_all_users);
             }
+
             foreach (
                 Escrow::get()->whereIn('status', [EscrowConstants::REFUNDED, EscrowConstants::CANCELED])
-                    ->whereNotNull('delivery_id') as $escrow
+                    ->whereNotNull('delivery_id') as $escrowItem
             ) {
-                $totalAmount += getDeliveryAmountOnEscrowFeesOnly($escrow);
+                // Calculate delivery fees from saved tier values for refunded/canceled
+                $deliveryFeeAmount = getDeliveryAmountOnEscrow($escrowItem);
+                $deliveryFeesAdmin = ($deliveryFeeAmount * ($escrowItem->delivery_tier_percent_charge / 100)) + $escrowItem->delivery_tier_fixed_charge;
+                $totalAmount += $deliveryFeesAdmin;
             }
 
             foreach (
                 Escrow::get()->whereNotIn('status', [
                     EscrowConstants::APPROVAL_PENDING,
-                ])->where('payment_type', '!=', EscrowConstants::DID_NOT_PAID) as $escrow
+                ])->where('payment_type', '!=', EscrowConstants::DID_NOT_PAID) as $escrowItem
             ) {
-                $totalAmount += getAdvancedPaymentAmountOfEscrowFeesOnly($escrow);
+                $totalAmount += getAdvancedPaymentAmountOfEscrowFeesOnly($escrowItem);
             }
             $escrow_profit = $totalAmount ?? 0;
         } catch (Exception $e) {
