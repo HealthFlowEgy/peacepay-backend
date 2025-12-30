@@ -914,28 +914,47 @@ class EscrowActionController extends Controller
 
         $escrow->delivery_id = auth()->user()->id;
 
+        
+        $merchantDoesDelivery = isset($escrow->policies[0]->fields['who_will_deliver']) && $escrow->policies[0]->fields['who_will_deliver'] == 'merchant';
+
         // Capture delivery user's pricing tier at the moment they accept
         $deliveryUser = auth()->user();
-        $deliveryTier = $deliveryUser->getPricingTierByType(\App\Models\PricingTier::TYPE_DELIVERY);
 
-        if ($deliveryTier) {
-            // Use user's pricing tier
-            $escrow->delivery_tier_fixed_charge = $deliveryTier->fixed_charge;
-            $escrow->delivery_tier_percent_charge = $deliveryTier->percent_charge;
+        if ($merchantDoesDelivery) {
+            // If merchant does delivery themselves, no delivery calculations
+            $escrow->delivery_tier_fixed_charge = 0;
+            $escrow->delivery_tier_percent_charge = 0;
         } else {
-            // Use default admin delivery fees
-            $escrow->delivery_tier_fixed_charge = getAdminDeliveryFeesFixed();
-            $escrow->delivery_tier_percent_charge = getAdminDeliveryFeesPercentage();
+            // Normal delivery flow - check for pricing tier
+            $deliveryTier = $deliveryUser->getPricingTierByType(\App\Models\PricingTier::TYPE_DELIVERY);
+
+            if ($deliveryTier) {
+                // Use user's pricing tier
+                $escrow->delivery_tier_fixed_charge = $deliveryTier->fixed_charge;
+                $escrow->delivery_tier_percent_charge = $deliveryTier->percent_charge;
+            } else {
+                // Use default admin delivery fees
+                $escrow->delivery_tier_fixed_charge = getAdminDeliveryFeesFixed();
+                $escrow->delivery_tier_percent_charge = getAdminDeliveryFeesPercentage();
+            }
         }
 
         $escrow->save();
 
         // Calculate and update delivery fees and delivery_get in escrow_details
         $deliveryFeeAmount = getDeliveryAmountOnEscrow($escrow);
-        $deliveryFees = ($deliveryFeeAmount * ($escrow->delivery_tier_percent_charge / 100)) + $escrow->delivery_tier_fixed_charge;
-        $deliveryGet = getDeliveryAmountOnEscrowMinusFees($escrow, $deliveryUser);
 
-        if ($escrow->escrowDetails) {
+        if ($merchantDoesDelivery) {
+            // Merchant does delivery, no calculations
+            $deliveryFees = 0;
+            $deliveryGet = 0;
+        } else {
+            // Calculate admin fees from delivery amount
+            $deliveryFees = ($deliveryFeeAmount * ($escrow->delivery_tier_percent_charge / 100)) + $escrow->delivery_tier_fixed_charge;
+            $deliveryGet = $deliveryFeeAmount - $deliveryFees;
+        }
+
+        if ($escrow->escrowDetails && !$merchantDoesDelivery) {
             $escrow->escrowDetails->update([
                 'delivery_fees' => $deliveryFees,
                 'delivery_get' => $deliveryGet
