@@ -193,9 +193,8 @@ class EscrowController extends Controller
         $escrowCategory       = EscrowCategory::first();
         $validated['escrow_category'] = $escrowCategory->id;
 
-        $getEscrowChargeLimit = TransactionSetting::find(1);
+        $getEscrowChargeLimit = TransactionSetting::where('slug', 'escrow')->first();
         $sender_currency      = Currency::where('code', $validated['escrow_currency'])->first();
-        $digitShow            = $sender_currency->type == "CRYPTO" ? 6 : 2;
         $opposite_user                 = User::where('username', $validated['buyer_seller_identify'])->orWhere('email', $validated['buyer_seller_identify'])
             ->orWhere('mobile', $validated['buyer_seller_identify'])->first();
 
@@ -205,8 +204,6 @@ class EscrowController extends Controller
         if ($checkDelivery == 0) {
             return ApiResponse::validation(['error' => [__('Insufficient balance In delivery fee')]]);
         }
-
-
 
         //user check 
         if (empty($opposite_user)) {
@@ -234,87 +231,63 @@ class EscrowController extends Controller
         //get payment method
         $payment_type = EscrowConstants::DID_NOT_PAID;
         $payment_gateways_currencies = null;
+        $real_amount = $validated['amount'];
         $request_amount = $validated['amount'];
 
         foreach ($validated['field'] as $field => $amount) {
-            if (in_array($field, fieldsAddedToAmount())) {
-                $request_amount += $amount;
-            } elseif (
+            if (
                 in_array($field, fieldsAddedToAmountIfFromBuyer())
                 && $policy->fields[mappingPolicyFields($field)] == 'buyer'
             ) {
                 $request_amount += $amount;
             }
         }
-
-
-        if ($validated['role'] == "buyer") {
-            if ($validated['payment_gateway'] == "myWallet") {
-                $user_wallets = UserWallet::where(['user_id' => auth()->user()->id, 'currency_id' => $sender_currency->id])->first();
-                if (empty($user_wallets)) return ApiResponse::validation(['error' => [__('Wallet not found')]]);
-                if ($user_wallets->balance == 0 || $user_wallets->balance < 0 || $user_wallets->balance < $request_amount) return ApiResponse::validation(['error' => [__('Insuficiant Balance')]]);
-                $payment_method        = "My Wallet";
-                $gateway_currency      = $validated['escrow_currency'];
-                $gateway_exchange_rate = 1;
-                $payment_type          = EscrowConstants::MY_WALLET;
+        
+        $user = auth()->user();
+        $deliveryFees = 0;
+        if(isset($policy->fields['who_will_deliver']) && $policy->fields['who_will_deliver'] == 'merchant'){
+            $delivery_amount = $validated['field']['delivery_fee_amount']??0;
+            $real_amount += $delivery_amount;
+            $deliveryTier = $user ? $user->getPricingTierByType(\App\Models\PricingTier::TYPE_DELIVERY) : null;
+            
+            if ($deliveryTier) {
+                // Use tiered merchant/escrow fees
+                $fixedDeliveryFees = $deliveryTier->fixed_charge;
+                $percentDeliveryFees = ($deliveryTier->percent_charge / 100) * $delivery_amount;
             } else {
-                $payment_gateways_currencies = PaymentGatewayCurrency::with('gateway')->find($validated['payment_gateway']);
-                if (!$payment_gateways_currencies || !$payment_gateways_currencies->gateway) {
-                    return ApiResponse::validation(['error' => [__('Payment gateway not found.')]]);
-                }
-                $payment_method   = $payment_gateways_currencies->name;
-                $gateway_currency = $payment_gateways_currencies->currency_code;
-                //calculate gateway exchange rate 
-                $gateway_exchange_rate =  (1 / $sender_currency->rate) * $payment_gateways_currencies->rate;  //this currency is converted in payment gateway currency
-                $payment_type = EscrowConstants::GATEWAY;
+                $getDeliveryFees = TransactionSetting::where('slug', 'delivery_fees')->first();
+                // Use default escrow fees
+                $fixedDeliveryFees = $getDeliveryFees->fixed_charge;
+                $percentDeliveryFees = ($getDeliveryFees->percent_charge / 100) * $delivery_amount;
             }
+            $deliveryFees = $fixedDeliveryFees + $percentDeliveryFees;
         }
+
         //convert escrow currency amount into default currency
         $usd_exchange_amount = (1 / $sender_currency->rate) * $request_amount;
 
         //charge calculate in USD currency - check for tiered pricing
-        $user = auth()->user();
         $merchantTier = $user ? $user->getPricingTierByType(\App\Models\PricingTier::TYPE_MERCHANT) : null;
 
         if ($merchantTier) {
             // Use tiered merchant/escrow fees
-            $usd_fixed_charge = $merchantTier->fixed_charge;
-            $usd_percent_charge = ($merchantTier->percent_charge / 100) * $usd_exchange_amount;
+            $usd_fixed_merchant_charge = $merchantTier->fixed_charge;
+            $usd_percent_merchant_charge = ($merchantTier->percent_charge / 100) * $real_amount;
         } else {
             // Use default escrow fees
-            $usd_fixed_charge = $getEscrowChargeLimit->fixed_charge;
-            $usd_percent_charge = ($getEscrowChargeLimit->percent_charge / 100) * $usd_exchange_amount;
+            $usd_fixed_merchant_charge = $getEscrowChargeLimit->fixed_charge;
+            $usd_percent_merchant_charge = ($getEscrowChargeLimit->percent_charge / 100) * $real_amount;
         }
-        $usd_total_charge = $usd_fixed_charge + $usd_percent_charge;
+        $marchante_fees = $usd_fixed_merchant_charge + $usd_percent_merchant_charge;
+
         //final charge in escrow currency
-        $escrow_total_charge = $usd_total_charge * $sender_currency->rate;
+        $marchante_fees = $marchante_fees * $sender_currency->rate;
         //limit check 
         if ($getEscrowChargeLimit->min_limit > $usd_exchange_amount || $getEscrowChargeLimit->max_limit < $usd_exchange_amount) return ApiResponse::validation(['error' => [__('Please follow the escrow limit')]]);
         //calculate seller amount 
-        if ($validated['who_will_pay_options'] == "seller") {
-            $seller_amount = $request_amount - $escrow_total_charge;
-        } else if ($validated['who_will_pay_options'] == "half") {
-            $seller_amount = $request_amount - ($escrow_total_charge / 2);
-        } else if ($validated['who_will_pay_options'] == "me" && $validated['role'] == "seller") {
-            $seller_amount = $request_amount - $escrow_total_charge;
-        } else {
-            $seller_amount = $request_amount;
-        }
-        //calculate buyer amount 
-        if ($validated['role'] == "buyer") {
-            if ($validated['who_will_pay_options'] == "buyer") {
-                $buyer_amount = ($request_amount + $escrow_total_charge) * $gateway_exchange_rate;
-            } else if ($validated['who_will_pay_options'] == "half") {
-                $buyer_amount = ($request_amount + ($escrow_total_charge / 2)) * $gateway_exchange_rate;
-            } else if ($validated['who_will_pay_options'] == "me" && $validated['role'] == "buyer") {
-                $buyer_amount = ($request_amount + $escrow_total_charge) * $gateway_exchange_rate;
-            } else {
-                $buyer_amount = $request_amount * $gateway_exchange_rate;
-            }
-            if ($validated['payment_gateway'] == "myWallet") {
-                if ($user_wallets->balance == 0 || $user_wallets->balance < 0 || $user_wallets->balance < $buyer_amount) return ApiResponse::validation(['error' => ['Insuficiant Balance.Here escrow charge will be substack with your wallet. Your escrow charge is ' . $escrow_total_charge . ' ' . $validated['escrow_currency']]]);
-            }
-        }
+        $seller_amount = $real_amount - $marchante_fees - $deliveryFees;
+        
+        
         $oldData = (object) [
             'buyer_or_seller_id'          => $opposite_user->id,
             'escrow_category_id'          => $validated['escrow_category'],
@@ -330,8 +303,9 @@ class EscrowController extends Controller
             'amount'          => $request_amount,
             'escrow_currency' => $validated['escrow_currency'],
             'charge_payer'    => $validated['who_will_pay_options'],
-
-            'escrow_total_charge'   => $escrow_total_charge,
+            'merchant_fees'   => $marchante_fees,
+            'delivery_fees'   => $deliveryFees,
+            'escrow_total_charge'   => $marchante_fees + $deliveryFees,
             'seller_amount'         => $seller_amount ?? 0,
             'gateway_currency'      => $gateway_currency ?? "null",
             'payment_method'        => $payment_method ?? "null",
@@ -395,8 +369,10 @@ class EscrowController extends Controller
             'my_role'       => $validated['role'],
             'total_amount'  => $request_amount,
             'charge_payer'  => $validated['who_will_pay_options'],
-            'fee'           => get_amount($escrow_total_charge, $validated['escrow_currency']),
+            'fee'           => get_amount($marchante_fees, $validated['escrow_currency']),
             'seller_amount' => get_amount($seller_amount, $validated['escrow_currency'])  ?? 0,
+            'merchant_fees' => $marchante_fees,
+            'delivery_fees' => $deliveryFees,
             'pay_with'      => $payment_method ?? "null",
             'exchange_rate' => "1" . ' ' . $validated['escrow_currency'] . ' = ' . get_amount($gateway_exchange_rate ?? 0, $gateway_currency ?? "USD"),
             'buyer_amount'  => $buyer_amount ?? 0,
@@ -727,15 +703,6 @@ class EscrowController extends Controller
             $status = $setStatus;
         }
 
-        // Get the seller/merchant user to capture their pricing tier
-        $seller_id = ($escrowData->role == 'seller') ? $escrowData->user_id : $escrowData->buyer_or_seller_id;
-        $sellerUser = User::find($seller_id);
-        $merchantTier = $sellerUser ? $sellerUser->getPricingTierByType(\App\Models\PricingTier::TYPE_MERCHANT) : null;
-
-        // Capture merchant tier values
-        $merchantFixedCharge = $merchantTier ? $merchantTier->fixed_charge : 0;
-        $merchantPercentCharge = $merchantTier ? $merchantTier->percent_charge : 0;
-
         DB::beginTransaction();
         try {
             $escrowCreate = Escrow::create([
@@ -759,9 +726,6 @@ class EscrowController extends Controller
                 'return_price'                => $escrowData->return_price ?? 0,
                 'delivery_timeframe'          => $escrowData->delivery_timeframe ?? 0,
                 'pin_code'                    => rand(100000, 999999),
-                // Save merchant tier pricing at the moment of creation
-                'merchant_tier_fixed_charge'   => $merchantFixedCharge,
-                'merchant_tier_percent_charge' => $merchantPercentCharge,
             ]);
 
 
@@ -790,10 +754,11 @@ class EscrowController extends Controller
                 ]);
             }
 
-
             EscrowDetails::create([
                 'escrow_id'             => $escrowCreate->id ?? 0,
                 'fee'                   => $escrowData->escrow_total_charge,
+                'merchant_fees'         => $escrowData->merchant_fees,
+                'delivery_fees'         => $escrowData->delivery_fees,
                 'seller_get'            => $escrowData->seller_amount,
                 'buyer_pay'             => $escrowData->buyer_amount,
                 'gateway_exchange_rate' => $escrowData->gateway_exchange_rate,

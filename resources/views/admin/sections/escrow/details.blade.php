@@ -45,20 +45,22 @@
                     </div>
                 </div>
                 <div class="col-xl-4 col-lg-4 form-group">
-                    <ul class="user-profile-list two"> 
-                        <li class="one">{{ __("Fees & Charges")}}: <span>{{ get_amount($escrows->escrowDetails->fee,$escrows->escrow_currency) }}</span></li> 
-                        <li class="two">{{ __("Seller Amount")}}: <span>{{ get_amount($escrows->escrowDetails->seller_get,$escrows->escrow_currency) }}</span></li> 
+                    <ul class="user-profile-list two">
+                        <li class="one">{{ __("Total Fees & Charges")}}: <span>{{ get_amount($escrows->escrowDetails->fee,$escrows->escrow_currency) }}</span></li>
+                        <li class="one">{{ __("Merchant Fees")}}: <span class="text-info">{{ get_amount($escrows->escrowDetails->merchant_fees,$escrows->escrow_currency) }}</span></li>
+                        <li class="one">{{ __("Delivery Fees")}}: <span class="text-warning">{{ get_amount($escrows->escrowDetails->delivery_fees,$escrows->escrow_currency) }}</span></li>
+                        <li class="two">{{ __("Seller Amount")}}: <span>{{ get_amount($escrows->escrowDetails->seller_get,$escrows->escrow_currency) }}</span></li>
                         @if ($escrows->payment_type == escrow_const()::GATEWAY)
-                        <li class="three">{{ __("Pay with")}}: <span>{{ $escrows->paymentGatewayCurrency->name }}</span></li> 
-                        <li class="three">{{ __("Exchange Rate")}}: <span>{{ "1 ".$escrows->escrow_currency." = ".get_amount($escrows->escrowDetails->gateway_exchange_rate,$escrows->paymentGatewayCurrency->currency_code) }}</span></li> 
-                        <li class="four">{{ __("Buyer Paid")}}: <span>{{ get_amount($escrows->escrowDetails->buyer_pay,$escrows->paymentGatewayCurrency->currency_code) }}</span></li> 
+                        <li class="three">{{ __("Pay with")}}: <span>{{ $escrows->paymentGatewayCurrency->name }}</span></li>
+                        <li class="three">{{ __("Exchange Rate")}}: <span>{{ "1 ".$escrows->escrow_currency." = ".get_amount($escrows->escrowDetails->gateway_exchange_rate,$escrows->paymentGatewayCurrency->currency_code) }}</span></li>
+                        <li class="four">{{ __("Buyer Paid")}}: <span>{{ get_amount($escrows->escrowDetails->buyer_pay,$escrows->paymentGatewayCurrency->currency_code) }}</span></li>
                         @endif
                         @if ($escrows->payment_type == escrow_const()::MY_WALLET)
-                        <li class="three">{{ __("Pay with")}}: <span>{{ "Wallet" }}</span></li> 
-                        <li class="three">{{ __("Exchange Rate")}}: <span>{{ "1 ".$escrows->escrow_currency." = 1 ".$escrows->escrow_currency }}</span></li> 
+                        <li class="three">{{ __("Pay with")}}: <span>{{ "Wallet" }}</span></li>
+                        <li class="three">{{ __("Exchange Rate")}}: <span>{{ "1 ".$escrows->escrow_currency." = 1 ".$escrows->escrow_currency }}</span></li>
                         <li class="four">{{ __("Buyer Paid")}}: <span>{{ get_amount($escrows->escrowDetails->buyer_pay,$escrows->escrow_currency) }}</span></li>
                         @endif
-                       
+
                         <li class="five">{{ __("Status")}}:  <span class="{{ @$escrows->stringStatus->class }}">{{ @$escrows->stringStatus->value }}</span></li>
                     </ul>
                 </div>

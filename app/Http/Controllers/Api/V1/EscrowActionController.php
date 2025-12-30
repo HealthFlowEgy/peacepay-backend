@@ -922,6 +922,14 @@ class EscrowActionController extends Controller
 
         $escrow->save();
 
+        // Calculate and update delivery fees in escrow_details
+        $deliveryFeeAmount = getDeliveryAmountOnEscrow($escrow);
+        $deliveryFees = ($deliveryFeeAmount * ($escrow->delivery_tier_percent_charge / 100)) + $escrow->delivery_tier_fixed_charge;
+
+        if ($escrow->escrowDetails) {
+            $escrow->escrowDetails->update(['delivery_fees' => $deliveryFees]);
+        }
+
         $user      = User::findOrFail($escrow->user_id == auth()->user()->id ? $escrow->buyer_or_seller_id : $escrow->user_id);
         //status check 
         if ($escrow->status != EscrowConstants::ONGOING) {
