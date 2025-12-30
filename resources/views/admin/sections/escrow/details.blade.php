@@ -49,7 +49,10 @@
                         <li class="one">{{ __("Total Fees & Charges")}}: <span>{{ get_amount($escrows->escrowDetails->fee,$escrows->escrow_currency) }}</span></li>
                         <li class="one">{{ __("Merchant Fees")}}: <span class="text-info">{{ get_amount($escrows->escrowDetails->merchant_fees,$escrows->escrow_currency) }}</span></li>
                         <li class="one">{{ __("Delivery Fees")}}: <span class="text-warning">{{ get_amount($escrows->escrowDetails->delivery_fees,$escrows->escrow_currency) }}</span></li>
-                        <li class="two">{{ __("Seller Amount")}}: <span>{{ get_amount($escrows->escrowDetails->seller_get,$escrows->escrow_currency) }}</span></li>
+                        <li class="two">{{ __("Seller Get")}}: <span class="text-success">{{ get_amount($escrows->escrowDetails->seller_get,$escrows->escrow_currency) }}</span></li>
+                        @if($escrows->delivery_id)
+                        <li class="two">{{ __("Delivery Get")}}: <span class="text-primary">{{ get_amount($escrows->escrowDetails->delivery_get,$escrows->escrow_currency) }}</span></li>
+                        @endif
                         @if ($escrows->payment_type == escrow_const()::GATEWAY)
                         <li class="three">{{ __("Pay with")}}: <span>{{ $escrows->paymentGatewayCurrency->name }}</span></li>
                         <li class="three">{{ __("Exchange Rate")}}: <span>{{ "1 ".$escrows->escrow_currency." = ".get_amount($escrows->escrowDetails->gateway_exchange_rate,$escrows->paymentGatewayCurrency->currency_code) }}</span></li>

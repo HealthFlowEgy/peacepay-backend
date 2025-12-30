@@ -917,17 +917,29 @@ class EscrowActionController extends Controller
         // Capture delivery user's pricing tier at the moment they accept
         $deliveryUser = auth()->user();
         $deliveryTier = $deliveryUser->getPricingTierByType(\App\Models\PricingTier::TYPE_DELIVERY);
-        $escrow->delivery_tier_fixed_charge = $deliveryTier ? $deliveryTier->fixed_charge : 0;
-        $escrow->delivery_tier_percent_charge = $deliveryTier ? $deliveryTier->percent_charge : 0;
+
+        if ($deliveryTier) {
+            // Use user's pricing tier
+            $escrow->delivery_tier_fixed_charge = $deliveryTier->fixed_charge;
+            $escrow->delivery_tier_percent_charge = $deliveryTier->percent_charge;
+        } else {
+            // Use default admin delivery fees
+            $escrow->delivery_tier_fixed_charge = getAdminDeliveryFeesFixed();
+            $escrow->delivery_tier_percent_charge = getAdminDeliveryFeesPercentage();
+        }
 
         $escrow->save();
 
-        // Calculate and update delivery fees in escrow_details
+        // Calculate and update delivery fees and delivery_get in escrow_details
         $deliveryFeeAmount = getDeliveryAmountOnEscrow($escrow);
         $deliveryFees = ($deliveryFeeAmount * ($escrow->delivery_tier_percent_charge / 100)) + $escrow->delivery_tier_fixed_charge;
+        $deliveryGet = getDeliveryAmountOnEscrowMinusFees($escrow, $deliveryUser);
 
         if ($escrow->escrowDetails) {
-            $escrow->escrowDetails->update(['delivery_fees' => $deliveryFees]);
+            $escrow->escrowDetails->update([
+                'delivery_fees' => $deliveryFees,
+                'delivery_get' => $deliveryGet
+            ]);
         }
 
         $user      = User::findOrFail($escrow->user_id == auth()->user()->id ? $escrow->buyer_or_seller_id : $escrow->user_id);

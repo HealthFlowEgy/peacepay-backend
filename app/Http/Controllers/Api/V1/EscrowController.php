@@ -760,6 +760,7 @@ class EscrowController extends Controller
                 'merchant_fees'         => $escrowData->merchant_fees,
                 'delivery_fees'         => $escrowData->delivery_fees,
                 'seller_get'            => $escrowData->seller_amount,
+                'delivery_get'          => 0, // Will be calculated when delivery accepts
                 'buyer_pay'             => $escrowData->buyer_amount,
                 'gateway_exchange_rate' => $escrowData->gateway_exchange_rate,
                 'created_at'            => now(),

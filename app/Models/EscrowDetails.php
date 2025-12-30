@@ -10,10 +10,13 @@ class EscrowDetails extends Model
     use HasFactory;
     protected $guarded = ['id'];
     protected $casts = [
-        'id' => 'integer', 
-        'escrow_id ' => 'integer', 
+        'id' => 'integer',
+        'escrow_id ' => 'integer',
         'fee' => 'double',
+        'merchant_fees' => 'double',
+        'delivery_fees' => 'double',
         'seller_get' => 'double',
+        'delivery_get' => 'double',
         'buyer_pay' => 'double',
         'gateway_exchange_rate' => 'double',
         'created_at'           => 'datetime',
