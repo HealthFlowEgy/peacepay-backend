@@ -209,6 +209,8 @@ Route::prefix("v1")->name('api.v1.')->group(function () {
             Route::post('manual/payment/confirmed', 'manualPaymentConfirmedApi')->name('manual.payment.confirmed');
             //check user is avaibleable
             Route::get('user-check', 'userCheck')->name('userCheck');
+            // Get escrow details
+            Route::get('details/{escrow_id}', 'details')->name('details');
         });
         //escrow action routes
         Route::controller(EscrowActionController::class)->prefix('api-escrow-action')->name('api-escrow-action.')->group(function () {

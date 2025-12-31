@@ -9,6 +9,7 @@ use App\Http\Controllers\User\EscrowActionsController;
 use App\Http\Controllers\Api\V1\EscrowController as ApiEscrowController;
 use App\Http\Controllers\Api\V1\EscrowActionController as ApiEscrowActionsController;
 use App\Http\Controllers\PageHealthPayController;
+use App\Http\Controllers\DeepLinkController;
 
 /*
 |--------------------------------------------------------------------------
@@ -19,7 +20,10 @@ use App\Http\Controllers\PageHealthPayController;
 | routes are loaded by the RouteServiceProvider within a group which
 | contains the "web" middleware group. Now create something great!
 |
-*/ 
+*/
+
+// Deep link redirect routes
+Route::get('app/escrow/{escrow_id}', [DeepLinkController::class, 'escrow'])->name('deeplink.escrow');
 
 Route::get('payment/process',[PageHealthPayController::class,'index'])->name('success'); 
 

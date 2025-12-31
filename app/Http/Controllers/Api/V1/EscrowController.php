@@ -55,6 +55,8 @@ class EscrowController extends Controller
         })
         ->latest()->get()
         ->map(function ($data) {
+            $appScheme = env('MOBILE_APP_SCHEME', 'peacepay');
+
             return [
                 'id'              => $data->id,
                 'user_id'         => $data->user_id,
@@ -79,6 +81,8 @@ class EscrowController extends Controller
                     ];
                 })->toArray(),
                 'created_at'      => $data->created_at,
+                'deep_link'       => $appScheme . '://escrow/' . $data->escrow_id,
+                'web_link'        => route('deeplink.escrow', $data->escrow_id),
             ];
         });
         $data = [
@@ -974,5 +978,119 @@ class EscrowController extends Controller
         }
         $message = ['success' => [__("Escrow created Successful, Please Go Back Your App")]];
         return ApiResponse::onlysuccess($message);
+    }
+
+    public function details($escrow_id)
+    {
+        $user = auth()->guard(get_auth_guard())->user();
+
+        // Find escrow by ID or escrow_id field
+        $escrow = Escrow::with([
+            'escrowCategory',
+            'escrowDetails',
+            'policies',
+            'user:id,firstname,lastname,username,email,mobile,image',
+            'buyerOrSeller:id,firstname,lastname,username,email,mobile,image',
+            'delivery:id,firstname,lastname,username,email,mobile,image'
+        ])
+        ->where(function($query) use ($escrow_id) {
+            $query->where('id', $escrow_id)
+                  ->orWhere('escrow_id', $escrow_id);
+        })
+        ->first();
+
+        if (!$escrow) {
+            return ApiResponse::error(['error' => [__('Escrow not found')]]);
+        }
+
+        // Check if user is authorized to view this escrow
+        if ($escrow->user_id != $user->id &&
+            $escrow->buyer_or_seller_id != $user->id &&
+            $escrow->delivery_id != $user->id) {
+            return ApiResponse::error(['error' => [__('You are not authorized to view this escrow')]]);
+        }
+
+        // Get policy fields
+        $policyFields = [];
+        foreach ($escrow->policies as $policy) {
+            $policyFields[$policy->pivot->field] = [
+                'fee' => $policy->pivot->fee,
+                'collected_from' => $policy->pivot->collected_from,
+                'data' => $policy->pivot->data ?? null
+            ];
+        }
+
+        $data = [
+            'escrow' => [
+                'id' => $escrow->id,
+                'escrow_id' => $escrow->escrow_id,
+                'title' => $escrow->title,
+                'amount' => $escrow->amount,
+                'escrow_currency' => $escrow->escrow_currency,
+                'status' => $escrow->status,
+                'status_text' => $escrow->stringStatus->value ?? '',
+                'role' => $escrow->role,
+                'who_will_pay' => $escrow->who_will_pay,
+                'payment_type' => $escrow->payment_type,
+                'remark' => $escrow->remark,
+                'file' => $escrow->file,
+                'pin_code' => $escrow->pin_code, // Will be masked by accessor
+                'return_price' => $escrow->return_price,
+                'delivery_timeframe' => $escrow->delivery_timeframe,
+                'created_at' => $escrow->created_at,
+                'category' => $escrow->escrowCategory ? [
+                    'id' => $escrow->escrowCategory->id,
+                    'name' => $escrow->escrowCategory->name,
+                ] : null,
+                'user' => $escrow->user ? [
+                    'id' => $escrow->user->id,
+                    'name' => $escrow->user->firstname . ' ' . $escrow->user->lastname,
+                    'username' => $escrow->user->username,
+                    'email' => $escrow->user->email,
+                    'mobile' => $escrow->user->mobile,
+                    'image' => $escrow->user->userImage ?? null,
+                ] : null,
+                'buyer_or_seller' => $escrow->buyerOrSeller ? [
+                    'id' => $escrow->buyerOrSeller->id,
+                    'name' => $escrow->buyerOrSeller->firstname . ' ' . $escrow->buyerOrSeller->lastname,
+                    'username' => $escrow->buyerOrSeller->username,
+                    'email' => $escrow->buyerOrSeller->email,
+                    'mobile' => $escrow->buyerOrSeller->mobile,
+                    'image' => $escrow->buyerOrSeller->userImage ?? null,
+                ] : null,
+                'delivery' => $escrow->delivery ? [
+                    'id' => $escrow->delivery->id,
+                    'name' => $escrow->delivery->firstname . ' ' . $escrow->delivery->lastname,
+                    'username' => $escrow->delivery->username,
+                    'email' => $escrow->delivery->email,
+                    'mobile' => $escrow->delivery->mobile,
+                    'image' => $escrow->delivery->userImage ?? null,
+                ] : null,
+                'details' => $escrow->escrowDetails ? [
+                    'fee' => $escrow->escrowDetails->fee,
+                    'merchant_fees' => $escrow->escrowDetails->merchant_fees,
+                    'delivery_fees' => $escrow->escrowDetails->delivery_fees,
+                    'seller_get' => $escrow->escrowDetails->seller_get,
+                    'delivery_get' => $escrow->escrowDetails->delivery_get,
+                    'buyer_pay' => $escrow->escrowDetails->buyer_pay,
+                    'gateway_exchange_rate' => $escrow->escrowDetails->gateway_exchange_rate,
+                ] : null,
+                'pricing_tiers' => [
+                    'merchant' => [
+                        'fixed_charge' => $escrow->merchant_tier_fixed_charge,
+                        'percent_charge' => $escrow->merchant_tier_percent_charge,
+                    ],
+                    'delivery' => [
+                        'fixed_charge' => $escrow->delivery_tier_fixed_charge,
+                        'percent_charge' => $escrow->delivery_tier_percent_charge,
+                    ],
+                ],
+                'policy_fields' => $policyFields,
+                'deep_link' => env('MOBILE_APP_SCHEME', 'peacepay') . '://escrow/' . $escrow->escrow_id,
+                'web_link' => route('deeplink.escrow', $escrow->escrow_id),
+            ]
+        ];
+
+        return ApiResponse::success($data, __('Escrow details retrieved successfully'));
     }
 }
