@@ -81,8 +81,8 @@ class EscrowController extends Controller
                     ];
                 })->toArray(),
                 'created_at'      => $data->created_at,
-                'deep_link'       => $appScheme . '://escrow/' . $data->escrow_id,
-                'web_link'        => route('deeplink.escrow', $data->escrow_id),
+                'deep_link'       => $appScheme . '://escrow/' . $data->id,
+                'web_link'        => route('deeplink.escrow', $data->id),
             ];
         });
         $data = [
@@ -1086,8 +1086,8 @@ class EscrowController extends Controller
                     ],
                 ],
                 'policy_fields' => $policyFields,
-                'deep_link' => env('MOBILE_APP_SCHEME', 'peacepay') . '://escrow/' . $escrow->escrow_id,
-                'web_link' => route('deeplink.escrow', $escrow->escrow_id),
+                'deep_link' => env('MOBILE_APP_SCHEME', 'peacepay') . '://escrow/' . $escrow->id,
+                'web_link' => route('deeplink.escrow', $escrow->id),
             ]
         ];
 

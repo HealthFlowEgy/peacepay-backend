@@ -27,8 +27,8 @@ class DeepLinkController extends Controller
         // Get the app scheme from environment or use default
         $appScheme = env('MOBILE_APP_SCHEME', 'peacepay');
 
-        // Create the deep link URL
-        $deepLink = $appScheme . '://escrow/' . $escrow->escrow_id;
+        // Create the deep link URL using numeric ID
+        $deepLink = $appScheme . '://escrow/' . $escrow->id;
 
         // Return a view with meta redirect and JavaScript fallback
         return view('deeplink.redirect', [
