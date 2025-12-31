@@ -198,26 +198,7 @@ class DashboardController extends Controller
         try {
             $totalAmount = 0;
             foreach ($escrow->where('status', EscrowConstants::RELEASED)->where('total_amount_get_for_all_users' ,0) as $escrowItem) {
-                // Calculate delivery fees from saved tier values
-                if ($escrowItem->delivery_id) {
-                    $deliveryFeeAmount = getDeliveryAmountOnEscrow($escrowItem);
-                    $deliveryFeesAdmin = ($deliveryFeeAmount * ($escrowItem->delivery_tier_percent_charge / 100)) + $escrowItem->delivery_tier_fixed_charge;
-                } else {
-                    $deliveryFeesAdmin = 0;
-                }
-
-                $amount = $escrowItem->amount;
-                $amount -= getDeliveryAmountOnEscrow($escrowItem);
-                $amount -= getAdvancedPaymentAmountOfEscrow($escrowItem);
-
-                // Calculate merchant fees from saved tier values
-                if ($escrowItem->from_admin_to_user_id != $escrowItem->buyer_or_seller_id) {
-                    $fees = ($amount * ($escrowItem->merchant_tier_percent_charge / 100)) + $escrowItem->merchant_tier_fixed_charge;
-                } else {
-                    $fees = 0;
-                }
-
-                $totalAmount += ($fees + $deliveryFeesAdmin);
+                $totalAmount += $escrowItem->escrowDetails->delivery_fees + $escrowItem->escrowDetails->merchant_fees;
             }
 
             foreach ($escrow->where('status', EscrowConstants::RELEASED)->where('total_amount_get_for_all_users', '!=' ,0) as $escrowItem) {
