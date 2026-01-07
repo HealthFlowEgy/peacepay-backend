@@ -13,7 +13,7 @@ use App\Http\Requests\RefreshTokenRequest;
 use App\Http\Resources\UserResource;
 use App\Http\Resources\AuthTokenResource;
 use App\Services\AuthService;
-use App\Services\OtpService;
+use App\Services\Sms\OtpService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;

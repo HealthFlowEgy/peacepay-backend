@@ -12,7 +12,7 @@ use App\Http\Resources\PeaceLinkResource;
 use App\Http\Resources\PeaceLinkCollection;
 use App\Services\PeaceLinkService;
 use App\Services\WalletService;
-use App\Services\OtpService;
+use App\Services\Sms\OtpService;
 use App\Services\NotificationService;
 use App\Enums\PeaceLinkStatus;
 use App\Enums\PeaceLinkRole;
