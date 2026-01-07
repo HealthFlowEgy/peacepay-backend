@@ -1,531 +1,669 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers\Api\V1;
 
-use Exception;
-use App\Models\User;
-use App\Models\Escrow;
-use App\Models\UserWallet;
-use App\Models\Dispute;
-use Illuminate\Http\Request;
-use App\Constants\EscrowConstants;
-use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Validator;
+use App\Http\Requests\CreatePeaceLinkRequest;
+use App\Http\Requests\ConfirmDeliveryRequest;
+use App\Http\Requests\AssignDspRequest;
+use App\Http\Resources\PeaceLinkResource;
+use App\Http\Resources\PeaceLinkCollection;
 use App\Services\PeaceLinkService;
-use App\Http\Helpers\Api\Helpers as ApiResponse;
-use App\Notifications\Escrow\EscrowRequest;
+use App\Services\WalletService;
+use App\Services\OtpService;
+use App\Services\NotificationService;
+use App\Enums\PeaceLinkStatus;
+use App\Enums\PeaceLinkRole;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
-/**
- * PeaceLink Controller
- * Handles all PeaceLink (SPH) API endpoints
- * Based on Re-Engineering Specification v2.0
- */
 class PeaceLinkController extends Controller
 {
-    protected PeaceLinkService $peaceLinkService;
+    public function __construct(
+        private readonly PeaceLinkService $peaceLinkService,
+        private readonly WalletService $walletService,
+        private readonly OtpService $otpService,
+        private readonly NotificationService $notificationService
+    ) {}
 
-    public function __construct(PeaceLinkService $peaceLinkService)
+    /**
+     * Get PeaceLinks list with filters
+     * 
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function index(Request $request): JsonResponse
     {
-        $this->peaceLinkService = $peaceLinkService;
+        $validated = $request->validate([
+            'role' => 'sometimes|string|in:buyer,merchant',
+            'status' => 'sometimes|string|in:active,in_transit,completed,cancelled',
+            'per_page' => 'sometimes|integer|min:10|max:50',
+        ]);
+
+        $user = $request->user();
+        $peaceLinks = $this->peaceLinkService->getUserPeaceLinks(
+            $user,
+            $validated['role'] ?? null,
+            $validated['status'] ?? null,
+            $validated['per_page'] ?? 20
+        );
+
+        return response()->json([
+            'success' => true,
+            'data' => new PeaceLinkCollection($peaceLinks),
+        ]);
     }
 
     /**
-     * Get PeaceLink details with proper state-based data
-     * BUG FIX: OTP only visible after DSP assigned
+     * Get single PeaceLink details
+     * 
+     * @param Request $request
+     * @param string $peaceLinkId
+     * @return JsonResponse
      */
-    public function show($id)
+    public function show(Request $request, string $peaceLinkId): JsonResponse
     {
-        $escrow = Escrow::with(['escrowCategory', 'escrowDetails', 'user', 'userWillPay', 'delivery'])
-            ->findOrFail($id);
+        $user = $request->user();
+        $peaceLink = $this->peaceLinkService->getPeaceLink($user, $peaceLinkId);
 
-        $user = auth()->user();
-        $userRole = $this->getUserRole($escrow, $user);
-
-        $data = [
-            'id' => $escrow->id,
-            'reference_number' => $escrow->reference_number ?? $escrow->escrow_id,
-            'escrow_id' => $escrow->escrow_id,
-            'title' => $escrow->title,
-            'status' => $escrow->status,
-            'status_label' => EscrowConstants::getStatusName($escrow->status),
-            'status_label_ar' => EscrowConstants::getStatusNameAr($escrow->status),
-            
-            // Amounts
-            'item_amount' => get_amount($escrow->item_amount ?: $escrow->amount, $escrow->escrow_currency),
-            'delivery_fee' => get_amount($escrow->delivery_fee ?: 0, $escrow->escrow_currency),
-            'total_amount' => get_amount(($escrow->item_amount ?: $escrow->amount) + ($escrow->delivery_fee ?: 0), $escrow->escrow_currency),
-            'delivery_fee_paid_by' => $escrow->delivery_fee_paid_by ?? 'buyer',
-            'advance_percentage' => $escrow->advance_percentage ?? 0,
-            'advance_amount' => get_amount($escrow->advance_amount ?? 0, $escrow->escrow_currency),
-            'advance_paid' => $escrow->advance_paid ?? false,
-            
-            'escrow_currency' => $escrow->escrow_currency,
-            'category' => $escrow->escrowCategory->name ?? null,
-            'remarks' => $escrow->remark,
-            
-            // Parties
-            'merchant' => $this->formatUserData($escrow->user),
-            'buyer' => $this->formatUserData($escrow->userWillPay),
-            'dsp' => $this->formatUserData($escrow->delivery),
-            
-            // User's role in this transaction
-            'user_role' => $userRole,
-            
-            // Timestamps
-            'created_at' => $escrow->created_at,
-            'approved_at' => $escrow->approved_at,
-            'dsp_assigned_at' => $escrow->dsp_assigned_at,
-            'delivered_at' => $escrow->delivered_at,
-            'canceled_at' => $escrow->canceled_at,
-            'expires_at' => $escrow->expires_at,
-            'max_delivery_at' => $escrow->max_delivery_at,
-            
-            // Cancellation info
-            'canceled_by' => $escrow->canceled_by,
-            'cancellation_reason' => $escrow->cancellation_reason,
-            
-            // Actions available based on state and role
-            'actions' => $this->getAvailableActions($escrow, $userRole),
-            
-            // OTP visibility - BUG FIX: Only show after DSP assigned
-            'otp_visible' => EscrowConstants::isOtpVisibleToBuyer($escrow->status),
-        ];
-
-        // Add OTP for buyer only when DSP is assigned
-        if ($userRole === 'buyer' && EscrowConstants::isOtpVisibleToBuyer($escrow->status)) {
-            $data['pin_code'] = $escrow->pin_code;
+        if (!$peaceLink) {
+            return response()->json([
+                'success' => false,
+                'message' => 'معاملة PeaceLink غير موجودة',
+            ], 404);
         }
 
-        // Add DSP assignment field visibility for merchant
-        if ($userRole === 'merchant') {
-            // BUG FIX: DSP field should be hidden until buyer approves
-            $data['can_assign_dsp'] = $escrow->status === EscrowConstants::SPH_ACTIVE;
-            $data['can_change_dsp'] = in_array($escrow->status, [EscrowConstants::DSP_ASSIGNED, EscrowConstants::OTP_GENERATED]) 
-                && ($escrow->dsp_reassignment_count ?? 0) < EscrowConstants::MAX_DSP_REASSIGNMENTS;
-        }
-
-        $message = ['success' => [__('PeaceLink details')]];
-        return ApiResponse::success($message, $data);
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'peacelink' => new PeaceLinkResource($peaceLink),
+            ]
+        ]);
     }
 
     /**
-     * Get available actions based on status and user role
+     * Create new PeaceLink (buyer initiates)
+     * 
+     * @param CreatePeaceLinkRequest $request
+     * @return JsonResponse
      */
-    protected function getAvailableActions(Escrow $escrow, string $userRole): array
+    public function store(CreatePeaceLinkRequest $request): JsonResponse
     {
-        $actions = [];
-        $status = $escrow->status;
+        $buyer = $request->user();
 
-        switch ($userRole) {
-            case 'buyer':
-                // BUG FIX: Correct button label - "Cancel Order" not "Return Item"
-                if (EscrowConstants::canBuyerCancel($status)) {
-                    $actions[] = [
-                        'action' => 'cancel',
-                        'label' => 'Cancel Order',
-                        'label_ar' => 'إلغاء الطلب',
-                        'enabled' => true,
-                    ];
-                }
-                
-                if ($status === EscrowConstants::DELIVERED) {
-                    $actions[] = [
-                        'action' => 'dispute',
-                        'label' => 'Report Issue',
-                        'label_ar' => 'الإبلاغ عن مشكلة',
-                        'enabled' => true,
-                    ];
-                }
-                break;
+        try {
+            // Calculate total with fees
+            $fees = $this->peaceLinkService->calculateFees(
+                $request->item_amount,
+                $request->delivery_fee ?? 0,
+                $request->buyer_pays_delivery
+            );
 
-            case 'merchant':
-                // BUG FIX: Show Cancel button after DSP assignment
-                if (EscrowConstants::canMerchantCancel($status)) {
-                    $actions[] = [
-                        'action' => 'cancel',
-                        'label' => 'Cancel PeaceLink',
-                        'label_ar' => 'إلغاء الرابط',
-                        'enabled' => true,
-                    ];
-                }
+            $totalRequired = $fees['total_buyer_pays'];
 
-                if ($status === EscrowConstants::SPH_ACTIVE) {
-                    $actions[] = [
-                        'action' => 'assign_dsp',
-                        'label' => 'Assign Delivery',
-                        'label_ar' => 'تعيين التوصيل',
-                        'enabled' => true,
-                    ];
-                }
+            // Validate buyer balance
+            $this->walletService->validateBalance($buyer, $totalRequired);
 
-                // BUG FIX: Add "Change DSP" button
-                if (in_array($status, [EscrowConstants::DSP_ASSIGNED, EscrowConstants::OTP_GENERATED])) {
-                    $canChange = ($escrow->dsp_reassignment_count ?? 0) < EscrowConstants::MAX_DSP_REASSIGNMENTS;
-                    $actions[] = [
-                        'action' => 'change_dsp',
-                        'label' => 'Change Delivery',
-                        'label_ar' => 'تغيير التوصيل',
-                        'enabled' => $canChange,
-                        'reason' => $canChange ? null : 'Maximum reassignments reached',
-                    ];
-                }
+            // Find merchant
+            $merchant = $this->walletService->searchUserByPhone(
+                $request->merchant_phone,
+                $buyer->id
+            );
 
-                if ($status === EscrowConstants::DELIVERED) {
-                    $actions[] = [
-                        'action' => 'dispute',
-                        'label' => 'Report Issue',
-                        'label_ar' => 'الإبلاغ عن مشكلة',
-                        'enabled' => true,
-                    ];
-                }
-                break;
+            if (!$merchant) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'التاجر غير موجود',
+                ], 404);
+            }
 
-            case 'dsp':
-                // BUG FIX: Add "Cancel Delivery" button for DSP
-                if (EscrowConstants::canDspCancel($status)) {
-                    $actions[] = [
-                        'action' => 'cancel_delivery',
-                        'label' => 'Cancel Delivery',
-                        'label_ar' => 'إلغاء التوصيل',
-                        'enabled' => true,
-                    ];
-                }
+            // Create PeaceLink and hold funds
+            $peaceLink = DB::transaction(function () use ($buyer, $merchant, $request, $fees) {
+                // Create PeaceLink record
+                $peaceLink = $this->peaceLinkService->create([
+                    'buyer_id' => $buyer->id,
+                    'merchant_id' => $merchant->id,
+                    'product_description' => $request->product_description,
+                    'item_amount' => $request->item_amount,
+                    'delivery_fee' => $request->delivery_fee ?? 0,
+                    'buyer_pays_delivery' => $request->buyer_pays_delivery,
+                    'platform_fee' => $fees['platform_fee'],
+                    'delivery_address' => $request->delivery_address,
+                    'delivery_notes' => $request->delivery_notes,
+                    'use_internal_dsp' => $request->use_internal_dsp ?? false,
+                ]);
 
-                if (in_array($status, [EscrowConstants::DSP_ASSIGNED, EscrowConstants::OTP_GENERATED])) {
-                    $actions[] = [
-                        'action' => 'enter_otp',
-                        'label' => 'Enter OTP',
-                        'label_ar' => 'إدخال رمز التحقق',
-                        'enabled' => true,
-                    ];
-                }
-                break;
+                // Hold funds from buyer wallet
+                $this->walletService->holdFunds(
+                    $buyer,
+                    $fees['total_buyer_pays'],
+                    'peacelink',
+                    $peaceLink->id
+                );
+
+                // Update status to funded
+                $peaceLink->update(['status' => PeaceLinkStatus::FUNDED]);
+
+                return $peaceLink;
+            });
+
+            // Notify merchant
+            $this->notificationService->notifyNewPeaceLink($peaceLink);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'تم إنشاء معاملة PeaceLink بنجاح',
+                'data' => [
+                    'peacelink' => new PeaceLinkResource($peaceLink->fresh(['buyer', 'merchant'])),
+                    'fees' => $fees,
+                ]
+            ], 201);
+
+        } catch (\App\Exceptions\InsufficientBalanceException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'رصيدك غير كافي لإتمام هذه المعاملة',
+                'data' => [
+                    'available' => $e->getAvailable(),
+                    'required' => $e->getRequired(),
+                ]
+            ], 422);
+
+        } catch (\Exception $e) {
+            Log::error('PeaceLink creation failed', [
+                'buyer_id' => $buyer->id,
+                'error' => $e->getMessage()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'فشل في إنشاء معاملة PeaceLink',
+            ], 500);
+        }
+    }
+
+    /**
+     * Calculate PeaceLink fees
+     * 
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function calculateFees(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'item_amount' => 'required|numeric|min:50',
+            'delivery_fee' => 'sometimes|numeric|min:0',
+            'buyer_pays_delivery' => 'sometimes|boolean',
+        ]);
+
+        $fees = $this->peaceLinkService->calculateFees(
+            $validated['item_amount'],
+            $validated['delivery_fee'] ?? 0,
+            $validated['buyer_pays_delivery'] ?? true
+        );
+
+        return response()->json([
+            'success' => true,
+            'data' => $fees,
+        ]);
+    }
+
+    /**
+     * Merchant accepts PeaceLink
+     * 
+     * @param Request $request
+     * @param string $peaceLinkId
+     * @return JsonResponse
+     */
+    public function accept(Request $request, string $peaceLinkId): JsonResponse
+    {
+        $user = $request->user();
+        $peaceLink = $this->peaceLinkService->getPeaceLink($user, $peaceLinkId);
+
+        if (!$peaceLink) {
+            return response()->json([
+                'success' => false,
+                'message' => 'معاملة PeaceLink غير موجودة',
+            ], 404);
         }
 
-        return $actions;
+        // Verify user is merchant
+        if ($peaceLink->merchant_id !== $user->id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'غير مصرح لك بهذا الإجراء',
+            ], 403);
+        }
+
+        // Verify status
+        if ($peaceLink->status !== PeaceLinkStatus::FUNDED) {
+            return response()->json([
+                'success' => false,
+                'message' => 'لا يمكن قبول هذه المعاملة في حالتها الحالية',
+            ], 422);
+        }
+
+        try {
+            $peaceLink = $this->peaceLinkService->acceptPeaceLink($peaceLink);
+
+            // Notify buyer
+            $this->notificationService->notifyPeaceLinkAccepted($peaceLink);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'تم قبول المعاملة بنجاح',
+                'data' => [
+                    'peacelink' => new PeaceLinkResource($peaceLink),
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'فشل في قبول المعاملة',
+            ], 500);
+        }
     }
 
     /**
      * Assign DSP to PeaceLink
+     * 
+     * @param AssignDspRequest $request
+     * @param string $peaceLinkId
+     * @return JsonResponse
      */
-    public function assignDsp(Request $request, $id)
+    public function assignDsp(AssignDspRequest $request, string $peaceLinkId): JsonResponse
     {
-        $validator = Validator::make($request->all(), [
-            'dsp_mobile' => 'required|string|exists:users,mobile',
-            'dsp_wallet_number' => 'nullable|string',
-        ]);
+        $user = $request->user();
+        $peaceLink = $this->peaceLinkService->getPeaceLink($user, $peaceLinkId);
 
-        if ($validator->fails()) {
-            return ApiResponse::validation(['error' => $validator->errors()->all()]);
+        if (!$peaceLink) {
+            return response()->json([
+                'success' => false,
+                'message' => 'معاملة PeaceLink غير موجودة',
+            ], 404);
         }
 
-        $escrow = Escrow::findOrFail($id);
-        $user = auth()->user();
-
-        // Verify user is the merchant
-        if ($escrow->user_id !== $user->id) {
-            return ApiResponse::error(['error' => [__('Unauthorized')]]);
-        }
-
-        // Verify status
-        if ($escrow->status !== EscrowConstants::SPH_ACTIVE) {
-            return ApiResponse::error(['error' => [__('DSP can only be assigned when SPH is active')]]);
-        }
-
-        $dsp = User::where('mobile', $request->dsp_mobile)->first();
-        
-        if (!$dsp || $dsp->type !== 'delivery') {
-            return ApiResponse::error(['error' => [__('Invalid DSP wallet')]]);
+        // Only merchant or admin can assign DSP
+        if ($peaceLink->merchant_id !== $user->id && !$user->isAdmin()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'غير مصرح لك بهذا الإجراء',
+            ], 403);
         }
 
         try {
-            $result = $this->peaceLinkService->assignDsp(
-                $escrow, 
-                $dsp, 
-                $request->dsp_wallet_number
+            $peaceLink = $this->peaceLinkService->assignDsp(
+                $peaceLink,
+                $request->dsp_id,
+                $request->estimated_delivery_date
             );
 
-            // TODO: Send OTP to buyer via SMS
-            // SmsService::sendOtp($escrow->userWillPay->mobile, $result['otp']);
+            // Notify all parties
+            $this->notificationService->notifyDspAssigned($peaceLink);
 
-            return ApiResponse::success(['success' => [__('DSP assigned successfully')]], [
-                'escrow' => $result['escrow'],
-                'otp_sent' => true,
+            return response()->json([
+                'success' => true,
+                'message' => 'تم تعيين مندوب التوصيل',
+                'data' => [
+                    'peacelink' => new PeaceLinkResource($peaceLink),
+                ]
             ]);
-        } catch (Exception $e) {
-            return ApiResponse::error(['error' => [$e->getMessage()]]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'فشل في تعيين مندوب التوصيل',
+            ], 500);
         }
     }
 
     /**
-     * Change DSP (reassign)
+     * Update delivery status to in-transit
+     * 
+     * @param Request $request
+     * @param string $peaceLinkId
+     * @return JsonResponse
      */
-    public function changeDsp(Request $request, $id)
+    public function markInTransit(Request $request, string $peaceLinkId): JsonResponse
     {
-        $validator = Validator::make($request->all(), [
-            'dsp_mobile' => 'required|string|exists:users,mobile',
-            'reason' => 'required|string|max:500',
-        ]);
+        $user = $request->user();
+        $peaceLink = $this->peaceLinkService->getPeaceLink($user, $peaceLinkId);
 
-        if ($validator->fails()) {
-            return ApiResponse::validation(['error' => $validator->errors()->all()]);
+        if (!$peaceLink) {
+            return response()->json([
+                'success' => false,
+                'message' => 'معاملة PeaceLink غير موجودة',
+            ], 404);
         }
 
-        $escrow = Escrow::findOrFail($id);
-        $user = auth()->user();
+        // Only DSP or merchant can mark in transit
+        $isDsp = $peaceLink->dsp_id === $user->id;
+        $isMerchant = $peaceLink->merchant_id === $user->id;
 
-        // Verify user is the merchant
-        if ($escrow->user_id !== $user->id) {
-            return ApiResponse::error(['error' => [__('Unauthorized')]]);
+        if (!$isDsp && !$isMerchant) {
+            return response()->json([
+                'success' => false,
+                'message' => 'غير مصرح لك بهذا الإجراء',
+            ], 403);
         }
 
-        // Verify status allows reassignment
-        if (!in_array($escrow->status, [EscrowConstants::DSP_ASSIGNED, EscrowConstants::OTP_GENERATED])) {
-            return ApiResponse::error(['error' => [__('Cannot change DSP in current state')]]);
-        }
-
-        // Check reassignment limit
-        if (($escrow->dsp_reassignment_count ?? 0) >= EscrowConstants::MAX_DSP_REASSIGNMENTS) {
-            return ApiResponse::error(['error' => [__('Maximum DSP reassignments reached')]]);
-        }
-
-        $newDsp = User::where('mobile', $request->dsp_mobile)->first();
-        
-        if (!$newDsp || $newDsp->type !== 'delivery') {
-            return ApiResponse::error(['error' => [__('Invalid DSP wallet')]]);
+        if (!in_array($peaceLink->status, [PeaceLinkStatus::FUNDED, PeaceLinkStatus::DSP_ASSIGNED])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'لا يمكن تحديث حالة هذه المعاملة',
+            ], 422);
         }
 
         try {
-            // Reset to SPH_ACTIVE first
-            $escrow->status = EscrowConstants::SPH_ACTIVE;
-            $escrow->save();
+            $peaceLink = $this->peaceLinkService->markInTransit($peaceLink);
 
-            // Then assign new DSP
-            $result = $this->peaceLinkService->assignDsp($escrow, $newDsp);
+            // Notify buyer
+            $this->notificationService->notifyInTransit($peaceLink);
 
-            return ApiResponse::success(['success' => [__('DSP changed successfully')]], [
-                'escrow' => $result['escrow'],
+            return response()->json([
+                'success' => true,
+                'message' => 'تم تحديث الحالة إلى "في الطريق"',
+                'data' => [
+                    'peacelink' => new PeaceLinkResource($peaceLink),
+                ]
             ]);
-        } catch (Exception $e) {
-            return ApiResponse::error(['error' => [$e->getMessage()]]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'فشل في تحديث الحالة',
+            ], 500);
         }
     }
 
     /**
-     * Cancel PeaceLink
+     * Generate delivery OTP (called by DSP on arrival)
+     * 
+     * @param Request $request
+     * @param string $peaceLinkId
+     * @return JsonResponse
      */
-    public function cancel(Request $request, $id)
+    public function generateDeliveryOtp(Request $request, string $peaceLinkId): JsonResponse
     {
-        $validator = Validator::make($request->all(), [
-            'reason' => 'nullable|string|max:500',
-        ]);
+        $user = $request->user();
+        $peaceLink = $this->peaceLinkService->getPeaceLink($user, $peaceLinkId);
 
-        if ($validator->fails()) {
-            return ApiResponse::validation(['error' => $validator->errors()->all()]);
+        if (!$peaceLink) {
+            return response()->json([
+                'success' => false,
+                'message' => 'معاملة PeaceLink غير موجودة',
+            ], 404);
         }
 
-        $escrow = Escrow::findOrFail($id);
-        $user = auth()->user();
-        $userRole = $this->getUserRole($escrow, $user);
+        // Only DSP or merchant can generate OTP
+        $isDsp = $peaceLink->dsp_id === $user->id;
+        $isMerchant = $peaceLink->merchant_id === $user->id && !$peaceLink->use_internal_dsp;
 
-        // Determine cancellation party
-        $canceledBy = match($userRole) {
-            'buyer' => EscrowConstants::CANCEL_BY_BUYER,
-            'merchant' => EscrowConstants::CANCEL_BY_MERCHANT,
-            'dsp' => EscrowConstants::CANCEL_BY_DSP,
-            default => null,
-        };
-
-        if (!$canceledBy) {
-            return ApiResponse::error(['error' => [__('Unauthorized')]]);
+        if (!$isDsp && !$isMerchant) {
+            return response()->json([
+                'success' => false,
+                'message' => 'غير مصرح لك بهذا الإجراء',
+            ], 403);
         }
 
-        // Verify cancellation is allowed
-        $canCancel = match($canceledBy) {
-            EscrowConstants::CANCEL_BY_BUYER => EscrowConstants::canBuyerCancel($escrow->status),
-            EscrowConstants::CANCEL_BY_MERCHANT => EscrowConstants::canMerchantCancel($escrow->status),
-            EscrowConstants::CANCEL_BY_DSP => EscrowConstants::canDspCancel($escrow->status),
-            default => false,
-        };
-
-        if (!$canCancel) {
-            return ApiResponse::error(['error' => [__('Cannot cancel in current state')]]);
+        if ($peaceLink->status !== PeaceLinkStatus::IN_TRANSIT) {
+            return response()->json([
+                'success' => false,
+                'message' => 'المعاملة ليست في حالة التوصيل',
+            ], 422);
         }
 
         try {
-            // Special handling for DSP cancel - just remove DSP, don't cancel the whole transaction
-            if ($canceledBy === EscrowConstants::CANCEL_BY_DSP) {
-                $escrow->delivery_id = null;
-                $escrow->dsp_wallet_number = null;
-                $escrow->otp_hash = null;
-                $escrow->otp_generated_at = null;
-                $escrow->otp_expires_at = null;
-                $escrow->otp_attempts = 0;
-                $escrow->status = EscrowConstants::SPH_ACTIVE;
-                $escrow->dsp_assigned_at = null;
-                $escrow->save();
+            $otp = $this->otpService->generateDeliveryOtp($peaceLink);
 
-                return ApiResponse::success(['success' => [__('Delivery canceled. Awaiting new DSP assignment.')]], [
-                    'escrow' => $escrow->fresh(),
-                ]);
-            }
+            // Send OTP to buyer via SMS
+            $this->notificationService->sendDeliveryOtp($peaceLink, $otp);
 
-            $result = $this->peaceLinkService->processCancellation(
-                $escrow,
-                $canceledBy,
-                $request->reason
-            );
-
-            return ApiResponse::success(['success' => [__('PeaceLink canceled successfully')]], [
-                'escrow' => $result['escrow'],
-                'refund_details' => $result['refund_details'],
+            return response()->json([
+                'success' => true,
+                'message' => 'تم إرسال رمز التأكيد للمشتري',
+                'data' => [
+                    'expires_in' => 300, // 5 minutes
+                ]
             ]);
-        } catch (Exception $e) {
-            return ApiResponse::error(['error' => [$e->getMessage()]]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'فشل في إنشاء رمز التأكيد',
+            ], 500);
         }
     }
 
     /**
-     * Verify OTP and complete delivery
+     * Confirm delivery with OTP (buyer confirms)
+     * 
+     * @param ConfirmDeliveryRequest $request
+     * @param string $peaceLinkId
+     * @return JsonResponse
      */
-    public function verifyOtp(Request $request, $id)
+    public function confirmDelivery(ConfirmDeliveryRequest $request, string $peaceLinkId): JsonResponse
     {
-        $validator = Validator::make($request->all(), [
-            'otp' => 'required|string|size:6',
-        ]);
+        $user = $request->user();
+        $peaceLink = $this->peaceLinkService->getPeaceLink($user, $peaceLinkId);
 
-        if ($validator->fails()) {
-            return ApiResponse::validation(['error' => $validator->errors()->all()]);
+        if (!$peaceLink) {
+            return response()->json([
+                'success' => false,
+                'message' => 'معاملة PeaceLink غير موجودة',
+            ], 404);
         }
 
-        $escrow = Escrow::findOrFail($id);
-        $user = auth()->user();
-
-        // Verify user is the DSP
-        if ($escrow->delivery_id !== $user->id) {
-            return ApiResponse::error(['error' => [__('Unauthorized')]]);
+        // Only buyer can confirm delivery
+        if ($peaceLink->buyer_id !== $user->id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'غير مصرح لك بهذا الإجراء',
+            ], 403);
         }
 
-        // Verify status
-        if (!in_array($escrow->status, [EscrowConstants::DSP_ASSIGNED, EscrowConstants::OTP_GENERATED])) {
-            return ApiResponse::error(['error' => [__('Invalid state for OTP verification')]]);
+        if ($peaceLink->status !== PeaceLinkStatus::IN_TRANSIT) {
+            return response()->json([
+                'success' => false,
+                'message' => 'المعاملة ليست في حالة التوصيل',
+            ], 422);
         }
 
         try {
             // Verify OTP
-            if (!$this->peaceLinkService->verifyOtp($escrow, $request->otp)) {
-                return ApiResponse::error(['error' => [__('Invalid OTP')]]);
+            $otpResult = $this->otpService->verifyDeliveryOtp(
+                $peaceLink,
+                $request->otp
+            );
+
+            if (!$otpResult['valid']) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $otpResult['message'],
+                    'data' => [
+                        'attempts_remaining' => $otpResult['attempts_remaining'] ?? 0
+                    ]
+                ], 422);
             }
 
-            // Process delivery
-            $result = $this->peaceLinkService->processDelivery($escrow, $user);
+            // Complete delivery and release funds
+            $result = DB::transaction(function () use ($peaceLink) {
+                // Mark as delivered
+                $peaceLink = $this->peaceLinkService->markDelivered($peaceLink);
 
-            return ApiResponse::success(['success' => [__('Delivery confirmed successfully')]], [
-                'escrow' => $result['escrow'],
-                'merchant_payout' => $result['merchant_payout'],
+                // Release funds to merchant
+                $this->walletService->releaseFunds($peaceLink);
+
+                // Pay DSP if internal
+                if ($peaceLink->use_internal_dsp && $peaceLink->dsp_id) {
+                    $this->walletService->payDsp($peaceLink);
+                }
+
+                // Update status to released
+                $peaceLink->update(['status' => PeaceLinkStatus::RELEASED]);
+
+                return $peaceLink;
+            });
+
+            // Notify all parties
+            $this->notificationService->notifyDeliveryCompleted($result);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'تم تأكيد الاستلام وإتمام المعاملة بنجاح',
+                'data' => [
+                    'peacelink' => new PeaceLinkResource($result),
+                ]
             ]);
-        } catch (Exception $e) {
-            return ApiResponse::error(['error' => [$e->getMessage()]]);
+
+        } catch (\Exception $e) {
+            Log::error('Delivery confirmation failed', [
+                'peacelink_id' => $peaceLinkId,
+                'error' => $e->getMessage()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'فشل في تأكيد الاستلام',
+            ], 500);
         }
     }
 
     /**
-     * Open a dispute
+     * Cancel PeaceLink (before in-transit)
+     * 
+     * @param Request $request
+     * @param string $peaceLinkId
+     * @return JsonResponse
      */
-    public function openDispute(Request $request, $id)
+    public function cancel(Request $request, string $peaceLinkId): JsonResponse
     {
-        $validator = Validator::make($request->all(), [
-            'reason' => 'required|string|max:1000',
-            'reason_ar' => 'nullable|string|max:1000',
-            'evidence_urls' => 'nullable|array',
-            'evidence_urls.*' => 'url',
+        $validated = $request->validate([
+            'reason' => 'required|string|min:10|max:500',
         ]);
 
-        if ($validator->fails()) {
-            return ApiResponse::validation(['error' => $validator->errors()->all()]);
+        $user = $request->user();
+        $peaceLink = $this->peaceLinkService->getPeaceLink($user, $peaceLinkId);
+
+        if (!$peaceLink) {
+            return response()->json([
+                'success' => false,
+                'message' => 'معاملة PeaceLink غير موجودة',
+            ], 404);
         }
 
-        $escrow = Escrow::findOrFail($id);
-        $user = auth()->user();
-        $userRole = $this->getUserRole($escrow, $user);
+        // Both buyer and merchant can cancel before in-transit
+        $isBuyer = $peaceLink->buyer_id === $user->id;
+        $isMerchant = $peaceLink->merchant_id === $user->id;
 
-        // Verify user is involved in the transaction
-        if (!in_array($userRole, ['buyer', 'merchant', 'dsp'])) {
-            return ApiResponse::error(['error' => [__('Unauthorized')]]);
+        if (!$isBuyer && !$isMerchant) {
+            return response()->json([
+                'success' => false,
+                'message' => 'غير مصرح لك بهذا الإجراء',
+            ], 403);
         }
 
-        // Check if dispute already exists
-        $existingDispute = Dispute::where('escrow_id', $escrow->id)
-            ->whereNotIn('status', [EscrowConstants::DISPUTE_RESOLVED_BUYER, EscrowConstants::DISPUTE_RESOLVED_MERCHANT, EscrowConstants::DISPUTE_RESOLVED_SPLIT])
-            ->first();
+        // Can only cancel before in-transit
+        $cancellableStatuses = [
+            PeaceLinkStatus::PENDING,
+            PeaceLinkStatus::FUNDED,
+            PeaceLinkStatus::DSP_ASSIGNED,
+        ];
 
-        if ($existingDispute) {
-            return ApiResponse::error(['error' => [__('A dispute already exists for this transaction')]]);
+        if (!in_array($peaceLink->status, $cancellableStatuses)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'لا يمكن إلغاء هذه المعاملة في حالتها الحالية. يرجى فتح نزاع إذا لزم الأمر',
+            ], 422);
         }
 
         try {
-            DB::beginTransaction();
+            $peaceLink = DB::transaction(function () use ($peaceLink, $user, $validated) {
+                // Refund buyer
+                $this->walletService->refundHeldFunds($peaceLink);
 
-            // Create dispute
-            $dispute = Dispute::create([
-                'escrow_id' => $escrow->id,
-                'opened_by' => $user->id,
-                'opened_by_role' => $userRole,
-                'status' => EscrowConstants::DISPUTE_OPEN,
-                'reason' => $request->reason,
-                'reason_ar' => $request->reason_ar,
-                'evidence_urls' => $request->evidence_urls,
+                // Update status
+                $peaceLink = $this->peaceLinkService->cancel(
+                    $peaceLink,
+                    $user->id,
+                    $validated['reason']
+                );
+
+                return $peaceLink;
+            });
+
+            // Notify parties
+            $this->notificationService->notifyPeaceLinkCancelled($peaceLink);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'تم إلغاء المعاملة واسترداد المبلغ',
+                'data' => [
+                    'peacelink' => new PeaceLinkResource($peaceLink),
+                ]
             ]);
 
-            // Update escrow status
-            $escrow->status = EscrowConstants::ACTIVE_DISPUTE;
-            $escrow->save();
-
-            DB::commit();
-
-            return ApiResponse::success(['success' => [__('Dispute opened successfully')]], [
-                'dispute' => $dispute,
-                'escrow' => $escrow->fresh(),
+        } catch (\Exception $e) {
+            Log::error('PeaceLink cancellation failed', [
+                'peacelink_id' => $peaceLinkId,
+                'error' => $e->getMessage()
             ]);
-        } catch (Exception $e) {
-            DB::rollBack();
-            return ApiResponse::error(['error' => [$e->getMessage()]]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'فشل في إلغاء المعاملة',
+            ], 500);
         }
     }
 
     /**
-     * Get user's role in the escrow
+     * Get PeaceLink timeline/history
+     * 
+     * @param Request $request
+     * @param string $peaceLinkId
+     * @return JsonResponse
      */
-    protected function getUserRole(Escrow $escrow, User $user): string
+    public function timeline(Request $request, string $peaceLinkId): JsonResponse
     {
-        if ($escrow->user_id === $user->id) {
-            return 'merchant';
+        $user = $request->user();
+        $peaceLink = $this->peaceLinkService->getPeaceLink($user, $peaceLinkId);
+
+        if (!$peaceLink) {
+            return response()->json([
+                'success' => false,
+                'message' => 'معاملة PeaceLink غير موجودة',
+            ], 404);
         }
-        if ($escrow->buyer_or_seller_id === $user->id) {
-            return 'buyer';
-        }
-        if ($escrow->delivery_id === $user->id) {
-            return 'dsp';
-        }
-        return 'unknown';
+
+        $timeline = $this->peaceLinkService->getTimeline($peaceLink);
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'timeline' => $timeline,
+            ]
+        ]);
     }
 
     /**
-     * Format user data for response
+     * Get PeaceLink statistics for user
+     * 
+     * @param Request $request
+     * @return JsonResponse
      */
-    protected function formatUserData(?User $user): ?array
+    public function statistics(Request $request): JsonResponse
     {
-        if (!$user) {
-            return null;
-        }
+        $user = $request->user();
+        $stats = $this->peaceLinkService->getUserStatistics($user);
 
-        return [
-            'id' => $user->id,
-            'name' => $user->fullname ?? $user->firstname . ' ' . $user->lastname,
-            'mobile' => $user->mobile,
-            'type' => $user->type,
-        ];
+        return response()->json([
+            'success' => true,
+            'data' => $stats,
+        ]);
     }
 }
