@@ -902,8 +902,9 @@ class EscrowActionController extends Controller
         if(!$escrow){
             return ApiResponse::onlyError(['error' => [__('You are not authorized to access this page')]]);
         }
+
         if (!(auth()->user()->type == "delivery")) {
-            return ApiResponse::onlyError(['error' => [__('You are not authorized to access this page')]]);
+            return ApiResponse::onlyError(['error' => [__('You are not authorized to access this page ' . auth()->user()->type)]]);
         }
 
         // Get raw pin_code from database without accessor
@@ -912,81 +913,83 @@ class EscrowActionController extends Controller
             return ApiResponse::onlyError(['error' => [__('Pin code is not matched')]]);
         }
 
-        $escrow->delivery_id = auth()->user()->id;
-
-        
-        $merchantDoesDelivery = isset($escrow->policies[0]->fields['who_will_deliver']) && $escrow->policies[0]->fields['who_will_deliver'] == 'merchant';
-
-        // Capture delivery user's pricing tier at the moment they accept
-        $deliveryUser = auth()->user();
-
-        if ($merchantDoesDelivery) {
-            // If merchant does delivery themselves, no delivery calculations
-            $escrow->delivery_tier_fixed_charge = 0;
-            $escrow->delivery_tier_percent_charge = 0;
-        } else {
-            // Normal delivery flow - check for pricing tier
-            $deliveryTier = $deliveryUser->getPricingTierByType(\App\Models\PricingTier::TYPE_DELIVERY);
-
-            if ($deliveryTier) {
-                // Use user's pricing tier
-                $escrow->delivery_tier_fixed_charge = $deliveryTier->fixed_charge;
-                $escrow->delivery_tier_percent_charge = $deliveryTier->percent_charge;
-            } else {
-                // Use default admin delivery fees
-                $escrow->delivery_tier_fixed_charge = getAdminDeliveryFeesFixed();
-                $escrow->delivery_tier_percent_charge = getAdminDeliveryFeesPercentage();
-            }
-        }
-
-        $escrow->save();
-
-        // Calculate and update delivery fees and delivery_get in escrow_details
-        $deliveryFeeAmount = getDeliveryAmountOnEscrow($escrow);
-
-        if ($merchantDoesDelivery) {
-            // Merchant does delivery, no calculations
-            $deliveryFees = 0;
-            $deliveryGet = 0;
-        } else {
-            // Calculate admin fees from delivery amount
-            $deliveryFees = ($deliveryFeeAmount * ($escrow->delivery_tier_percent_charge / 100)) + $escrow->delivery_tier_fixed_charge;
-            $deliveryGet = $deliveryFeeAmount - $deliveryFees;
-        }
-
-        if ($escrow->escrowDetails && !$merchantDoesDelivery) {
-            $escrow->escrowDetails->update([
-                'delivery_fees' => $deliveryFees,
-                'delivery_get' => $deliveryGet
-            ]);
-        }
-
-        $user      = User::findOrFail($escrow->user_id == auth()->user()->id ? $escrow->buyer_or_seller_id : $escrow->user_id);
-        //status check 
+        //status check
         if ($escrow->status != EscrowConstants::ONGOING) {
-            return ApiResponse::onlyError(['error' => [__('Something went wrong')]]);
+            return ApiResponse::onlyError(['error' => [__('escrow status is not ONGOING')]]);
         }
-        //select wallet id 
+
+        $user = User::findOrFail($escrow->user_id == auth()->user()->id ? $escrow->buyer_or_seller_id : $escrow->user_id);
+
+        //select wallet id
         $wallet_user_id = $escrow->user_id == auth()->user()->id && $escrow->role == "buyer" ? $escrow->buyer_or_seller_id : $escrow->user_id;
-        $user_wallet           = UserWallet::where('user_id', $wallet_user_id)->where('currency_id', $escrow->escrowCurrency->id)->first();
+        $user_wallet = UserWallet::where('user_id', $wallet_user_id)->where('currency_id', $escrow->escrowCurrency->id)->first();
         if (empty($user_wallet)) return ApiResponse::onlyError(['error' => [__('Seller Wallet not found')]]);
-
-        $release = releasePaymentToMerchant($escrow, $user_wallet);
-        $user_wallet = $release['user_wallet'];
-        $delivery_wallet = $release['delivery_wallet'];
-
-        $escrow->status = EscrowConstants::RELEASED;
-
-        // Add delivery incentive balance
-        $basic_settings = BasicSettings::first();
-        $delivery_incentive = 0;
-        if ($basic_settings && $basic_settings->incentive_balance_delivery > 0) {
-            $delivery_incentive = $basic_settings->incentive_balance_delivery;
-            $delivery_wallet->balance += $delivery_incentive;
-        }
 
         DB::beginTransaction();
         try {
+            $escrow->delivery_id = auth()->user()->id;
+
+
+            $merchantDoesDelivery = isset($escrow->policies[0]->fields['who_will_deliver']) && $escrow->policies[0]->fields['who_will_deliver'] == 'merchant';
+
+            // Capture delivery user's pricing tier at the moment they accept
+            $deliveryUser = auth()->user();
+
+            if ($merchantDoesDelivery) {
+                // If merchant does delivery themselves, no delivery calculations
+                $escrow->delivery_tier_fixed_charge = 0;
+                $escrow->delivery_tier_percent_charge = 0;
+            } else {
+                // Normal delivery flow - check for pricing tier
+                $deliveryTier = $deliveryUser->getPricingTierByType(\App\Models\PricingTier::TYPE_DELIVERY);
+
+                if ($deliveryTier) {
+                    // Use user's pricing tier
+                    $escrow->delivery_tier_fixed_charge = $deliveryTier->fixed_charge;
+                    $escrow->delivery_tier_percent_charge = $deliveryTier->percent_charge;
+                } else {
+                    // Use default admin delivery fees
+                    $escrow->delivery_tier_fixed_charge = getAdminDeliveryFeesFixed();
+                    $escrow->delivery_tier_percent_charge = getAdminDeliveryFeesPercentage();
+                }
+            }
+
+            $escrow->save();
+
+            // Calculate and update delivery fees and delivery_get in escrow_details
+            $deliveryFeeAmount = getDeliveryAmountOnEscrow($escrow);
+
+            if ($merchantDoesDelivery) {
+                // Merchant does delivery, no calculations
+                $deliveryFees = 0;
+                $deliveryGet = 0;
+            } else {
+                // Calculate admin fees from delivery amount
+                $deliveryFees = ($deliveryFeeAmount * ($escrow->delivery_tier_percent_charge / 100)) + $escrow->delivery_tier_fixed_charge;
+                $deliveryGet = $deliveryFeeAmount - $deliveryFees;
+            }
+
+            if ($escrow->escrowDetails && !$merchantDoesDelivery) {
+                $escrow->escrowDetails->update([
+                    'delivery_fees' => $deliveryFees,
+                    'delivery_get' => $deliveryGet
+                ]);
+            }
+
+            $release = releasePaymentToMerchant($escrow, $user_wallet);
+            $user_wallet = $release['user_wallet'];
+            $delivery_wallet = $release['delivery_wallet'];
+
+            $escrow->status = EscrowConstants::RELEASED;
+
+            // Add delivery incentive balance
+            $basic_settings = BasicSettings::first();
+            $delivery_incentive = 0;
+            if ($basic_settings && $basic_settings->incentive_balance_delivery > 0) {
+                $delivery_incentive = $basic_settings->incentive_balance_delivery;
+                $delivery_wallet->balance += $delivery_incentive;
+            }
+
             $user_wallet->save();
             $delivery_wallet->save();
             $escrow->save();
