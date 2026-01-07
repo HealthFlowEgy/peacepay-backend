@@ -4,6 +4,14 @@
 # Stage 1: Composer dependencies
 FROM composer:2.6 AS composer
 
+# Install gd extension for composer stage
+RUN apk add --no-cache \
+    libpng-dev \
+    libjpeg-turbo-dev \
+    freetype-dev \
+    && docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install -j$(nproc) gd
+
 WORKDIR /app
 
 COPY composer.json composer.lock ./
