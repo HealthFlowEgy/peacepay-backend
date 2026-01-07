@@ -86,7 +86,9 @@ WORKDIR /var/www/html
 COPY --from=composer /app .
 
 # Create required directories first (before setting permissions)
-RUN mkdir -p ./public/build \
+RUN mkdir -p /var/log/supervisor \
+    && mkdir -p /var/log/nginx \
+    && mkdir -p ./public/build \
     && mkdir -p ./storage/logs \
     && mkdir -p ./storage/framework/sessions \
     && mkdir -p ./storage/framework/views \
