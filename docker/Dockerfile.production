@@ -85,8 +85,8 @@ WORKDIR /var/www/html
 # Copy application from composer stage
 COPY --from=composer /app .
 
-# Copy built assets from node stage (if any)
-COPY --from=node /app/public/build ./public/build 2>/dev/null || true
+# Create public/build directory (assets built separately if needed)
+RUN mkdir -p ./public/build
 
 # Set permissions
 RUN chown -R www-data:www-data /var/www/html \
