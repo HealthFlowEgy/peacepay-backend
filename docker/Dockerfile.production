@@ -85,20 +85,18 @@ WORKDIR /var/www/html
 # Copy application from composer stage
 COPY --from=composer /app .
 
-# Create public/build directory (assets built separately if needed)
-RUN mkdir -p ./public/build
+# Create required directories first (before setting permissions)
+RUN mkdir -p ./public/build \
+    && mkdir -p ./storage/logs \
+    && mkdir -p ./storage/framework/sessions \
+    && mkdir -p ./storage/framework/views \
+    && mkdir -p ./storage/framework/cache \
+    && mkdir -p ./bootstrap/cache
 
 # Set permissions
 RUN chown -R www-data:www-data /var/www/html \
     && chmod -R 755 /var/www/html/storage \
     && chmod -R 755 /var/www/html/bootstrap/cache
-
-# Create required directories
-RUN mkdir -p /var/www/html/storage/logs \
-    && mkdir -p /var/www/html/storage/framework/sessions \
-    && mkdir -p /var/www/html/storage/framework/views \
-    && mkdir -p /var/www/html/storage/framework/cache \
-    && chown -R www-data:www-data /var/www/html/storage
 
 # Expose port
 EXPOSE 80
