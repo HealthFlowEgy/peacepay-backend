@@ -1,0 +1,1161 @@
+openapi: 3.0.3
+info:
+  title: PeacePay / PeaceLink API
+  description: |
+    # Overview
+    PeacePay is a secure escrow payment platform for Egypt's e-commerce ecosystem.
+    This API enables enterprise merchants and DSP companies to integrate PeaceLink
+    (Secure Payment Hold) functionality into their platforms.
+    
+    ## Authentication
+    All API requests require authentication using API Key + HMAC signature.
+    
+    ### Headers Required
+    - `X-API-Key`: Your API key
+    - `X-Timestamp`: Unix timestamp (within 5 minutes)
+    - `X-Signature`: HMAC-SHA256 signature of request body
+    
+    ### Signature Calculation
+    ```
+    signature = HMAC-SHA256(api_secret, timestamp + method + path + body)
+    ```
+    
+    ## Rate Limits
+    - 1000 requests per minute per API key
+    - 100 requests per minute per endpoint
+    
+    ## Idempotency
+    All POST/PUT requests support idempotency via `X-Idempotency-Key` header.
+    
+  version: 2.0.0
+  contact:
+    name: HealthFlow Group
+    email: api-support@healthflow.eg
+  license:
+    name: Proprietary
+    
+servers:
+  - url: https://api.peacepay.eg/v1
+    description: Production
+  - url: https://sandbox.peacepay.eg/v1
+    description: Sandbox
+
+tags:
+  - name: PeaceLink
+    description: Secure Payment Hold transactions
+  - name: Wallet
+    description: Wallet operations
+  - name: DSP
+    description: Delivery Service Provider operations
+  - name: Webhooks
+    description: Webhook endpoints for event notifications
+  - name: Auth
+    description: Authentication endpoints
+
+paths:
+  # ============================================================================
+  # AUTHENTICATION
+  # ============================================================================
+  /auth/otp/request:
+    post:
+      tags: [Auth]
+      summary: Request OTP for login
+      operationId: requestOtp
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [phone]
+              properties:
+                phone:
+                  type: string
+                  pattern: '^01[0125][0-9]{8}$'
+                  example: "01012345678"
+                  description: Egyptian mobile number
+      responses:
+        '200':
+          description: OTP sent successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OtpResponse'
+        '429':
+          description: Too many requests
+          
+  /auth/otp/verify:
+    post:
+      tags: [Auth]
+      summary: Verify OTP and get tokens
+      operationId: verifyOtp
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [phone, otp, device_id]
+              properties:
+                phone:
+                  type: string
+                  example: "01012345678"
+                otp:
+                  type: string
+                  pattern: '^[0-9]{6}$'
+                  example: "123456"
+                device_id:
+                  type: string
+                  description: Unique device identifier
+      responses:
+        '200':
+          description: Authentication successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthTokens'
+        '401':
+          description: Invalid or expired OTP
+          
+  /auth/pin/verify:
+    post:
+      tags: [Auth]
+      summary: Verify PIN for sensitive operations
+      operationId: verifyPin
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [pin]
+              properties:
+                pin:
+                  type: string
+                  pattern: '^[0-9]{6}$'
+      responses:
+        '200':
+          description: PIN verified
+        '401':
+          description: Invalid PIN
+        '423':
+          description: Account locked due to too many attempts
+
+  # ============================================================================
+  # PEACELINK
+  # ============================================================================
+  /peacelink:
+    post:
+      tags: [PeaceLink]
+      summary: Create a new PeaceLink
+      description: |
+        Creates a new Secure Payment Hold request. The buyer will receive
+        an SMS with a link to approve and pay.
+      operationId: createPeaceLink
+      security:
+        - apiKey: []
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePeaceLinkRequest'
+      responses:
+        '201':
+          description: PeaceLink created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PeaceLinkResponse'
+        '400':
+          description: Validation error
+        '402':
+          description: Insufficient wallet balance (for merchant-paid delivery)
+          
+    get:
+      tags: [PeaceLink]
+      summary: List PeaceLinks
+      operationId: listPeaceLinks
+      security:
+        - apiKey: []
+        - bearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          schema:
+            $ref: '#/components/schemas/PeaceLinkStatus'
+        - name: from_date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: to_date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+            maximum: 100
+      responses:
+        '200':
+          description: List of PeaceLinks
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PeaceLinkListResponse'
+
+  /peacelink/{id}:
+    get:
+      tags: [PeaceLink]
+      summary: Get PeaceLink details
+      operationId: getPeaceLink
+      security:
+        - apiKey: []
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: PeaceLink details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PeaceLinkDetailResponse'
+        '404':
+          description: PeaceLink not found
+
+  /peacelink/{id}/approve:
+    post:
+      tags: [PeaceLink]
+      summary: Buyer approves PeaceLink
+      description: |
+        Buyer approves the PeaceLink and pays from wallet.
+        This creates the SPH (Secure Payment Hold).
+      operationId: approvePeaceLink
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [pin]
+              properties:
+                pin:
+                  type: string
+                  description: Buyer's PIN for authorization
+      responses:
+        '200':
+          description: PeaceLink approved, SPH created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PeaceLinkDetailResponse'
+        '400':
+          description: Cannot approve (wrong status)
+        '402':
+          description: Insufficient wallet balance
+        '403':
+          description: Not authorized (wrong buyer phone)
+
+  /peacelink/{id}/assign-dsp:
+    post:
+      tags: [PeaceLink]
+      summary: Assign DSP to PeaceLink
+      description: |
+        Merchant assigns a DSP wallet to handle delivery.
+        This generates the OTP for delivery confirmation.
+      operationId: assignDsp
+      security:
+        - apiKey: []
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [dsp_wallet_number]
+              properties:
+                dsp_wallet_number:
+                  type: string
+                  description: DSP wallet number in PeacePay
+                  example: "01098765432"
+                driver_phone:
+                  type: string
+                  description: Specific driver phone (for DSP companies)
+      responses:
+        '200':
+          description: DSP assigned, OTP generated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DspAssignmentResponse'
+        '400':
+          description: Cannot assign (wrong status or already assigned)
+        '404':
+          description: DSP wallet not found
+
+  /peacelink/{id}/reassign-dsp:
+    post:
+      tags: [PeaceLink]
+      summary: Reassign DSP (before OTP used)
+      description: |
+        Merchant can reassign to a different DSP before OTP is used.
+        Only one reassignment is allowed per PeaceLink.
+      operationId: reassignDsp
+      security:
+        - apiKey: []
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [dsp_wallet_number, reason]
+              properties:
+                dsp_wallet_number:
+                  type: string
+                reason:
+                  type: string
+                  enum: [unresponsive, refused, unavailable, other]
+      responses:
+        '200':
+          description: DSP reassigned
+        '400':
+          description: Cannot reassign (OTP used or max reassignments reached)
+
+  /peacelink/{id}/cancel:
+    post:
+      tags: [PeaceLink]
+      summary: Cancel PeaceLink
+      description: |
+        Cancel a PeaceLink. Refund and fee logic depends on:
+        - Who is canceling (buyer/merchant)
+        - Whether DSP is assigned
+        - Whether advance payment was made
+      operationId: cancelPeaceLink
+      security:
+        - apiKey: []
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [reason]
+              properties:
+                reason:
+                  type: string
+                  maxLength: 500
+      responses:
+        '200':
+          description: PeaceLink canceled
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CancellationResponse'
+        '400':
+          description: Cannot cancel (OTP already used)
+
+  /peacelink/{id}/confirm-delivery:
+    post:
+      tags: [PeaceLink]
+      summary: Confirm delivery with OTP
+      description: |
+        DSP/Driver enters OTP to confirm delivery.
+        This releases funds to merchant and DSP.
+      operationId: confirmDelivery
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [otp]
+              properties:
+                otp:
+                  type: string
+                  pattern: '^[0-9]{6}$'
+      responses:
+        '200':
+          description: Delivery confirmed, funds released
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeliveryConfirmationResponse'
+        '400':
+          description: Invalid or expired OTP
+
+  /peacelink/{id}/dispute:
+    post:
+      tags: [PeaceLink]
+      summary: Open dispute
+      operationId: openDispute
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [reason]
+              properties:
+                reason:
+                  type: string
+                evidence_urls:
+                  type: array
+                  items:
+                    type: string
+                    format: uri
+      responses:
+        '201':
+          description: Dispute opened
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DisputeResponse'
+
+  # ============================================================================
+  # WALLET
+  # ============================================================================
+  /wallet/balance:
+    get:
+      tags: [Wallet]
+      summary: Get wallet balance
+      operationId: getWalletBalance
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Wallet balance
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WalletBalanceResponse'
+
+  /wallet/transactions:
+    get:
+      tags: [Wallet]
+      summary: Get transaction history
+      operationId: getTransactions
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [credit, debit, hold, release, refund, fee, cashout, topup]
+        - name: from_date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: to_date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Transaction list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionListResponse'
+
+  /wallet/cashout:
+    post:
+      tags: [Wallet]
+      summary: Request cash-out
+      description: |
+        Request withdrawal from wallet. Fee (1.5%) is deducted immediately
+        from wallet at request time, not on approval.
+      operationId: requestCashout
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [amount, cashout_method_id, pin]
+              properties:
+                amount:
+                  type: number
+                  minimum: 100
+                cashout_method_id:
+                  type: string
+                  format: uuid
+                pin:
+                  type: string
+      responses:
+        '201':
+          description: Cash-out request created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CashoutResponse'
+        '400':
+          description: Insufficient balance (including fee)
+
+  # ============================================================================
+  # DSP
+  # ============================================================================
+  /dsp/drivers:
+    post:
+      tags: [DSP]
+      summary: Bulk create driver accounts
+      description: |
+        DSP company can bulk onboard drivers by phone number.
+        Accounts are created without PIN (driver sets on first login).
+      operationId: createDrivers
+      security:
+        - apiKey: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [drivers]
+              properties:
+                drivers:
+                  type: array
+                  maxItems: 100
+                  items:
+                    type: object
+                    required: [phone, name]
+                    properties:
+                      phone:
+                        type: string
+                      name:
+                        type: string
+                      employee_id:
+                        type: string
+      responses:
+        '201':
+          description: Drivers created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DriversCreateResponse'
+
+  /dsp/deliveries:
+    get:
+      tags: [DSP]
+      summary: Get assigned deliveries
+      operationId: getDeliveries
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [assigned, in_progress, completed, canceled]
+      responses:
+        '200':
+          description: Delivery list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeliveryListResponse'
+
+  /dsp/delivery/{id}/cancel:
+    post:
+      tags: [DSP]
+      summary: DSP cancels assigned delivery
+      description: |
+        DSP can cancel before OTP is entered.
+        This returns the PeaceLink to 'sph_active' status for DSP reassignment.
+      operationId: dspCancelDelivery
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [reason]
+              properties:
+                reason:
+                  type: string
+                  enum: [location_issue, emergency, customer_unreachable, other]
+      responses:
+        '200':
+          description: Delivery canceled
+        '400':
+          description: Cannot cancel (OTP already used)
+
+  # ============================================================================
+  # WEBHOOKS
+  # ============================================================================
+  /webhook/test:
+    post:
+      tags: [Webhooks]
+      summary: Test webhook endpoint
+      description: Send a test webhook to verify configuration
+      operationId: testWebhook
+      security:
+        - apiKey: []
+      responses:
+        '200':
+          description: Test webhook sent
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    apiKey:
+      type: apiKey
+      in: header
+      name: X-API-Key
+
+  schemas:
+    # ============================================================================
+    # ENUMS
+    # ============================================================================
+    PeaceLinkStatus:
+      type: string
+      enum:
+        - created
+        - pending_approval
+        - sph_active
+        - dsp_assigned
+        - otp_generated
+        - delivered
+        - canceled
+        - disputed
+        - resolved
+        - expired
+
+    # ============================================================================
+    # REQUEST SCHEMAS
+    # ============================================================================
+    CreatePeaceLinkRequest:
+      type: object
+      required:
+        - buyer_phone
+        - item_description
+        - item_amount
+        - delivery_fee
+      properties:
+        buyer_phone:
+          type: string
+          pattern: '^01[0125][0-9]{8}$'
+          example: "01012345678"
+        item_description:
+          type: string
+          maxLength: 500
+        item_description_ar:
+          type: string
+          maxLength: 500
+        item_amount:
+          type: number
+          minimum: 1
+          example: 1000
+        delivery_fee:
+          type: number
+          minimum: 0
+          example: 100
+        delivery_fee_paid_by:
+          type: string
+          enum: [buyer, merchant]
+          default: buyer
+        advance_percentage:
+          type: number
+          minimum: 0
+          maximum: 100
+          default: 0
+          description: Percentage of item amount to pay merchant upfront
+        policy_id:
+          type: string
+          format: uuid
+          description: Custom delivery policy (uses default if not specified)
+        item_metadata:
+          type: object
+          description: Additional item details
+        external_reference:
+          type: string
+          description: Your system's order ID
+
+    # ============================================================================
+    # RESPONSE SCHEMAS
+    # ============================================================================
+    OtpResponse:
+      type: object
+      properties:
+        message:
+          type: string
+        expires_in:
+          type: integer
+          description: Seconds until OTP expires
+
+    AuthTokens:
+      type: object
+      properties:
+        access_token:
+          type: string
+        refresh_token:
+          type: string
+        expires_in:
+          type: integer
+        user:
+          $ref: '#/components/schemas/UserSummary'
+
+    UserSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        phone:
+          type: string
+        role:
+          type: string
+        kyc_level:
+          type: string
+        has_pin:
+          type: boolean
+
+    PeaceLinkResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        reference_number:
+          type: string
+        status:
+          $ref: '#/components/schemas/PeaceLinkStatus'
+        buyer_phone:
+          type: string
+        item_description:
+          type: string
+        item_amount:
+          type: number
+        delivery_fee:
+          type: number
+        total_amount:
+          type: number
+        advance_amount:
+          type: number
+        approval_url:
+          type: string
+          format: uri
+          description: URL to send to buyer for approval
+        expires_at:
+          type: string
+          format: date-time
+        created_at:
+          type: string
+          format: date-time
+
+    PeaceLinkDetailResponse:
+      allOf:
+        - $ref: '#/components/schemas/PeaceLinkResponse'
+        - type: object
+          properties:
+            merchant:
+              $ref: '#/components/schemas/MerchantSummary'
+            dsp:
+              $ref: '#/components/schemas/DspSummary'
+            buyer:
+              $ref: '#/components/schemas/BuyerSummary'
+            payouts:
+              type: array
+              items:
+                $ref: '#/components/schemas/PayoutSummary'
+            timeline:
+              type: array
+              items:
+                $ref: '#/components/schemas/TimelineEvent'
+
+    PeaceLinkListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/PeaceLinkResponse'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+
+    DspAssignmentResponse:
+      type: object
+      properties:
+        peacelink_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+        dsp_wallet_number:
+          type: string
+        otp_sent_to_buyer:
+          type: boolean
+        message:
+          type: string
+
+    CancellationResponse:
+      type: object
+      properties:
+        peacelink_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+        refund_to_buyer:
+          type: number
+        dsp_payout:
+          type: number
+        merchant_payout:
+          type: number
+        platform_fee:
+          type: number
+        message:
+          type: string
+
+    DeliveryConfirmationResponse:
+      type: object
+      properties:
+        peacelink_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+        merchant_payout:
+          type: number
+        dsp_payout:
+          type: number
+        platform_fee:
+          type: number
+        confirmed_at:
+          type: string
+          format: date-time
+
+    DisputeResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        peacelink_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+        reason:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+
+    WalletBalanceResponse:
+      type: object
+      properties:
+        balance:
+          type: number
+        held_balance:
+          type: number
+        available_balance:
+          type: number
+        currency:
+          type: string
+
+    TransactionListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/TransactionSummary'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+
+    TransactionSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        type:
+          type: string
+        amount:
+          type: number
+        balance_after:
+          type: number
+        description:
+          type: string
+        reference_type:
+          type: string
+        reference_id:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+
+    CashoutResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        requested_amount:
+          type: number
+        fee_amount:
+          type: number
+        net_amount:
+          type: number
+        status:
+          type: string
+        message:
+          type: string
+
+    DriversCreateResponse:
+      type: object
+      properties:
+        created:
+          type: integer
+        failed:
+          type: integer
+        drivers:
+          type: array
+          items:
+            type: object
+            properties:
+              phone:
+                type: string
+              status:
+                type: string
+              error:
+                type: string
+
+    DeliveryListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/DeliverySummary'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+
+    DeliverySummary:
+      type: object
+      properties:
+        peacelink_id:
+          type: string
+          format: uuid
+        reference_number:
+          type: string
+        status:
+          type: string
+        merchant_name:
+          type: string
+        buyer_phone:
+          type: string
+        delivery_fee:
+          type: number
+        assigned_at:
+          type: string
+          format: date-time
+
+    MerchantSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        business_name:
+          type: string
+        phone:
+          type: string
+
+    DspSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        wallet_number:
+          type: string
+        assigned_at:
+          type: string
+          format: date-time
+
+    BuyerSummary:
+      type: object
+      properties:
+        phone:
+          type: string
+        name:
+          type: string
+        approved_at:
+          type: string
+          format: date-time
+
+    PayoutSummary:
+      type: object
+      properties:
+        recipient_type:
+          type: string
+        gross_amount:
+          type: number
+        fee_amount:
+          type: number
+        net_amount:
+          type: number
+        payout_type:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+
+    TimelineEvent:
+      type: object
+      properties:
+        event:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        actor:
+          type: string
+        details:
+          type: string
+
+    Pagination:
+      type: object
+      properties:
+        page:
+          type: integer
+        limit:
+          type: integer
+        total:
+          type: integer
+        total_pages:
+          type: integer
+
+    # ============================================================================
+    # WEBHOOK PAYLOADS
+    # ============================================================================
+    WebhookPayload:
+      type: object
+      properties:
+        event:
+          type: string
+          enum:
+            - peacelink.created
+            - peacelink.approved
+            - peacelink.dsp_assigned
+            - peacelink.delivered
+            - peacelink.canceled
+            - peacelink.disputed
+            - peacelink.resolved
+            - peacelink.expired
+        timestamp:
+          type: string
+          format: date-time
+        data:
+          type: object
+          description: Event-specific payload
+
+    Error:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          type: object
