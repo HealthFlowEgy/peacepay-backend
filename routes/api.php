@@ -15,6 +15,7 @@ use App\Http\Controllers\Api\V1\MoneyExchangeController;
 use App\Http\Controllers\Api\V1\Auth\AuthorizationController;
 use App\Http\Controllers\Api\V1\Auth\ForgotPasswordController;
 use App\Http\Controllers\Api\V1\PolicyController;
+use App\Http\Controllers\Api\V1\PeaceLinkController;
 
 /*
 |--------------------------------------------------------------------------
@@ -231,6 +232,25 @@ Route::prefix("v1")->name('api.v1.')->group(function () {
             //release payment request
             Route::post('release-payment', 'releasePayment')->name('release.payment');
             Route::post('release-request', 'releaseRequest')->name('release.request');
+        });
+
+        // PeaceLink API Routes (Re-Engineering v2.0)
+        Route::controller(PeaceLinkController::class)->prefix('peacelink')->name('peacelink.')->group(function () {
+            // Get PeaceLink details with state-based data
+            Route::get('/{id}', 'show')->name('show');
+            
+            // DSP Assignment
+            Route::post('/{id}/assign-dsp', 'assignDsp')->name('assign-dsp');
+            Route::post('/{id}/change-dsp', 'changeDsp')->name('change-dsp');
+            
+            // Cancellation
+            Route::post('/{id}/cancel', 'cancel')->name('cancel');
+            
+            // OTP Verification (for DSP)
+            Route::post('/{id}/verify-otp', 'verifyOtp')->name('verify-otp');
+            
+            // Dispute
+            Route::post('/{id}/dispute', 'openDispute')->name('dispute');
         });
         //money exchange
         Route::controller(MoneyExchangeController::class)->prefix("money-exchange")->name("money.exchange.")->group(function () {
