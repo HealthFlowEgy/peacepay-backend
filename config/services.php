@@ -43,6 +43,20 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Firebase Cloud Messaging
+    |--------------------------------------------------------------------------
+    |
+    | Configuration for Firebase Cloud Messaging (FCM) push notifications.
+    | Download service account credentials from Firebase Console.
+    |
+    */
+    'firebase' => [
+        'credentials' => env('FIREBASE_CREDENTIALS', storage_path('app/firebase/firebase-credentials.json')),
+        'project_id' => env('FIREBASE_PROJECT_ID', 'peacepay-7ad55'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Cequens SMS Service
     |--------------------------------------------------------------------------
     |
