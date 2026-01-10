@@ -1,0 +1,69 @@
+---
+title: PeaceLink State Machine
+---
+stateDiagram-v2
+    [*] --> Created: Merchant creates PeaceLink
+    
+    Created --> PendingApproval: SMS sent to buyer
+    Created --> Expired: Link expires (24h)
+    
+    PendingApproval --> SPHActive: Buyer approves & pays
+    PendingApproval --> Expired: Link expires
+    PendingApproval --> Canceled: Buyer/Merchant cancels
+    
+    SPHActive --> DSPAssigned: Merchant assigns DSP wallet
+    SPHActive --> Canceled: Buyer cancels (full refund)
+    SPHActive --> Canceled: Merchant cancels (full refund)
+    
+    DSPAssigned --> OTPGenerated: System generates OTP
+    DSPAssigned --> SPHActive: DSP cancels (reassignment)
+    DSPAssigned --> Canceled: Buyer cancels (partial refund, DSP paid)
+    DSPAssigned --> Canceled: Merchant cancels (full refund, DSP paid from merchant)
+    
+    OTPGenerated --> Delivered: Valid OTP entered
+    OTPGenerated --> DSPAssigned: OTP expires (new OTP)
+    OTPGenerated --> Disputed: Buyer/Merchant opens dispute
+    OTPGenerated --> Canceled: Merchant cancels (DSP paid)
+    
+    Delivered --> [*]: Transaction complete
+    
+    Canceled --> [*]: Transaction terminated
+    
+    Disputed --> Resolved: Admin resolves
+    
+    Resolved --> [*]: Dispute closed
+    
+    Expired --> [*]: No action taken
+
+    note right of Created
+        Merchant provides:
+        - Buyer phone
+        - Item details
+        - Delivery fee
+        - Policy settings
+    end note
+    
+    note right of SPHActive
+        Buyer wallet debited
+        Funds held in escrow
+        Advance paid to merchant (if configured)
+    end note
+    
+    note right of DSPAssigned
+        DSP wallet validated
+        OTP generated
+        SMS sent to buyer
+    end note
+    
+    note right of Delivered
+        Merchant receives: item_amount - fees
+        DSP receives: delivery_fee - 0.5%
+        PeacePay receives: all fees
+    end note
+    
+    note right of Canceled
+        Refund logic depends on:
+        - Who canceled
+        - DSP assignment status
+        - Advance payment status
+    end note

@@ -15,7 +15,7 @@ use App\Http\Controllers\Api\V1\MoneyExchangeController;
 use App\Http\Controllers\Api\V1\Auth\AuthorizationController;
 use App\Http\Controllers\Api\V1\Auth\ForgotPasswordController;
 use App\Http\Controllers\Api\V1\PolicyController;
-use App\Http\Controllers\Api\V1\SupportTicketController;
+use App\Http\Controllers\Api\V1\PeaceLinkController;
 
 /*
 |--------------------------------------------------------------------------
@@ -209,8 +209,6 @@ Route::prefix("v1")->name('api.v1.')->group(function () {
             Route::post('manual/payment/confirmed', 'manualPaymentConfirmedApi')->name('manual.payment.confirmed');
             //check user is avaibleable
             Route::get('user-check', 'userCheck')->name('userCheck');
-            // Get escrow details
-            Route::get('details/{escrow_id}', 'details')->name('details');
         });
         //escrow action routes
         Route::controller(EscrowActionController::class)->prefix('api-escrow-action')->name('api-escrow-action.')->group(function () {
@@ -235,19 +233,31 @@ Route::prefix("v1")->name('api.v1.')->group(function () {
             Route::post('release-payment', 'releasePayment')->name('release.payment');
             Route::post('release-request', 'releaseRequest')->name('release.request');
         });
+
+        // PeaceLink API Routes (Re-Engineering v2.0)
+        Route::controller(PeaceLinkController::class)->prefix('peacelink')->name('peacelink.')->group(function () {
+            // Get PeaceLink details with state-based data
+            Route::get('/{id}', 'show')->name('show');
+            
+            // DSP Assignment
+            Route::post('/{id}/assign-dsp', 'assignDsp')->name('assign-dsp');
+            Route::post('/{id}/change-dsp', 'changeDsp')->name('change-dsp');
+            
+            // Cancellation
+            Route::post('/{id}/cancel', 'cancel')->name('cancel');
+            
+            // OTP Verification (for DSP)
+            Route::post('/{id}/verify-otp', 'verifyOtp')->name('verify-otp');
+            
+            // Dispute
+            Route::post('/{id}/dispute', 'openDispute')->name('dispute');
+        });
         //money exchange
         Route::controller(MoneyExchangeController::class)->prefix("money-exchange")->name("money.exchange.")->group(function () {
             Route::get('/', 'index')->name("index");
             Route::post('submit', 'moneyExchangeSubmit')->name('submit');
             Route::get('preview', 'preview')->name('preview');
             Route::post('confirm', 'confirmMoneyOut')->name('confirm');
-        });
-        //support ticket
-        Route::controller(SupportTicketController::class)->prefix("support-ticket")->name("support.ticket.")->group(function () {
-            Route::get('/', 'index')->name('index');
-            Route::post('store', 'store')->name('store');
-            Route::get('conversation/{id}', 'conversation')->name('conversation');
-            Route::post('message/send', 'messageSend')->name('message.send');
         });
     });
 });

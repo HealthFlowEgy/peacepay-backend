@@ -41,4 +41,37 @@ return [
         'redirect' => env('FACEBOOK_CALLBACK',""),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Firebase Cloud Messaging
+    |--------------------------------------------------------------------------
+    |
+    | Configuration for Firebase Cloud Messaging (FCM) push notifications.
+    | Download service account credentials from Firebase Console.
+    |
+    */
+    'firebase' => [
+        'credentials' => env('FIREBASE_CREDENTIALS', storage_path('app/firebase/firebase-credentials.json')),
+        'project_id' => env('FIREBASE_PROJECT_ID', 'peacepay-7ad55'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Cequens SMS Service
+    |--------------------------------------------------------------------------
+    |
+    | Configuration for Cequens SMS API integration.
+    | @see https://developer.cequens.com/reference/sending-sms
+    |
+    */
+    'cequens' => [
+        'api_token' => env('CEQUENS_API_TOKEN'),
+        'api_key' => env('CEQUENS_API_KEY'),
+        'sender_id' => env('CEQUENS_SENDER_ID', 'PeacePay'),
+        'enabled' => env('CEQUENS_ENABLED', true),
+        'api_url' => env('CEQUENS_API_URL', 'https://apis.cequens.com/sms/v1'),
+        'dlr_webhook_url' => env('CEQUENS_DLR_WEBHOOK_URL'),
+        'default_language' => env('CEQUENS_DEFAULT_LANGUAGE', 'ar'),
+    ],
+
 ];

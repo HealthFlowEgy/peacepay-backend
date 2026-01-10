@@ -1,0 +1,1140 @@
+openapi: 3.0.3
+info:
+  title: PeacePay API
+  description: |
+    PeacePay - منصة الدفع الآمن للتجارة الإلكترونية في مصر
+    
+    Secure Escrow Payment Platform for E-commerce in Egypt
+    
+    ## Authentication
+    All protected endpoints require a Bearer token obtained from the login endpoint.
+    ```
+    Authorization: Bearer {token}
+    ```
+    
+    ## Response Format
+    All responses follow a consistent format:
+    ```json
+    {
+      "success": true|false,
+      "message": "رسالة توضيحية",
+      "data": { ... },
+      "errors": { ... }  // Only on validation errors
+    }
+    ```
+    
+    ## Error Codes
+    - `400` - Bad Request
+    - `401` - Unauthorized
+    - `403` - Forbidden
+    - `404` - Not Found
+    - `422` - Validation Error
+    - `429` - Too Many Requests
+    - `500` - Server Error
+    
+  version: 1.0.0
+  contact:
+    name: PeacePay Support
+    email: support@peacepay.eg
+  license:
+    name: Proprietary
+    
+servers:
+  - url: https://api.peacepay.eg/api/v1
+    description: Production Server
+  - url: https://staging-api.peacepay.eg/api/v1
+    description: Staging Server
+  - url: http://localhost:8000/api/v1
+    description: Local Development
+
+tags:
+  - name: Auth
+    description: Authentication & User Management
+  - name: Wallet
+    description: Wallet Operations
+  - name: PeaceLink
+    description: Escrow Transactions
+  - name: Cashout
+    description: Withdrawal Operations
+  - name: Dispute
+    description: Dispute Resolution
+  - name: KYC
+    description: Know Your Customer
+  - name: Notifications
+    description: User Notifications
+  - name: Transactions
+    description: Transaction History
+
+paths:
+  # ============================================================================
+  # Authentication
+  # ============================================================================
+  /auth/register:
+    post:
+      tags: [Auth]
+      summary: Register new user
+      operationId: register
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, phone, password, password_confirmation]
+              properties:
+                name:
+                  type: string
+                  example: أحمد محمد
+                phone:
+                  type: string
+                  pattern: '^01[0125][0-9]{8}$'
+                  example: "01012345678"
+                email:
+                  type: string
+                  format: email
+                  example: ahmed@example.com
+                password:
+                  type: string
+                  minLength: 8
+                  example: "password123"
+                password_confirmation:
+                  type: string
+                  example: "password123"
+      responses:
+        '201':
+          description: Registration successful, OTP sent
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: Login user
+      operationId: login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [phone, password]
+              properties:
+                phone:
+                  type: string
+                  example: "01012345678"
+                password:
+                  type: string
+                  example: "password123"
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '401':
+          description: Invalid credentials
+
+  /auth/verify-otp:
+    post:
+      tags: [Auth]
+      summary: Verify OTP code
+      operationId: verifyOtp
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [phone, code, type]
+              properties:
+                phone:
+                  type: string
+                  example: "01012345678"
+                code:
+                  type: string
+                  pattern: '^[0-9]{6}$'
+                  example: "123456"
+                type:
+                  type: string
+                  enum: [registration, login, password_reset]
+      responses:
+        '200':
+          description: OTP verified successfully
+        '422':
+          description: Invalid or expired OTP
+
+  /auth/me:
+    get:
+      tags: [Auth]
+      summary: Get current user profile
+      operationId: getProfile
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: User profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+
+  /auth/logout:
+    post:
+      tags: [Auth]
+      summary: Logout user
+      operationId: logout
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Logged out successfully
+
+  # ============================================================================
+  # Wallet
+  # ============================================================================
+  /wallet:
+    get:
+      tags: [Wallet]
+      summary: Get wallet balance
+      operationId: getWallet
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Wallet details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Wallet'
+
+  /wallet/add-money:
+    post:
+      tags: [Wallet]
+      summary: Add money to wallet
+      operationId: addMoney
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [amount, payment_method]
+              properties:
+                amount:
+                  type: number
+                  minimum: 10
+                  maximum: 50000
+                  example: 500
+                payment_method:
+                  type: string
+                  enum: [fawry, vodafone_cash, card, instapay]
+                  example: fawry
+      responses:
+        '200':
+          description: Payment initiated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  reference_code:
+                    type: string
+                  payment_url:
+                    type: string
+                  instructions:
+                    type: string
+
+  /wallet/send:
+    post:
+      tags: [Wallet]
+      summary: Send money to another user
+      operationId: sendMoney
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [recipient_phone, amount]
+              properties:
+                recipient_phone:
+                  type: string
+                  example: "01112345678"
+                amount:
+                  type: number
+                  minimum: 10
+                  example: 100
+                note:
+                  type: string
+                  example: "شكراً لك"
+      responses:
+        '200':
+          description: Transfer successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Transaction'
+        '422':
+          description: Insufficient balance or validation error
+
+  /wallet/search-recipient:
+    get:
+      tags: [Wallet]
+      summary: Search for recipient by phone
+      operationId: searchRecipient
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: phone
+          in: query
+          required: true
+          schema:
+            type: string
+          example: "01112345678"
+      responses:
+        '200':
+          description: User found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  name:
+                    type: string
+                  masked_phone:
+                    type: string
+        '404':
+          description: User not found
+
+  # ============================================================================
+  # PeaceLink
+  # ============================================================================
+  /peacelinks:
+    get:
+      tags: [PeaceLink]
+      summary: List user's PeaceLinks
+      operationId: listPeaceLinks
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: role
+          in: query
+          schema:
+            type: string
+            enum: [buyer, merchant, all]
+            default: all
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [active, in_transit, completed, cancelled, all]
+            default: all
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: List of PeaceLinks
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PeaceLink'
+                  meta:
+                    $ref: '#/components/schemas/PaginationMeta'
+    
+    post:
+      tags: [PeaceLink]
+      summary: Create new PeaceLink
+      operationId: createPeaceLink
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [merchant_phone, product_description, item_amount, delivery_address, delivery_city, delivery_phone]
+              properties:
+                merchant_phone:
+                  type: string
+                  example: "01112345678"
+                product_description:
+                  type: string
+                  minLength: 10
+                  example: "آيفون 15 برو ماكس 256 جيجا"
+                item_amount:
+                  type: number
+                  minimum: 50
+                  maximum: 100000
+                  example: 65000
+                quantity:
+                  type: integer
+                  minimum: 1
+                  default: 1
+                delivery_address:
+                  type: string
+                  example: "شارع التحرير، المعادي"
+                delivery_city:
+                  type: string
+                  example: "القاهرة"
+                delivery_phone:
+                  type: string
+                  example: "01012345678"
+                delivery_notes:
+                  type: string
+                  example: "الاتصال قبل الوصول"
+                delivery_fee:
+                  type: number
+                  minimum: 0
+                  default: 0
+                delivery_fee_payer:
+                  type: string
+                  enum: [buyer, merchant]
+                  default: buyer
+      responses:
+        '201':
+          description: PeaceLink created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PeaceLink'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /peacelinks/{id}:
+    get:
+      tags: [PeaceLink]
+      summary: Get PeaceLink details
+      operationId: getPeaceLink
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: UUID or reference
+      responses:
+        '200':
+          description: PeaceLink details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PeaceLinkDetails'
+        '404':
+          description: PeaceLink not found
+
+  /peacelinks/{id}/accept:
+    post:
+      tags: [PeaceLink]
+      summary: Accept PeaceLink (Merchant)
+      operationId: acceptPeaceLink
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: PeaceLink accepted
+        '403':
+          description: Not authorized (not merchant)
+        '422':
+          description: Cannot accept (wrong status)
+
+  /peacelinks/{id}/cancel:
+    post:
+      tags: [PeaceLink]
+      summary: Cancel PeaceLink
+      operationId: cancelPeaceLink
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [reason]
+              properties:
+                reason:
+                  type: string
+                  minLength: 10
+                  example: "تغيير رأي"
+      responses:
+        '200':
+          description: PeaceLink cancelled
+        '422':
+          description: Cannot cancel (in transit)
+
+  /peacelinks/{id}/confirm-delivery:
+    post:
+      tags: [PeaceLink]
+      summary: Confirm delivery with OTP
+      operationId: confirmDelivery
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [otp]
+              properties:
+                otp:
+                  type: string
+                  pattern: '^[0-9]{6}$'
+                  example: "123456"
+      responses:
+        '200':
+          description: Delivery confirmed, funds released
+        '422':
+          description: Invalid OTP
+
+  /peacelinks/calculate-fees:
+    post:
+      tags: [PeaceLink]
+      summary: Calculate fees for PeaceLink
+      operationId: calculateFees
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [item_amount]
+              properties:
+                item_amount:
+                  type: number
+                  example: 1000
+                delivery_fee:
+                  type: number
+                  default: 0
+                delivery_fee_payer:
+                  type: string
+                  enum: [buyer, merchant]
+                  default: buyer
+      responses:
+        '200':
+          description: Fee calculation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FeeCalculation'
+
+  # ============================================================================
+  # Cashout
+  # ============================================================================
+  /cashout:
+    get:
+      tags: [Cashout]
+      summary: List cashout requests
+      operationId: listCashouts
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: List of cashout requests
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Cashout'
+    
+    post:
+      tags: [Cashout]
+      summary: Request cashout
+      operationId: createCashout
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [amount, method]
+              properties:
+                amount:
+                  type: number
+                  minimum: 50
+                  example: 500
+                method:
+                  type: string
+                  enum: [bank, wallet]
+                bank_code:
+                  type: string
+                  description: Required if method is bank
+                  example: NBE
+                account_number:
+                  type: string
+                  description: Required if method is bank
+                account_holder_name:
+                  type: string
+                  description: Required if method is bank
+                wallet_phone:
+                  type: string
+                  description: Required if method is wallet
+                wallet_provider:
+                  type: string
+                  enum: [vodafone_cash, orange_cash, etisalat_cash]
+                  description: Required if method is wallet
+      responses:
+        '201':
+          description: Cashout request created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Cashout'
+        '422':
+          description: Insufficient balance or validation error
+
+  # ============================================================================
+  # Disputes
+  # ============================================================================
+  /disputes:
+    post:
+      tags: [Dispute]
+      summary: Open dispute
+      operationId: createDispute
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [peacelink_id, reason, description]
+              properties:
+                peacelink_id:
+                  type: string
+                  example: "uuid-or-reference"
+                reason:
+                  type: string
+                  enum: [not_received, wrong_item, damaged, other]
+                description:
+                  type: string
+                  minLength: 20
+                  example: "المنتج المستلم لا يطابق الوصف..."
+      responses:
+        '201':
+          description: Dispute opened
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Dispute'
+
+  /disputes/{id}/respond:
+    post:
+      tags: [Dispute]
+      summary: Respond to dispute
+      operationId: respondToDispute
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [response]
+              properties:
+                response:
+                  type: string
+                  minLength: 20
+      responses:
+        '200':
+          description: Response submitted
+
+  # ============================================================================
+  # KYC
+  # ============================================================================
+  /kyc/status:
+    get:
+      tags: [KYC]
+      summary: Get KYC status
+      operationId: getKycStatus
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: KYC status and limits
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/KycStatus'
+
+  /kyc/upgrade:
+    post:
+      tags: [KYC]
+      summary: Request KYC upgrade
+      operationId: upgradeKyc
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [target_level, national_id, national_id_front, national_id_back]
+              properties:
+                target_level:
+                  type: string
+                  enum: [silver, gold]
+                national_id:
+                  type: string
+                  pattern: '^[0-9]{14}$'
+                national_id_front:
+                  type: string
+                  format: binary
+                national_id_back:
+                  type: string
+                  format: binary
+                selfie:
+                  type: string
+                  format: binary
+                  description: Required for gold level
+                address_proof:
+                  type: string
+                  format: binary
+                  description: Required for gold level
+      responses:
+        '201':
+          description: Upgrade request submitted
+
+  # ============================================================================
+  # Notifications
+  # ============================================================================
+  /notifications:
+    get:
+      tags: [Notifications]
+      summary: Get notifications
+      operationId: getNotifications
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: unread_only
+          in: query
+          schema:
+            type: boolean
+            default: false
+      responses:
+        '200':
+          description: List of notifications
+
+  /notifications/unread-count:
+    get:
+      tags: [Notifications]
+      summary: Get unread count
+      operationId: getUnreadCount
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Unread count
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  unread_count:
+                    type: integer
+
+  # ============================================================================
+  # Transactions
+  # ============================================================================
+  /transactions:
+    get:
+      tags: [Transactions]
+      summary: Get transaction history
+      operationId: getTransactions
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: type
+          in: query
+          schema:
+            type: string
+        - name: direction
+          in: query
+          schema:
+            type: string
+            enum: [credit, debit]
+        - name: date_from
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: date_to
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: page
+          in: query
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Transaction history
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Transaction'
+                  meta:
+                    $ref: '#/components/schemas/PaginationMeta'
+
+# ============================================================================
+# Components
+# ============================================================================
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    AuthResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        data:
+          type: object
+          properties:
+            user:
+              $ref: '#/components/schemas/User'
+            token:
+              type: string
+            requires_otp:
+              type: boolean
+
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        phone:
+          type: string
+        email:
+          type: string
+        kyc_level:
+          type: string
+          enum: [basic, silver, gold]
+        is_verified:
+          type: boolean
+        is_dsp:
+          type: boolean
+
+    UserProfile:
+      allOf:
+        - $ref: '#/components/schemas/User'
+        - type: object
+          properties:
+            wallet:
+              $ref: '#/components/schemas/Wallet'
+            limits:
+              type: object
+              properties:
+                daily_transfer:
+                  type: number
+                monthly_cashout:
+                  type: number
+
+    Wallet:
+      type: object
+      properties:
+        balance:
+          type: number
+        available_balance:
+          type: number
+        hold_balance:
+          type: number
+        pending_cashout:
+          type: number
+        currency:
+          type: string
+          default: EGP
+
+    PeaceLink:
+      type: object
+      properties:
+        id:
+          type: string
+        reference:
+          type: string
+        status:
+          type: string
+          enum: [pending, funded, dsp_assigned, in_transit, delivered, released, cancelled, disputed, refunded]
+        product_description:
+          type: string
+        item_amount:
+          type: number
+        platform_fee:
+          type: number
+        delivery_fee:
+          type: number
+        total_amount:
+          type: number
+        buyer:
+          $ref: '#/components/schemas/UserPublic'
+        merchant:
+          $ref: '#/components/schemas/UserPublic'
+        created_at:
+          type: string
+          format: date-time
+
+    PeaceLinkDetails:
+      allOf:
+        - $ref: '#/components/schemas/PeaceLink'
+        - type: object
+          properties:
+            dsp:
+              $ref: '#/components/schemas/UserPublic'
+            delivery_address:
+              type: string
+            delivery_city:
+              type: string
+            tracking_code:
+              type: string
+            timeline:
+              type: array
+              items:
+                type: object
+                properties:
+                  event:
+                    type: string
+                  timestamp:
+                    type: string
+                  actor:
+                    type: string
+            can_cancel:
+              type: boolean
+            can_confirm_delivery:
+              type: boolean
+            can_dispute:
+              type: boolean
+
+    UserPublic:
+      type: object
+      properties:
+        name:
+          type: string
+        masked_phone:
+          type: string
+
+    Transaction:
+      type: object
+      properties:
+        id:
+          type: string
+        reference:
+          type: string
+        type:
+          type: string
+        type_label:
+          type: string
+        direction:
+          type: string
+          enum: [credit, debit]
+        amount:
+          type: number
+        fee:
+          type: number
+        balance_after:
+          type: number
+        status:
+          type: string
+        counterparty:
+          $ref: '#/components/schemas/UserPublic'
+        created_at:
+          type: string
+          format: date-time
+
+    Cashout:
+      type: object
+      properties:
+        id:
+          type: string
+        reference:
+          type: string
+        amount:
+          type: number
+        fee:
+          type: number
+        net_amount:
+          type: number
+        method:
+          type: string
+          enum: [bank, wallet]
+        status:
+          type: string
+          enum: [pending, processing, completed, failed]
+        created_at:
+          type: string
+          format: date-time
+
+    Dispute:
+      type: object
+      properties:
+        id:
+          type: string
+        reference:
+          type: string
+        peacelink_id:
+          type: string
+        reason:
+          type: string
+        reason_label:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+          enum: [pending, under_review, resolved]
+        resolution:
+          type: string
+          enum: [buyer, merchant, split]
+        created_at:
+          type: string
+          format: date-time
+
+    KycStatus:
+      type: object
+      properties:
+        kyc_level:
+          type: string
+        kyc_level_label:
+          type: string
+        limits:
+          type: object
+          properties:
+            daily_transfer:
+              type: object
+              properties:
+                limit:
+                  type: number
+                used:
+                  type: number
+                remaining:
+                  type: number
+            monthly_cashout:
+              type: object
+              properties:
+                limit:
+                  type: number
+                used:
+                  type: number
+                remaining:
+                  type: number
+        can_upgrade:
+          type: boolean
+        next_level:
+          type: object
+
+    FeeCalculation:
+      type: object
+      properties:
+        item_amount:
+          type: number
+        platform_fee:
+          type: number
+        delivery_fee:
+          type: number
+        total_buyer_pays:
+          type: number
+        merchant_receives:
+          type: number
+
+    PaginationMeta:
+      type: object
+      properties:
+        current_page:
+          type: integer
+        last_page:
+          type: integer
+        per_page:
+          type: integer
+        total:
+          type: integer
+
+  responses:
+    ValidationError:
+      description: Validation error
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                example: false
+              message:
+                type: string
+                example: "بيانات غير صالحة"
+              errors:
+                type: object
+                additionalProperties:
+                  type: array
+                  items:
+                    type: string

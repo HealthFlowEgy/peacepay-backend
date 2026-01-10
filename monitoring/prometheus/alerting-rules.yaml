@@ -1,0 +1,333 @@
+# monitoring/prometheus/alerting-rules.yaml
+# PeacePay Prometheus Alerting Rules
+
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: peacepay-alerts
+  namespace: monitoring
+  labels:
+    app: peacepay
+    release: prometheus
+spec:
+  groups:
+    # =========================================================================
+    # APPLICATION ALERTS
+    # =========================================================================
+    - name: peacepay.application
+      rules:
+        - alert: HighErrorRate
+          expr: |
+            (
+              sum(rate(http_requests_total{job="peacepay-api",status=~"5.."}[5m]))
+              /
+              sum(rate(http_requests_total{job="peacepay-api"}[5m]))
+            ) > 0.01
+          for: 5m
+          labels:
+            severity: critical
+            team: backend
+          annotations:
+            summary: "High error rate detected"
+            description: "Error rate is {{ $value | humanizePercentage }} (threshold: 1%)"
+            runbook: "https://wiki.healthflow.eg/runbooks/high-error-rate"
+
+        - alert: HighLatency
+          expr: |
+            histogram_quantile(0.99,
+              sum(rate(http_request_duration_seconds_bucket{job="peacepay-api"}[5m])) by (le)
+            ) > 2
+          for: 5m
+          labels:
+            severity: warning
+            team: backend
+          annotations:
+            summary: "High API latency"
+            description: "P99 latency is {{ $value | humanizeDuration }} (threshold: 2s)"
+
+        - alert: HighRequestRate
+          expr: |
+            sum(rate(http_requests_total{job="peacepay-api"}[1m])) > 500
+          for: 2m
+          labels:
+            severity: warning
+            team: backend
+          annotations:
+            summary: "Unusually high request rate"
+            description: "Request rate is {{ $value | humanize }}/s"
+
+    # =========================================================================
+    # BUSINESS CRITICAL ALERTS
+    # =========================================================================
+    - name: peacepay.business
+      rules:
+        - alert: PaymentFailures
+          expr: |
+            sum(rate(peacepay_payment_failures_total[5m])) > 0.1
+          for: 2m
+          labels:
+            severity: critical
+            team: backend
+            pagerduty: "true"
+          annotations:
+            summary: "Payment failures detected"
+            description: "{{ $value | humanize }} payment failures per second"
+            runbook: "https://wiki.healthflow.eg/runbooks/payment-failures"
+
+        - alert: OTPFailureSpike
+          expr: |
+            sum(rate(peacepay_otp_failures_total[5m])) > 0.5
+          for: 2m
+          labels:
+            severity: critical
+            team: backend
+          annotations:
+            summary: "High OTP failure rate"
+            description: "{{ $value | humanize }} OTP failures per second - possible attack"
+
+        - alert: HighDisputeRate
+          expr: |
+            (
+              sum(rate(peacepay_disputes_opened_total[1h]))
+              /
+              sum(rate(peacepay_deliveries_confirmed_total[1h]))
+            ) > 0.05
+          for: 30m
+          labels:
+            severity: warning
+            team: operations
+          annotations:
+            summary: "High dispute rate"
+            description: "Dispute rate is {{ $value | humanizePercentage }} of deliveries"
+
+        - alert: LowDeliveryConfirmationRate
+          expr: |
+            (
+              sum(rate(peacepay_deliveries_confirmed_total[1h]))
+              /
+              sum(rate(peacepay_dsp_assigned_total[1h]))
+            ) < 0.7
+          for: 1h
+          labels:
+            severity: warning
+            team: operations
+          annotations:
+            summary: "Low delivery confirmation rate"
+            description: "Only {{ $value | humanizePercentage }} of assigned deliveries are being confirmed"
+
+    # =========================================================================
+    # QUEUE ALERTS
+    # =========================================================================
+    - name: peacepay.queue
+      rules:
+        - alert: QueueBacklog
+          expr: |
+            peacepay_queue_size{queue="default"} > 1000
+          for: 10m
+          labels:
+            severity: warning
+            team: backend
+          annotations:
+            summary: "Queue backlog growing"
+            description: "Queue {{ $labels.queue }} has {{ $value }} pending jobs"
+
+        - alert: QueueProcessingStalled
+          expr: |
+            rate(peacepay_queue_jobs_processed_total[5m]) == 0
+            and peacepay_queue_size > 0
+          for: 5m
+          labels:
+            severity: critical
+            team: backend
+          annotations:
+            summary: "Queue processing stalled"
+            description: "No jobs processed in last 5 minutes with {{ $value }} jobs pending"
+
+        - alert: HighJobFailureRate
+          expr: |
+            (
+              sum(rate(peacepay_queue_jobs_failed_total[10m]))
+              /
+              sum(rate(peacepay_queue_jobs_processed_total[10m]))
+            ) > 0.1
+          for: 5m
+          labels:
+            severity: warning
+            team: backend
+          annotations:
+            summary: "High job failure rate"
+            description: "{{ $value | humanizePercentage }} of queue jobs are failing"
+
+    # =========================================================================
+    # DATABASE ALERTS
+    # =========================================================================
+    - name: peacepay.database
+      rules:
+        - alert: DatabaseConnectionsHigh
+          expr: |
+            mysql_global_status_threads_connected / mysql_global_variables_max_connections > 0.8
+          for: 5m
+          labels:
+            severity: warning
+            team: backend
+          annotations:
+            summary: "Database connections running high"
+            description: "{{ $value | humanizePercentage }} of max connections in use"
+
+        - alert: DatabaseSlowQueries
+          expr: |
+            rate(mysql_global_status_slow_queries[5m]) > 1
+          for: 5m
+          labels:
+            severity: warning
+            team: backend
+          annotations:
+            summary: "High slow query rate"
+            description: "{{ $value | humanize }} slow queries per second"
+
+        - alert: DatabaseReplicationLag
+          expr: |
+            mysql_slave_status_seconds_behind_master > 30
+          for: 2m
+          labels:
+            severity: critical
+            team: backend
+          annotations:
+            summary: "Database replication lag"
+            description: "Replica is {{ $value }}s behind master"
+
+    # =========================================================================
+    # REDIS ALERTS
+    # =========================================================================
+    - name: peacepay.redis
+      rules:
+        - alert: RedisMemoryHigh
+          expr: |
+            redis_memory_used_bytes / redis_memory_max_bytes > 0.85
+          for: 5m
+          labels:
+            severity: warning
+            team: backend
+          annotations:
+            summary: "Redis memory usage high"
+            description: "Redis is using {{ $value | humanizePercentage }} of max memory"
+
+        - alert: RedisConnectionsHigh
+          expr: |
+            redis_connected_clients > 500
+          for: 5m
+          labels:
+            severity: warning
+            team: backend
+          annotations:
+            summary: "High Redis connection count"
+            description: "{{ $value }} clients connected to Redis"
+
+    # =========================================================================
+    # KUBERNETES ALERTS
+    # =========================================================================
+    - name: peacepay.kubernetes
+      rules:
+        - alert: PodCrashLooping
+          expr: |
+            rate(kube_pod_container_status_restarts_total{namespace="peacepay"}[15m]) > 0.2
+          for: 5m
+          labels:
+            severity: critical
+            team: devops
+          annotations:
+            summary: "Pod crash looping"
+            description: "Pod {{ $labels.pod }} is restarting frequently"
+
+        - alert: PodNotReady
+          expr: |
+            kube_pod_status_ready{namespace="peacepay",condition="true"} == 0
+          for: 5m
+          labels:
+            severity: critical
+            team: devops
+          annotations:
+            summary: "Pod not ready"
+            description: "Pod {{ $labels.pod }} has been not ready for 5 minutes"
+
+        - alert: DeploymentReplicasMismatch
+          expr: |
+            kube_deployment_spec_replicas{namespace="peacepay"}
+            != kube_deployment_status_replicas_available{namespace="peacepay"}
+          for: 10m
+          labels:
+            severity: warning
+            team: devops
+          annotations:
+            summary: "Deployment replicas mismatch"
+            description: "Deployment {{ $labels.deployment }} has {{ $value }} replica mismatch"
+
+        - alert: PodMemoryHigh
+          expr: |
+            (
+              container_memory_usage_bytes{namespace="peacepay"}
+              / container_spec_memory_limit_bytes{namespace="peacepay"}
+            ) > 0.9
+          for: 5m
+          labels:
+            severity: warning
+            team: devops
+          annotations:
+            summary: "Pod memory usage high"
+            description: "Pod {{ $labels.pod }} is using {{ $value | humanizePercentage }} of memory limit"
+
+        - alert: PodCPUHigh
+          expr: |
+            (
+              rate(container_cpu_usage_seconds_total{namespace="peacepay"}[5m])
+              / container_spec_cpu_quota{namespace="peacepay"} * 100000
+            ) > 0.9
+          for: 5m
+          labels:
+            severity: warning
+            team: devops
+          annotations:
+            summary: "Pod CPU usage high"
+            description: "Pod {{ $labels.pod }} is using {{ $value | humanizePercentage }} of CPU limit"
+
+    # =========================================================================
+    # EXTERNAL SERVICES ALERTS
+    # =========================================================================
+    - name: peacepay.external
+      rules:
+        - alert: SMSGatewayErrors
+          expr: |
+            sum(rate(peacepay_sms_errors_total[5m])) > 0.1
+          for: 5m
+          labels:
+            severity: warning
+            team: backend
+          annotations:
+            summary: "SMS gateway errors"
+            description: "{{ $value | humanize }} SMS errors per second"
+
+        - alert: PaymentGatewayErrors
+          expr: |
+            sum(rate(peacepay_payment_gateway_errors_total[5m])) > 0.05
+          for: 2m
+          labels:
+            severity: critical
+            team: backend
+            pagerduty: "true"
+          annotations:
+            summary: "Payment gateway errors"
+            description: "Payment gateway returning errors"
+            runbook: "https://wiki.healthflow.eg/runbooks/payment-gateway-errors"
+
+        - alert: PaymentGatewayLatency
+          expr: |
+            histogram_quantile(0.95,
+              sum(rate(peacepay_payment_gateway_duration_seconds_bucket[5m])) by (le, provider)
+            ) > 5
+          for: 5m
+          labels:
+            severity: warning
+            team: backend
+          annotations:
+            summary: "Payment gateway slow"
+            description: "Payment gateway {{ $labels.provider }} P95 latency is {{ $value | humanizeDuration }}"

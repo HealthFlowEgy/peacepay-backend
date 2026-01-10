@@ -10,6 +10,7 @@
         "buglinjo/laravel-webp": "^2.3",
         "doctrine/dbal": "^3.0",
         "flutterwavedev/flutterwave-v3": "^1.0",
+        "google/auth": "^1.28",
         "guzzlehttp/guzzle": "^7.2",
         "intervention/image": "^2.7",
         "jenssegers/agent": "^2.6",
